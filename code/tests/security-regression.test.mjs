@@ -44,3 +44,13 @@ test('legacy client-callable monetary server actions fail closed', async () => {
   assert.match(contentActions, /legacyMonetaryActionsDisabled: boolean = true/);
 });
 
+test('Firestore denies client writes to monetary and entitlement records', async () => {
+  const rules = await source('firestore.rules');
+  for (const collection of ['unlockedEpisodes', 'coinTransactions', 'adWatches']) {
+    const block = rules.match(new RegExp(`match /${collection}\\/\\{[^}]+\\} \\{([\\s\\S]*?)\\n      \\}`));
+    assert.ok(block, `missing ${collection} rule`);
+    assert.match(block[1], /allow write: if false/);
+  }
+  assert.match(rules, /match \/purchases\/\{purchaseId\}[\s\S]*?allow read, write: if false/);
+  assert.match(rules, /match \/settings\/\{settingId\}[\s\S]*?allow read, write: if false/);
+});
