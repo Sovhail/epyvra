@@ -278,7 +278,7 @@ fun RewardsScreen(navController: NavController, viewModel: EpyvraViewModel) {
             // Viral Referral & Invite Friends Section
             // ─────────────────────────────────────────────────────────────────
             val referralCode = userProfile?.referralCode.takeIf { !it.isNullOrBlank() }
-                ?: (userProfile?.publicId?.takeIf { it.isNotBlank() }?.let { "SNAP-${it.take(6).uppercase()}" } ?: "")
+                ?: (userProfile?.publicId?.takeIf { it.isNotBlank() }?.let { "EPY-${it.take(6).uppercase()}" } ?: "")
 
             if (referralCode.isNotEmpty() || appSettings.referralEnabled) {
                 Spacer(modifier = Modifier.height(16.dp))
@@ -349,7 +349,7 @@ fun RewardsScreen(navController: NavController, viewModel: EpyvraViewModel) {
                                     letterSpacing = 1.sp
                                 )
                                 Text(
-                                    text = referralCode.ifEmpty { "SNAP-REEL" },
+                                    text = referralCode.ifEmpty { "EPY-REEL" },
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Black,
                                     color = Color.White,
@@ -384,7 +384,7 @@ fun RewardsScreen(navController: NavController, viewModel: EpyvraViewModel) {
                                 // Share Button
                                 Button(
                                     onClick = {
-                                        val shareText = "Watch addictive short dramas on SnapReels! Use my invite code $referralCode to get +${appSettings.referredBonusCoins} free coins: ${appSettings.siteUrl.ifEmpty { "https://snapreels.com" }}"
+                                        val shareText = "Watch addictive short dramas on EPYVRA! Use my invite code $referralCode to get +${appSettings.referredBonusCoins} free coins: ${appSettings.siteUrl.ifEmpty { "https://epyvra.com" }}"
                                         val sendIntent = Intent().apply {
                                             action = Intent.ACTION_SEND
                                             putExtra(Intent.EXTRA_TEXT, shareText)

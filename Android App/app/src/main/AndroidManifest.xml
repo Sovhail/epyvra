@@ -8,15 +8,15 @@
 
     <application
         android:name=".EpyvraApplication"
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@drawable/app_logo"
         android:label="@string/app_name"
         android:roundIcon="@drawable/app_logo"
         android:supportsRtl="true"
-        android:theme="@style/Theme.MyApplication"
-        android:usesCleartextTraffic="true">
+        android:theme="@style/Theme.Epyvra"
+        android:usesCleartextTraffic="false">
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-3940256099942544~3347511713" />
@@ -26,38 +26,35 @@
             android:label="@string/app_name"
             android:launchMode="singleTask"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|uiMode"
-            android:theme="@style/Theme.MyApplication">
+            android:theme="@style/Theme.Epyvra">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- Custom App Scheme: snapreels://drama/{id} or snapreels://share/{id} -->
-            <intent-filter>
+            <!-- Custom App Scheme: epyvra://drama/{id} or epyvra://share/{id} -->
+            <intent-filter android:autoVerify="false">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="snapreels" />
+                <data android:scheme="epyvra" android:host="drama" />
+            </intent-filter>
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="epyvra" android:host="share" />
             </intent-filter>
 
-            <!-- HTTPS Web Share Deep Link: https://snapreels.gadohost.com/share/* -->
+            <!-- HTTPS Web Share Deep Link: https://epyvra.com/share/* -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data
                     android:scheme="https"
-                    android:host="snapreels.gadohost.com"
-                    android:pathPrefix="/share" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data
-                    android:scheme="http"
-                    android:host="snapreels.gadohost.com"
+                    android:host="epyvra.com"
                     android:pathPrefix="/share" />
             </intent-filter>
         </activity>

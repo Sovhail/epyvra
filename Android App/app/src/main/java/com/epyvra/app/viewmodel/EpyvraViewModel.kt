@@ -171,8 +171,8 @@ class EpyvraViewModel(application: Application) : AndroidViewModel(application) 
         preloadShortsJob?.cancel()
         preloadShortsJob = viewModelScope.launch(Dispatchers.IO) {
             _isPreloadingShorts.value = true
-            val cachePrefs = getApplication<Application>().getSharedPreferences("snapreels_cache", android.content.Context.MODE_PRIVATE)
-            val prefs = getApplication<Application>().getSharedPreferences("snapreels_settings", android.content.Context.MODE_PRIVATE)
+            val cachePrefs = getApplication<Application>().getSharedPreferences("epyvra_cache", android.content.Context.MODE_PRIVATE)
+            val prefs = getApplication<Application>().getSharedPreferences("epyvra_settings", android.content.Context.MODE_PRIVATE)
             val langCode = prefs.getString("language_code", "en") ?: "en"
 
             try {
@@ -621,8 +621,8 @@ class EpyvraViewModel(application: Application) : AndroidViewModel(application) 
                         val uid = firebaseUser?.uid ?: ""
                         // Generate email for phone users like backend does: User [uid] @ domain
                         // Or just uid@phone.com, but the user requested: UserId@domain
-                        // We can just send uid@snapreels.com or let backend handle it, backend user sync requires email
-                        val domain = AppConfig.API_URL.replace("https://", "").replace("http://", "").split("/").firstOrNull() ?: "snapreels.com"
+                        // We can just send uid@epyvra.com or let backend handle it, backend user sync requires email
+                        val domain = AppConfig.API_URL.replace("https://", "").replace("http://", "").split("/").firstOrNull() ?: "epyvra.com"
                         val shortId = (10000000..99999999).random().toString()
                         val userEmail = firebaseUser?.email ?: "${shortId}@${domain}"
                         

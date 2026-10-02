@@ -72,7 +72,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun attachBaseContext(newBase: android.content.Context) {
-        val preferences = newBase.getSharedPreferences("snapreels_settings", android.content.Context.MODE_PRIVATE)
+        val preferences = newBase.getSharedPreferences("epyvra_settings", android.content.Context.MODE_PRIVATE)
         val languageCode = preferences.getString("language_code", "en") ?: "en"
         val locale = getLocaleFromCode(languageCode)
         java.util.Locale.setDefault(locale)
@@ -122,7 +122,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        val preferences = getSharedPreferences("snapreels_settings", android.content.Context.MODE_PRIVATE)
+        val preferences = getSharedPreferences("epyvra_settings", android.content.Context.MODE_PRIVATE)
         val languageCode = preferences.getString("language_code", "en") ?: "en"
         setLocale(languageCode)
 
@@ -218,7 +218,7 @@ class MainActivity : ComponentActivity() {
                                 pendingDeepLink = null
 
                                 val dramaId = when {
-                                    uri.scheme == "snapreels" -> {
+                                    uri.scheme == "epyvra" -> {
                                         if (uri.host == "drama" || uri.host == "share") {
                                             uri.pathSegments.firstOrNull() ?: uri.lastPathSegment
                                         } else {
@@ -293,7 +293,7 @@ private fun ForceUpdateScreen(requiredVersion: Int, updateUrl: String) {
             Text("Update Required", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Black)
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                "A newer version of SnapReels is required to continue.",
+                "A newer version of EPYVRA is required to continue.",
                 color = Color.LightGray,
                 fontSize = 14.sp,
                 textAlign = TextAlign.Center

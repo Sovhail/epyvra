@@ -501,7 +501,7 @@ fun MySettingsContent(
 ) {
     val context = LocalContext.current
     val appSettings by viewModel.appSettings.collectAsState()
-    val preferences = remember { context.getSharedPreferences("snapreels_settings", android.content.Context.MODE_PRIVATE) }
+    val preferences = remember { context.getSharedPreferences("epyvra_settings", android.content.Context.MODE_PRIVATE) }
     var selectedLanguageCode by remember { mutableStateOf(preferences.getString("language_code", "en") ?: "en") }
     var showLanguages by remember { mutableStateOf(false) }
     val selectedLanguage = appSettings.languages.firstOrNull { it.languageCode == selectedLanguageCode }

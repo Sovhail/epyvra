@@ -250,7 +250,7 @@ fun ShortsScreen(navController: NavController, viewModel: EpyvraViewModel) {
 
 // ─── Helper to build share URL ────────────────────────────────────────────────
 private fun buildShareUrl(siteUrl: String, drama: Drama, episode: Episode): String {
-    val base = siteUrl.trim().trimEnd('/').ifEmpty { "https://snapreels.gadohost.com" }
+    val base = siteUrl.trim().trimEnd('/').ifEmpty { "https://epyvra.com" }
     val dramaId = drama.id
     return if (dramaId.isNotEmpty()) {
         "$base/share/$dramaId"

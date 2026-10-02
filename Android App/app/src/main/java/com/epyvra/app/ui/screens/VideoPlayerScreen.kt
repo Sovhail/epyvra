@@ -100,7 +100,7 @@ fun VideoPlayerScreen(navController: NavController, viewModel: EpyvraViewModel) 
     val likedSeriesIds by viewModel.likedSeriesIds.collectAsState()
     val appSettings by viewModel.appSettings.collectAsState()
 
-    val preferences = remember { context.getSharedPreferences("snapreels_settings", android.content.Context.MODE_PRIVATE) }
+    val preferences = remember { context.getSharedPreferences("epyvra_settings", android.content.Context.MODE_PRIVATE) }
     var autoUnlockEnabled by remember { mutableStateOf(preferences.getBoolean("auto_unlock_enabled", false)) }
 
     var showUnlockConfirm by remember { mutableStateOf(false) }
@@ -831,7 +831,7 @@ private fun EpisodesGridDialog(
 }
 
 private fun buildShareUrl(siteUrl: String, drama: Drama?, episode: Episode?): String {
-    val base = siteUrl.trim().trimEnd('/').ifEmpty { "https://snapreels.gadohost.com" }
+    val base = siteUrl.trim().trimEnd('/').ifEmpty { "https://epyvra.com" }
     val dramaId = drama?.id.orEmpty()
     return if (dramaId.isNotEmpty()) {
         "$base/share/$dramaId"
@@ -1217,7 +1217,7 @@ fun EpisodePlayerPage(
                             val currentUrl = view.tag as? String
                             if (currentUrl != episode.videoUrl) {
                                 view.tag = episode.videoUrl
-                                view.loadDataWithBaseURL("https://snapreels.gadohost.com/", htmlData, "text/html", "UTF-8", null)
+                                view.loadDataWithBaseURL("https://epyvra.com/", htmlData, "text/html", "UTF-8", null)
                             }
                             
                             if (isVideoPaused) {

@@ -190,7 +190,7 @@ fun LoginScreen(navController: NavController, viewModel: EpyvraViewModel) {
                     )
                     Spacer(modifier = Modifier.height(14.dp))
                     Text(
-                        text = "SnapReels",
+                        text = "EPYVRA",
                         fontSize = 34.sp,
                         fontWeight = FontWeight.Black,
                         color = Color.White,

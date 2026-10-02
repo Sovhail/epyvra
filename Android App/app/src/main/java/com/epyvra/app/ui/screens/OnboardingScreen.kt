@@ -46,7 +46,7 @@ fun OnboardingScreen(navController: NavController, viewModel: EpyvraViewModel) {
     val appSettings by viewModel.appSettings.collectAsState()
     val pagerState = rememberPagerState(pageCount = { 3 })
     
-    val preferences = remember { context.getSharedPreferences("snapreels_settings", Context.MODE_PRIVATE) }
+    val preferences = remember { context.getSharedPreferences("epyvra_settings", Context.MODE_PRIVATE) }
     var selectedLanguage by remember { mutableStateOf(preferences.getString("language_code", "en") ?: "en") }
 
     Surface(

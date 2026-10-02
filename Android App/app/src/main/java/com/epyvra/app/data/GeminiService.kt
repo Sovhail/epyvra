@@ -71,13 +71,13 @@ object GeminiService {
                 "category" to "Billionaire",
                 "tags" to "CEO, Secret Romance, Marriage Contract, Betrayal",
                 "slug" to "the-heirs-secret-bride",
-                "seo" to "Watch The Heir's Secret Bride free, short drama streaming, romance episodes, SnapReels originals."
+                "seo" to "Watch The Heir's Secret Bride free, short drama streaming, romance episodes, EPYVRA originals."
             )
         }
 
         // Structure the prompt system directions to generate parseable text
         val systemDirective = """
-            You are SnapReels AI Metadata Generator, an AI Assistant built for creators.
+            You are EPYVRA AI Metadata Generator, an AI Assistant built for creators.
             The creator gave this raw idea: "$prompt".
             Generate a full metadata pack in EXACTLY this format (each field on a new line with label):
             TITLE: <a short dramatic engaging show title (3-5 words)>

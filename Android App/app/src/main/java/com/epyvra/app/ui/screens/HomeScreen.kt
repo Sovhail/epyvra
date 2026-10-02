@@ -416,7 +416,7 @@ fun HomeListingTab(
                             .clip(RoundedCornerShape(8.dp))
                     )
                     Text(
-                        text = "SnapReels",
+                        text = "EPYVRA",
                         fontWeight = FontWeight.Black,
                         fontSize = 20.sp,
                         color = Color.White

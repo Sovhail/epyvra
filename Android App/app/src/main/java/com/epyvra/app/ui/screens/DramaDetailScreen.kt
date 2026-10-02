@@ -467,7 +467,7 @@ fun DramaDetailScreen(navController: NavController, viewModel: EpyvraViewModel) 
                         // Share Button
                         OutlinedButton(
                             onClick = {
-                                val base = appSettings.siteUrl.trim().trimEnd('/').ifEmpty { "https://snapreels.gadohost.com" }
+                                val base = appSettings.siteUrl.trim().trimEnd('/').ifEmpty { "https://epyvra.com" }
                                 val shareUrl = "$base/share/${drama!!.id}"
                                 openAndroidShareChooser(context, drama!!.title, shareUrl)
                             },

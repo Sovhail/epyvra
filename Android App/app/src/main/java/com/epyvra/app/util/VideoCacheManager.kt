@@ -22,7 +22,7 @@ object VideoCacheManager {
     @Synchronized
     fun getCache(context: Context): SimpleCache {
         if (simpleCache == null) {
-            val cacheDir = File(context.cacheDir, "snapreels_media_cache")
+            val cacheDir = File(context.cacheDir, "epyvra_media_cache")
             val evictor = LeastRecentlyUsedCacheEvictor(MAX_CACHE_SIZE)
             val databaseProvider = StandaloneDatabaseProvider(context.applicationContext)
             simpleCache = SimpleCache(cacheDir, evictor, databaseProvider)
@@ -32,7 +32,7 @@ object VideoCacheManager {
 
     fun getHttpDataSourceFactory(): DefaultHttpDataSource.Factory {
         return DefaultHttpDataSource.Factory()
-            .setUserAgent("Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36 SnapReels/1.1.9")
+            .setUserAgent("Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36 EPYVRA/1.1.9")
             .setConnectTimeoutMs(20_000)
             .setReadTimeoutMs(20_000)
             .setAllowCrossProtocolRedirects(true)

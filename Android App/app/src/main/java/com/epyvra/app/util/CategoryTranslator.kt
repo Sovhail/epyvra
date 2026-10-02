@@ -204,7 +204,7 @@ object CategoryTranslator {
      */
     fun getAppLanguage(context: android.content.Context): String {
         return try {
-            val prefs = context.getSharedPreferences("snapreels_settings", android.content.Context.MODE_PRIVATE)
+            val prefs = context.getSharedPreferences("epyvra_settings", android.content.Context.MODE_PRIVATE)
             prefs.getString("language_code", java.util.Locale.getDefault().language) ?: "en"
         } catch (e: Exception) {
             java.util.Locale.getDefault().language ?: "en"

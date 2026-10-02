@@ -70,7 +70,7 @@ private suspend fun getFirebaseIdToken(): String? = suspendCancellableCoroutine 
 
     init {
         AppConfig.init(context)
-        val prefs = context.getSharedPreferences("snapreels_rewards", Context.MODE_PRIVATE)
+        val prefs = context.getSharedPreferences("epyvra_rewards", Context.MODE_PRIVATE)
         val saved = prefs.getStringSet("claimed_tasks", emptySet()) ?: emptySet()
         if (saved.isNotEmpty()) {
             _claimedTaskIds.value = saved
@@ -80,7 +80,7 @@ private suspend fun getFirebaseIdToken(): String? = suspendCancellableCoroutine 
     fun markTaskClaimedLocally(taskId: String) {
         val updated = _claimedTaskIds.value + taskId
         _claimedTaskIds.value = updated
-        val prefs = context.getSharedPreferences("snapreels_rewards", Context.MODE_PRIVATE)
+        val prefs = context.getSharedPreferences("epyvra_rewards", Context.MODE_PRIVATE)
         prefs.edit().putStringSet("claimed_tasks", updated).apply()
     }
 
@@ -179,7 +179,7 @@ private suspend fun getFirebaseIdToken(): String? = suspendCancellableCoroutine 
                             claimedSet.add(claimedArr.getString(i))
                         }
                     }
-                    val prefs = context.getSharedPreferences("snapreels_rewards", Context.MODE_PRIVATE)
+                    val prefs = context.getSharedPreferences("epyvra_rewards", Context.MODE_PRIVATE)
                     val localClaims = prefs.getStringSet("claimed_tasks", emptySet()) ?: emptySet()
                     val merged = claimedSet + localClaims
                     _claimedTaskIds.value = merged
@@ -660,9 +660,9 @@ private suspend fun getFirebaseIdToken(): String? = suspendCancellableCoroutine 
     }
 
     fun getShorts(): Flow<List<ShortItem>> = flow {
-        val preferences = context.getSharedPreferences("snapreels_settings", Context.MODE_PRIVATE)
+        val preferences = context.getSharedPreferences("epyvra_settings", Context.MODE_PRIVATE)
         val langCode = preferences.getString("language_code", "en") ?: "en"
-        val cachePrefs = context.getSharedPreferences("snapreels_cache", Context.MODE_PRIVATE)
+        val cachePrefs = context.getSharedPreferences("epyvra_cache", Context.MODE_PRIVATE)
         val cachedJson = cachePrefs.getString("cached_shorts_$langCode", null)
         var hasEmittedCache = false
         if (!cachedJson.isNullOrBlank()) {
@@ -689,9 +689,9 @@ private suspend fun getFirebaseIdToken(): String? = suspendCancellableCoroutine 
     }.flowOn(Dispatchers.IO)
 
     fun getAllDramas(): Flow<List<Drama>> = flow {
-        val preferences = context.getSharedPreferences("snapreels_settings", Context.MODE_PRIVATE)
+        val preferences = context.getSharedPreferences("epyvra_settings", Context.MODE_PRIVATE)
         val langCode = preferences.getString("language_code", "en") ?: "en"
-        val cachePrefs = context.getSharedPreferences("snapreels_cache", Context.MODE_PRIVATE)
+        val cachePrefs = context.getSharedPreferences("epyvra_cache", Context.MODE_PRIVATE)
         val cachedJson = cachePrefs.getString("cached_dramas_$langCode", null)
         var hasEmittedCache = false
         if (!cachedJson.isNullOrBlank()) {
@@ -720,7 +720,7 @@ private suspend fun getFirebaseIdToken(): String? = suspendCancellableCoroutine 
     }.flowOn(Dispatchers.IO)
 
     suspend fun getDirectSeries(langCode: String): List<Drama> = kotlinx.coroutines.withContext(Dispatchers.IO) {
-        val cachePrefs = context.getSharedPreferences("snapreels_cache", Context.MODE_PRIVATE)
+        val cachePrefs = context.getSharedPreferences("epyvra_cache", Context.MODE_PRIVATE)
         // 1. Try requested language
         if (langCode.isNotBlank()) {
             try {
@@ -751,7 +751,7 @@ private suspend fun getFirebaseIdToken(): String? = suspendCancellableCoroutine 
     }
 
     suspend fun getDirectEpisodes(dramaId: String): List<Episode> = kotlinx.coroutines.withContext(Dispatchers.IO) {
-        val cachePrefs = context.getSharedPreferences("snapreels_cache", Context.MODE_PRIVATE)
+        val cachePrefs = context.getSharedPreferences("epyvra_cache", Context.MODE_PRIVATE)
         val cachedJson = cachePrefs.getString("cached_episodes_$dramaId", null)
         if (!cachedJson.isNullOrBlank()) {
             try {
@@ -772,7 +772,7 @@ private suspend fun getFirebaseIdToken(): String? = suspendCancellableCoroutine 
     }
 
     fun getEpisodesForDrama(dramaId: String): Flow<List<Episode>> = flow {
-        val cachePrefs = context.getSharedPreferences("snapreels_cache", Context.MODE_PRIVATE)
+        val cachePrefs = context.getSharedPreferences("epyvra_cache", Context.MODE_PRIVATE)
         val cachedJson = cachePrefs.getString("cached_episodes_$dramaId", null)
         var hasEmittedCache = false
         if (!cachedJson.isNullOrBlank()) {
@@ -799,7 +799,7 @@ private suspend fun getFirebaseIdToken(): String? = suspendCancellableCoroutine 
     }.flowOn(Dispatchers.IO)
 
     fun getHomepageCategories(): Flow<List<String>> = flow {
-        val cachePrefs = context.getSharedPreferences("snapreels_cache", Context.MODE_PRIVATE)
+        val cachePrefs = context.getSharedPreferences("epyvra_cache", Context.MODE_PRIVATE)
         val cachedJson = cachePrefs.getString("cached_categories", null)
         if (!cachedJson.isNullOrBlank()) {
             try {

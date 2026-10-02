@@ -100,7 +100,7 @@ No charges were made to your account.</string>
     <string name="vip">VIP</string>
     <string name="unlocked">UNLOCKED</string>
     <string name="free">FREE</string>
-    <string name="app_name">SnapReels</string>
+    <string name="app_name">EPYVRA</string>
     <string name="login">Sign In</string>
     <string name="signup">Sign Up</string>
     <string name="email">Email</string>
@@ -238,7 +238,7 @@ No charges were made to your account.</string>
     <string name="coins_earned_label">Coins Earned</string>
     <string name="have_invite_code_btn">Have an Invite Code?</string>
     <string name="enter_invite_code_title">Enter Invite Code</string>
-    <string name="enter_invite_code_hint">Paste invite code (e.g. SNAP-XXXXXX)</string>
+    <string name="enter_invite_code_hint">Paste invite code (e.g. EPY-XXXXXX)</string>
     <string name="claim_invite_btn">Claim Bonus Coins</string>
     <string name="invite_bonus_claimed">Invite Bonus Claimed ✓</string>
 </resources>

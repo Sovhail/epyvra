@@ -229,7 +229,7 @@
     <string name="coins_earned_label">العملات المكتسبة</string>
     <string name="have_invite_code_btn">هل لديك كود دعوة؟</string>
     <string name="enter_invite_code_title">إدخال كود الدعوة</string>
-    <string name="enter_invite_code_hint">الصق كود الدعوة (مثال: SNAP-XXXXXX)</string>
+    <string name="enter_invite_code_hint">الصق كود الدعوة (مثال: EPY-XXXXXX)</string>
     <string name="claim_invite_btn">استلام عملات المكافأة</string>
     <string name="invite_bonus_claimed">تم استلام مكافأة الدعوة ✓</string>
 </resources>
