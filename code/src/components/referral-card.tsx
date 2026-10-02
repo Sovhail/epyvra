@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { claimReferralCodeAction } from '@/lib/actions';
+import { useUser } from '@/firebase';
 import type { UserProfile } from '@/lib/types';
 import { 
   Gift, 
@@ -29,6 +29,7 @@ interface ReferralCardProps {
 
 export function ReferralCard({ userProfile, userId, onProfileRefresh }: ReferralCardProps) {
   const { toast } = useToast();
+  const { user } = useUser();
   const [copied, setCopied] = useState(false);
   const [redeemDialogOpen, setRedeemDialogOpen] = useState(false);
   const [inputCode, setInputCode] = useState('');
@@ -67,7 +68,7 @@ export function ReferralCard({ userProfile, userId, onProfileRefresh }: Referral
 
   const handleRedeem = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!userId) {
+    if (!userId || !user || user.uid !== userId) {
       toast({ variant: 'destructive', title: 'Login Required', description: 'Please login first to redeem an invitation code.' });
       return;
     }
@@ -78,7 +79,13 @@ export function ReferralCard({ userProfile, userId, onProfileRefresh }: Referral
 
     setIsSubmitting(true);
     try {
-      const res = await claimReferralCodeAction(userId, inputCode.trim());
+      const idToken = await user.getIdToken();
+      const response = await fetch(`/api/user/${encodeURIComponent(user.uid)}/referral`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${idToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ referralCode: inputCode.trim() }),
+      });
+      const res = await response.json();
       if (res.success) {
         toast({ title: 'Success! 🎉', description: res.message });
         setRedeemDialogOpen(false);
@@ -87,8 +94,9 @@ export function ReferralCard({ userProfile, userId, onProfileRefresh }: Referral
       } else {
         toast({ variant: 'destructive', title: 'Redemption Failed', description: res.error });
       }
-    } catch (err: any) {
-      toast({ variant: 'destructive', title: 'Error', description: err.message || 'Failed to claim code.' });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to claim code.';
+      toast({ variant: 'destructive', title: 'Error', description: message });
     } finally {
       setIsSubmitting(false);
     }

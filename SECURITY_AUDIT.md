@@ -6,7 +6,7 @@ Status: remediation in progress. Production release is prohibited while Critical
 | --- | --- | --- | --- |
 | SCR-001 | Critical | Unauthenticated user creation accepts caller-controlled UID/coins | Implemented: Firebase UID and server bonus are authoritative; negative tests pending |
 | SCR-002 | Critical | Extractable mobile API key is treated as user authorization | Implemented for UID-scoped/mobile monetary APIs with Firebase Admin token verification and UID binding; negative tests pending |
-| SCR-003 | Critical | Reward/ad claims lack trustworthy proof and atomic anti-replay | Open |
+| SCR-003 | Critical | Reward/ad claims lack trustworthy proof and atomic anti-replay | Partially remediated: transactional idempotency and timed one-use challenges added; unverified ad rewards fail closed; LevelPlay verification pending |
 | SCR-004 | Critical | Firestore rules permit client entitlement/balance writes | Open |
 | SCR-005 | Critical | Sensitive settings can be returned to browser clients without consistent redaction | Open |
 | SCR-006 | Critical | Admin/install authorization is incomplete | Open |
@@ -21,3 +21,10 @@ Status: remediation in progress. Production release is prohibited while Critical
 | SCR-015 | High | Next build suppresses TypeScript/ESLint failures | Open |
 
 Every remediation must include negative authorization tests, replay/race tests where applicable, and evidence in this document before closure.
+
+## Verification evidence
+
+- `npm run test:security`: 5/5 security regression checks pass (identity binding, server-owned signup balance, transaction/idempotency structure, one-use reward challenge, legacy mutation gate).
+- `npm run typecheck`: passes after the authentication and coin-operation changes.
+- Changed security modules and routes pass targeted ESLint.
+- Runtime concurrency tests remain required against a MongoDB replica set before SCR-003 can be closed.

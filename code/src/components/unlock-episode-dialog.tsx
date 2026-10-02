@@ -1,13 +1,12 @@
 
 'use client';
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useUser } from '@/firebase';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import type { Episode, Series, UserProfile, MonetizationSettings, Ad } from '@/lib/types';
-import { Coins, Loader2, Video, X, Timer, CheckCircle, Sparkles } from 'lucide-react';
+import { Loader2, Video, Timer, CheckCircle, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { unlockEpisodeAction } from '@/lib/actions';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/lib/translation-provider';
 
@@ -63,7 +62,7 @@ export function UnlockEpisodeDialog(props: UnlockEpisodeDialogProps) {
   const dailyWatchLimit = adSettings?.dailyWatchLimit || 10;
   const adsWatchedToday = userProfile?.todayAdCount ?? 0;
   const hasReachedAdLimit = adsWatchedToday >= dailyWatchLimit;
-  const isAdAvailable = adSettings?.isActive && !hasReachedAdLimit;
+  const isAdAvailable = false; // Enabled only after a provider-verified server callback is integrated.
 
   useEffect(() => {
     if (open) {
@@ -105,15 +104,13 @@ export function UnlockEpisodeDialog(props: UnlockEpisodeDialogProps) {
     setIsUnlockingCoins(true);
     
     try {
-      const result = await unlockEpisodeAction({
-          userId: user.uid,
-          seriesId: series.id,
-          episodeId: episode.id,
-          method: 'coins',
-          cost: episodeCost,
-          seriesTitle: series.title,
-          episodeNumber: episode.episodeInSeason
+      const idToken = await user.getIdToken();
+      const response = await fetch(`/api/user/${encodeURIComponent(user.uid)}/unlock`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${idToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ seriesId: series.id, episodeId: episode.id, method: 'coins' }),
       });
+      const result = await response.json();
 
       if (result.success) {
           onUnlockSuccessful(episode);
@@ -124,7 +121,7 @@ export function UnlockEpisodeDialog(props: UnlockEpisodeDialogProps) {
           toast({ variant: 'destructive', title: t('common_error'), description: result.error || 'Failed' });
           setIsUnlockingCoins(false);
       }
-    } catch (err: any) {
+    } catch {
       toast({ variant: 'destructive', title: t('common_error'), description: 'Server error.' });
       setIsUnlockingCoins(false);
     }
@@ -135,14 +132,13 @@ export function UnlockEpisodeDialog(props: UnlockEpisodeDialogProps) {
     setIsUnlockingAd(true);
 
     try {
-      const result = await unlockEpisodeAction({
-          userId: user.uid,
-          seriesId: series.id,
-          episodeId: episode.id,
-          method: 'ad',
-          seriesTitle: series.title,
-          episodeNumber: episode.episodeInSeason
+      const idToken = await user.getIdToken();
+      const response = await fetch(`/api/user/${encodeURIComponent(user.uid)}/unlock`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${idToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ seriesId: series.id, episodeId: episode.id, method: 'ad' }),
       });
+      const result = await response.json();
 
       if (result.success) {
           onUnlockSuccessful(episode);
@@ -153,7 +149,7 @@ export function UnlockEpisodeDialog(props: UnlockEpisodeDialogProps) {
           toast({ variant: 'destructive', title: t('common_error'), description: result.error });
           setIsUnlockingAd(false);
       }
-    } catch (err: any) {
+    } catch {
        toast({ variant: 'destructive', title: t('common_error'), description: 'Server error.' });
        setIsUnlockingAd(false);
     }

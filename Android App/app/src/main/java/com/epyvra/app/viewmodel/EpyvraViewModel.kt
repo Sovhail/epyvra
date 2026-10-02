@@ -557,17 +557,13 @@ class EpyvraViewModel(application: Application) : AndroidViewModel(application) 
     fun claimReward(taskId: String, coins: Int, callback: (Boolean) -> Unit) {
         val uid = userProfile.value?.uid ?: ""
         if (uid.isEmpty()) {
-            viewModelScope.launch {
-                repository.awardCoins(coins)
-                repository.markTaskClaimedLocally(taskId)
-                callback(true)
-            }
+            callback(false)
             return
         }
         viewModelScope.launch {
-            repository.markTaskClaimedLocally(taskId)
             val success = repository.claimRewardOnBackend(uid, taskId)
             if (success) {
+                repository.markTaskClaimedLocally(taskId)
                 repository.syncUserProfile(
                     uid = uid,
                     email = repository.currentEmail.value,

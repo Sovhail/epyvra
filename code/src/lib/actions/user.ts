@@ -8,6 +8,8 @@ import { deleteFile } from '../storage-utils';
 import { randomBytes } from 'crypto';
 import { hashPassword } from '../crypto';
 
+const LEGACY_MONETARY_ACTIONS_DISABLED: boolean = true;
+
 /**
  * Toggles a user's banned or disabled status in the platform.
  */
@@ -150,6 +152,8 @@ export async function clearHistoryAction(userId: string) {
  * Processes claiming rewards for tasks (e.g. daily check-ins, app install link views).
  */
 export async function claimRewardAction(userId: string, taskId: string, platform: 'website' | 'android' = 'website') {
+    if (LEGACY_MONETARY_ACTIONS_DISABLED) return { success: false, error: 'Use the authenticated reward API.' };
+    /* istanbul ignore next -- retained temporarily for upgrade compatibility; unreachable by design */
     const db = await getDb();
     try {
         // Step 1: Retrieve the specified reward task from the database
@@ -203,6 +207,8 @@ export async function claimRewardAction(userId: string, taskId: string, platform
  * Processes daily login check-in and increments coin balances.
  */
 export async function performDailyCheckInAction(userId: string) {
+    if (LEGACY_MONETARY_ACTIONS_DISABLED) return { success: false, error: 'Use the authenticated check-in API.' };
+    /* istanbul ignore next -- retained temporarily for upgrade compatibility; unreachable by design */
     const db = await getDb();
     try {
         // Step 1: Resolve the user profile from the database
@@ -310,6 +316,8 @@ export async function getSeriesLikeStatusAction(seriesId: string, userId: string
  * Claims an invitation / referral code to award bonus coins to both users.
  */
 export async function claimReferralCodeAction(userId: string, referralCodeInput: string) {
+    if (LEGACY_MONETARY_ACTIONS_DISABLED) return { success: false, error: 'Use the authenticated referral API.' };
+    /* istanbul ignore next -- retained temporarily for upgrade compatibility; unreachable by design */
     const db = await getDb();
     try {
         if (!userId || !referralCodeInput) {

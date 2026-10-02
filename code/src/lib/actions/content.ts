@@ -669,6 +669,9 @@ export async function deleteEpisodeAction(id: string, seriesId: string) {
  * Unlocks a locked episode by exchanging coins or watching AdMob ads.
  */
 export async function unlockEpisodeAction(payload: any) {
+    const legacyMonetaryActionsDisabled: boolean = true;
+    if (legacyMonetaryActionsDisabled) return { success: false, error: 'Use the authenticated episode-unlock API.' };
+    /* istanbul ignore next -- retained temporarily for upgrade compatibility; unreachable by design */
     const db = await getDb();
     try {
         const { userId, episodeId, method, cost, seriesTitle, episodeNumber } = payload;

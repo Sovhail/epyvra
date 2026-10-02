@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/mongodb';
 import { ObjectId, type Filter } from 'mongodb';
 import { ApiAuthError, authenticateFirebaseRequest } from '@/lib/api-auth';
+import { unlockEpisodeWithCoins } from '@/lib/coin-operations';
 
 type SeriesDocument = { _id: ObjectId | string; freeEpisodesCount?: number; title?: string };
 type UserDocument = { _id: string; coins?: number; isVip?: boolean; vipExpiry?: string | Date };
@@ -14,7 +15,7 @@ function queryById(id: string): Filter<SeriesDocument> {
 export async function POST(request: NextRequest, { params }: { params: Promise<{ uid: string }> }) {
   try {
     const { uid } = await params;
-    await authenticateFirebaseRequest(request, { targetUid: uid, requireMobileApiKey: true });
+    await authenticateFirebaseRequest(request, { targetUid: uid });
     const db = await getDb();
     const body = (await request.json()) as Record<string, unknown>;
     const seriesId = typeof body.seriesId === 'string' ? body.seriesId : '';
@@ -64,63 +65,29 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       }
     }
 
-    let coins = Number(user.coins ?? 0);
-    let todayAdCount = 0;
     if (method === 'coins') {
       const monetization = await db
         .collection<{ _id: string; episodeCost?: number }>('settings')
         .findOne({ _id: 'monetization' });
       const cost = Number(monetization?.episodeCost ?? 10);
-      const result = await users.updateOne(
-        { _id: uid, coins: { $gte: cost } },
-        { $inc: { coins: -cost } },
-      );
-      if (result.modifiedCount === 0) {
-        return NextResponse.json({ error: 'Insufficient coins' }, { status: 400 });
-      }
-      coins -= cost;
-      await db.collection('coin-transactions').insertOne({
+      const result = await unlockEpisodeWithCoins({
         userId: uid,
-        type: 'spend',
-        amount: -cost,
+        seriesId,
+        episodeId,
+        episodeNumber,
+        cost,
         description: `Unlocked: ${series?.title || 'Series'} - Ep ${episodeNumber}`,
-        createdAt: new Date(),
       });
-    } else {
-      const today = new Date().toISOString().split('T')[0];
-      const adSettings = await db
-        .collection<{ _id: string; dailyWatchLimit?: number }>('ads')
-        .findOne({ _id: 'video_player_ad' });
-      const dailyLimit = Number(adSettings?.dailyWatchLimit ?? 5);
-      const adWatch = await db.collection('ad-watches').findOne({ userId: uid, date: today });
-      todayAdCount = Number(adWatch?.count ?? 0);
-      if (todayAdCount >= dailyLimit) {
-        return NextResponse.json({ error: 'Daily ad unlock limit reached' }, { status: 400 });
+      if (!result.success) {
+        return NextResponse.json({ error: result.error }, { status: 400 });
       }
-      todayAdCount += 1;
-      await db.collection('ad-watches').updateOne(
-        { userId: uid, date: today },
-        { $set: { userId: uid, date: today, count: todayAdCount } },
-        { upsert: true },
-      );
+      return NextResponse.json({ success: true, coins: result.coins, todayAdCount: 0 });
     }
 
-    await db.collection('unlocked-episodes').updateOne(
-      { userId: uid, episodeId },
-      {
-        $set: {
-          userId: uid,
-          seriesId,
-          episodeId,
-          method,
-          episodeNumber,
-          unlockedAt: new Date(),
-        },
-      },
-      { upsert: true },
+    return NextResponse.json(
+      { error: 'Rewarded-ad unlocks are disabled until server-side verification is configured' },
+      { status: 503 },
     );
-
-    return NextResponse.json({ success: true, coins, todayAdCount });
   } catch (error) {
     if (error instanceof ApiAuthError) {
       return NextResponse.json({ error: error.message }, { status: error.status });

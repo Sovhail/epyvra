@@ -1,17 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { claimRewardAction } from '@/lib/actions';
+import { claimReward, startRewardClaim } from '@/lib/coin-operations';
 import { ApiAuthError, authenticateFirebaseRequest } from '@/lib/api-auth';
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ uid: string }> }) {
   try {
     const { uid } = await params;
-    await authenticateFirebaseRequest(request, { targetUid: uid, requireMobileApiKey: true });
+    const hasMobileApiKey = Boolean(request.headers.get('x-api-key'));
+    await authenticateFirebaseRequest(request, { targetUid: uid, requireMobileApiKey: hasMobileApiKey });
     const body = await request.json();
-    const { taskId } = body;
+    const taskId = typeof body.taskId === 'string' ? body.taskId : '';
+    const action = body.action === 'start' ? 'start' : 'claim';
     if (!taskId) {
       return NextResponse.json({ error: 'taskId is required' }, { status: 400 });
     }
-    const result = await claimRewardAction(uid, taskId, 'android');
+    const platform = hasMobileApiKey ? 'android' : 'website';
+    const result = action === 'start'
+      ? await startRewardClaim(uid, taskId, platform)
+      : await claimReward(
+          uid,
+          taskId,
+          platform,
+          typeof body.challengeToken === 'string' ? body.challengeToken : '',
+        );
     if (!result.success) {
       return NextResponse.json({ error: result.error || 'Failed to claim reward' }, { status: 400 });
     }

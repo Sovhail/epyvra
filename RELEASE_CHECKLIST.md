@@ -18,6 +18,7 @@
 - [ ] All Critical and High findings in `SECURITY_AUDIT.md` are closed or explicitly owner-accepted with rationale.
 - [ ] Every user-scoped API requires a valid Firebase bearer token and enforces UID ownership.
 - [ ] Coins, rewards, referrals, unlocks, and purchases use atomic/idempotent server-side operations.
+- [ ] MongoDB runs as a replica set; transactional coin/reward concurrency and rollback tests pass against the release topology.
 - [ ] Firestore clients cannot write balances, VIP state, ledgers, ad counts, or entitlements.
 - [ ] Admin/install routes and server actions verify a cryptographic session/setup token.
 - [ ] Browser-facing settings are redacted; server secrets never enter client component props.

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/mongodb';
-import { performDailyCheckInAction } from '@/lib/actions';
+import { performDailyCheckIn } from '@/lib/coin-operations';
 import { ApiAuthError, authenticateFirebaseRequest } from '@/lib/api-auth';
 
 export const dynamic = 'force-dynamic';
@@ -10,9 +10,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const { uid } = await params;
 
     // Enforce API key and User ID token authorization
-    await authenticateFirebaseRequest(request, { targetUid: uid, requireMobileApiKey: true });
+    await authenticateFirebaseRequest(request, { targetUid: uid });
 
-    const result = await performDailyCheckInAction(uid);
+    const result = await performDailyCheckIn(uid);
 
     if (result.success) {
       // Fetch updated user to return latest coins

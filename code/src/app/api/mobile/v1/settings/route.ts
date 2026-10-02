@@ -88,16 +88,8 @@ export async function GET(request: NextRequest) {
             countryCode: language.countryCode || ''
         }));
 
-        const rewardTasks = await db.collection('reward-tasks').find({ platform: 'android', isActive: true }).toArray();
-        const mappedRewardTasks = rewardTasks.map(t => ({
-            id: t._id.toString(),
-            title: t.title || '',
-            type: t.type || 'link',
-            coins: t.coins || 0,
-            url: t.url || '',
-            timerSeconds: t.timerSeconds || 0,
-            frequency: t.frequency || 'daily'
-        }));
+        // Fail closed until LevelPlay reward callbacks have server-verifiable anti-replay proof.
+        const mappedRewardTasks: never[] = [];
 
         // Fetch plugins settings (OneSignal)
         const pluginsSettings = await db.collection('settings').findOne({ _id: 'plugins' as any });

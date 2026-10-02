@@ -9,7 +9,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint . --max-warnings=0",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:security": "node --test tests/security-regression.test.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.712.0",

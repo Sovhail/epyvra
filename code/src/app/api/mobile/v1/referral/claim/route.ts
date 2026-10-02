@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { claimReferralCodeAction } from '@/lib/actions';
+import { claimReferralCode } from '@/lib/coin-operations';
 import { ApiAuthError, authenticateFirebaseRequest } from '@/lib/api-auth';
 
 export const dynamic = 'force-dynamic';
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Missing required parameter: referralCode' }, { status: 400 });
         }
 
-        const result = await claimReferralCodeAction(identity.uid, referralCode.trim());
+        const result = await claimReferralCode(identity.uid, referralCode.trim());
 
         if (result.success) {
             return NextResponse.json(result);

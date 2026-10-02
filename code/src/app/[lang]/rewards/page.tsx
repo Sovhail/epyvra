@@ -3,7 +3,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useUser } from '@/firebase';
 import { getRewardTasks, getRewardSettings, getUserClaims } from '@/lib/data.actions';
-import { claimRewardAction, performDailyCheckInAction } from '@/lib/actions';
 import type { RewardTask, RewardsSettings, UserRewardClaim } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,6 +24,7 @@ function RewardTaskItem({ task, claim, onClaimed }: { task: RewardTask, claim?: 
     const [adCountdown, setAdCountdown] = useState(0);
     const [canSkipAd, setCanSkipAd] = useState(false);
     const [isClaiming, setIsClaiming] = useState(false);
+    const [claimToken, setClaimToken] = useState<string | null>(null);
 
     // State for Link Task timer
     const [linkCountdown, setLinkCountdown] = useState(0);
@@ -59,8 +59,21 @@ function RewardTaskItem({ task, claim, onClaimed }: { task: RewardTask, claim?: 
         };
     }, [isLinkTimerActive, task.timerSeconds]);
 
-    const handleAction = () => {
+    const handleAction = async () => {
         if (!user) return;
+
+        const idToken = await user.getIdToken();
+        const startResponse = await fetch(`/api/user/${encodeURIComponent(user.uid)}/claim`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${idToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'start', taskId: task.id }),
+        });
+        const startResult = await startResponse.json();
+        if (!startResponse.ok || !startResult.challengeToken) {
+            toast({ variant: 'destructive', title: 'Task Unavailable', description: startResult.error || 'Could not start task.' });
+            return;
+        }
+        setClaimToken(startResult.challengeToken);
 
         if (task.type === 'link') {
             const duration = task.timerSeconds || 10;
@@ -107,7 +120,17 @@ function RewardTaskItem({ task, claim, onClaimed }: { task: RewardTask, claim?: 
     const handleClaim = async () => {
         if (!user || isClaiming) return;
         setIsClaiming(true);
-        const result = await claimRewardAction(user.uid, task.id);
+        if (!claimToken) {
+            setIsClaiming(false);
+            return;
+        }
+        const idToken = await user.getIdToken();
+        const response = await fetch(`/api/user/${encodeURIComponent(user.uid)}/claim`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${idToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'claim', taskId: task.id, challengeToken: claimToken }),
+        });
+        const result = await response.json();
         if (result.success) {
             toast({ 
                 title: t('rewards_toast_claimed_title'), 
@@ -246,7 +269,8 @@ export default function RewardsPage() {
             getRewardSettings(),
             getUserClaims(user.uid)
         ]);
-        setTasks(tData.filter(t => t.isActive));
+        // Ad rewards stay fail-closed until a verified provider callback can be bound server-side.
+        setTasks(tData.filter(t => t.isActive && t.type !== 'ad'));
         setSettings(sData);
         setClaims(cData);
         setLoading(false);
@@ -260,7 +284,13 @@ export default function RewardsPage() {
     const handleDailyCheckIn = async () => {
         if (!user || isCheckingIn) return;
         setIsCheckingIn(true);
-        const result = await performDailyCheckInAction(user.uid);
+        const idToken = await user.getIdToken();
+        const response = await fetch(`/api/user/${encodeURIComponent(user.uid)}/checkin`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${idToken}`, 'Content-Type': 'application/json' },
+            body: '{}',
+        });
+        const result = await response.json();
         if (result.success) {
             toast({ 
                 title: 'Checked In!', 
