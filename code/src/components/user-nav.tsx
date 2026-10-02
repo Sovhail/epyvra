@@ -64,7 +64,7 @@ export function UserNav() {
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">{adminProfile?.displayName || 'Admin'}</p>
             <p className="text-xs leading-none text-muted-foreground">
-              {adminProfile?.email || 'admin@snapreels.com'}
+              {adminProfile?.email || 'admin@epyvra.com'}
             </p>
           </div>
         </DropdownMenuLabel>

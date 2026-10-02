@@ -105,7 +105,7 @@ export default function SeoSettingsPage() {
                     <FormField name="seoTitle" control={form.control} render={({ field }) => (
                         <FormItem>
                             <FormLabel>Meta Title</FormLabel>
-                            <FormControl><Input {...field} placeholder="SnapReels - Best Dramas" /></FormControl>
+                            <FormControl><Input {...field} placeholder="EPYVRA - Best Dramas" /></FormControl>
                             <FormDescription>Recommended: Max 60 characters.</FormDescription>
                         </FormItem>
                     )}/>

@@ -3,12 +3,6 @@ import type {NextConfig} from 'next';
 const nextConfig: NextConfig = {
   /* config options here */
   compress: true, // Explicitly enable Gzip/Brotli compression
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   images: {
     remotePatterns: [
       {
@@ -39,12 +33,6 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
-      {
-        protocol: 'https',
-        hostname: '**.tiksnap.pro',
-        port: '',
-        pathname: '/**',
-      }
     ],
   },
   experimental: {

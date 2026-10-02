@@ -18,15 +18,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
     if (!series) {
         return {
-            title: 'Series Not Found | SnapReels',
-            description: 'Watch viral mini dramas and vertical reels on SnapReels.',
+            title: 'Series Not Found | EPYVRA',
+            description: 'Watch viral mini dramas and vertical reels on EPYVRA.',
         };
     }
 
     const title = episode 
-        ? `${series.title} - Episode ${episode.episodeInSeason} | SnapReels`
-        : `${series.title} | Watch on SnapReels`;
-    const description = series.metaDescription || series.description || 'Watch full episodes in HD on SnapReels.';
+        ? `${series.title} - Episode ${episode.episodeInSeason} | EPYVRA`
+        : `${series.title} | Watch on EPYVRA`;
+    const description = series.metaDescription || series.description || 'Watch full episodes in HD on EPYVRA.';
     const imageUrl = series.featuredCoverUrl || series.coverUrl;
 
     return {
@@ -37,7 +37,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
             description,
             images: imageUrl ? [{ url: imageUrl, width: 800, height: 1200, alt: series.title }] : [],
             type: 'video.other',
-            siteName: 'SnapReels',
+            siteName: 'EPYVRA',
         },
         twitter: {
             card: 'summary_large_image',
@@ -66,7 +66,7 @@ export default async function ShareLandingPage({ params }: PageProps) {
                     href="/"
                     className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 text-white font-bold text-sm shadow-lg shadow-red-600/30 hover:opacity-90 transition-all"
                 >
-                    Explore SnapReels
+                    Explore EPYVRA
                     <ArrowRight className="w-4 h-4" />
                 </Link>
             </div>
@@ -75,7 +75,7 @@ export default async function ShareLandingPage({ params }: PageProps) {
 
     const mobileSettings = await getMobileSettings();
 
-    const packageName = mobileSettings?.androidPackageName || 'com.snapreels.devsnaplix';
+    const packageName = mobileSettings?.androidPackageName || 'com.epyvra.app';
     const playStoreUrl = mobileSettings?.androidPlayStoreUrl || `https://play.google.com/store/apps/details?id=${packageName}`;
     const iosAppStoreUrl = mobileSettings?.iosAppStoreUrl || '';
 
@@ -89,11 +89,11 @@ export default async function ShareLandingPage({ params }: PageProps) {
 
     // Android Intent URI:
     // When opened in Chrome on Android:
-    // - If com.snapreels.devsnaplix is installed: opens snapreels://drama/{id}
+    // - If com.epyvra.app is installed: opens epyvra://drama/{id}
     // - If not installed: falls back to browser_fallback_url (Google Play Store)
     const encodedPlayStore = encodeURIComponent(playStoreUrl);
-    const androidIntentUri = `intent://drama/${series.id}#Intent;scheme=snapreels;package=${packageName};S.browser_fallback_url=${encodedPlayStore};end`;
-    const appCustomScheme = `snapreels://drama/${series.id}`;
+    const androidIntentUri = `intent://drama/${series.id}#Intent;scheme=epyvra;package=${packageName};S.browser_fallback_url=${encodedPlayStore};end`;
+    const appCustomScheme = `epyvra://drama/${series.id}`;
 
     const posterUrl = series.coverUrl || series.featuredCoverUrl || '';
     const backdropUrl = series.featuredCoverUrl || series.coverUrl || '';
@@ -119,7 +119,7 @@ export default async function ShareLandingPage({ params }: PageProps) {
                     </div>
                     <div className="flex flex-col">
                         <span className="text-lg font-black tracking-wider uppercase bg-clip-text text-transparent bg-gradient-to-r from-white via-neutral-100 to-neutral-400">
-                            SnapReels
+                            EPYVRA
                         </span>
                         <span className="text-[10px] text-neutral-400 font-medium tracking-wide -mt-1 uppercase">
                             Mini Series & Reels
@@ -207,7 +207,7 @@ export default async function ShareLandingPage({ params }: PageProps) {
 
                 {/* CTAs / Action Buttons */}
                 <div className="w-full space-y-3">
-                    {/* Primary Button: Open in SnapReels App (Android Intent) */}
+                    {/* Primary Button: Open in EPYVRA App (Android Intent) */}
                     {enableAndroid && (
                         <a
                             id="btn-open-android"
@@ -222,7 +222,7 @@ export default async function ShareLandingPage({ params }: PageProps) {
                                 </div>
                                 <div className="text-left">
                                     <div className="text-sm font-black tracking-wide uppercase flex items-center gap-1.5">
-                                        Watch in SnapReels App
+                                        Watch in EPYVRA App
                                     </div>
                                     <div className="text-[11px] text-white/80 font-medium">
                                         Installed? Opens Drama Directly
@@ -309,7 +309,7 @@ export default async function ShareLandingPage({ params }: PageProps) {
             {/* Footer */}
             <footer className="relative z-10 w-full max-w-md mx-auto px-5 py-6 text-center text-xs text-neutral-500 border-t border-white/5">
                 <p className="mb-2">
-                    SnapReels &copy; {new Date().getFullYear()} • Premium Short Drama Network
+                    EPYVRA &copy; {new Date().getFullYear()} • Premium Short Drama Network
                 </p>
                 <div className="flex items-center justify-center gap-4 text-[11px] text-neutral-400">
                     <Link href="/" className="hover:text-white transition-colors">Home</Link>

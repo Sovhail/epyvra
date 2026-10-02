@@ -61,7 +61,7 @@ export function Footer() {
 
     if (pagesLoading) return <FooterSkeleton />;
 
-    const defaultCopyright = `© 2026 SnapReels. All rights reserved.`;
+    const defaultCopyright = `© 2026 EPYVRA. All rights reserved.`;
     const showCopyright = settings?.showCopyright !== false;
     const showVersion = settings?.showVersion === true;
     const appVersion = settings?.appVersion || '1.0.0';
@@ -92,14 +92,14 @@ export function Footer() {
                     <div className="flex flex-col items-center md:items-start gap-4">
                         <Link href={langPrefix || '/'} className="flex items-center gap-2 mb-2">
                             {settings?.logoUrl ? (
-                                <img src={settings.logoUrl} alt={settings.siteName || 'SnapReels'} className="h-8 w-auto object-contain" />
+                                <img src={settings.logoUrl} alt={settings.siteName || 'EPYVRA'} className="h-8 w-auto object-contain" />
                             ) : (
                                 <div className="bg-primary text-primary-foreground font-bold rounded-lg w-8 h-8 flex items-center justify-center text-lg">
                                     {settings?.siteName ? settings.siteName.charAt(0).toUpperCase() : 'S'}
                                 </div>
                             )}
                             <span className="text-xl font-bold tracking-tight text-white">
-                                {settings?.siteName || 'SnapReels'}
+                                {settings?.siteName || 'EPYVRA'}
                             </span>
                         </Link>
                         <p className="text-sm text-white/50 max-w-xs leading-relaxed">

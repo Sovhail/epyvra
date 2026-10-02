@@ -6,7 +6,7 @@ import { getGeneralSettings } from '@/lib/data.actions';
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getGeneralSettings();
   const favicon = settings?.faviconUrl || '/favicon.ico';
-  const siteName = settings?.siteName || 'SnapReels';
+  const siteName = settings?.siteName || 'EPYVRA';
   
   return {
     title: settings?.seoTitle || siteName,

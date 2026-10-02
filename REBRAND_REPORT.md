@@ -16,10 +16,10 @@
 | `SnapReelsApplication` | `EpyvraApplication` | Completed |
 | `SnapReelsRepository` | `EpyvraRepository` | Completed |
 | `SnapReelsViewModel` | `EpyvraViewModel` | Completed |
-| `SnapReels` product name | `EPYVRA` | Android completed; web/docs pending |
-| `snapreels://` | `epyvra://` | Android completed; web coordination pending |
+| `SnapReels` product name | `EPYVRA` | Android and web runtime completed; historical changelog/docs pending |
+| `snapreels://` | `epyvra://` | Android and web runtime completed |
 | old hosted share domain | configurable site URL, default `https://epyvra.com` | In progress |
-| new `SNAP-<UID>` referrals | `EPY-<UID>` | Android completed; backend pending |
+| new `SNAP-<UID>` referrals | `EPY-<UID>` | Android and backend defaults completed |
 
 ## Baseline verification
 

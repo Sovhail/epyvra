@@ -34,7 +34,7 @@ export function ReferralCard({ userProfile, userId, onProfileRefresh }: Referral
   const [inputCode, setInputCode] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const referralCode = userProfile?.referralCode || (userProfile?.publicId ? `SNAP-${userProfile.publicId.substring(0, 6)}` : 'SNAP-FRIEND');
+  const referralCode = userProfile?.referralCode || (userProfile?.publicId ? `EPY-${userProfile.publicId.substring(0, 6)}` : 'EPY-FRIEND');
   const hasReferred = !!userProfile?.referredBy;
 
   const handleCopy = () => {
@@ -45,13 +45,13 @@ export function ReferralCard({ userProfile, userId, onProfileRefresh }: Referral
   };
 
   const handleShare = async () => {
-    const shareText = `Join me on SnapReels to watch trending short drama series! Use my invite code ${referralCode} to get free bonus coins! 🎬🍿`;
+    const shareText = `Join me on EPYVRA to watch trending short drama series! Use my invite code ${referralCode} to get free bonus coins! 🎬🍿`;
     const shareUrl = typeof window !== 'undefined' ? window.location.origin : '';
 
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Join SnapReels',
+          title: 'Join EPYVRA',
           text: shareText,
           url: shareUrl,
         });
@@ -145,7 +145,7 @@ export function ReferralCard({ userProfile, userId, onProfileRefresh }: Referral
 
                 <div className="py-6 space-y-3">
                   <Input
-                    placeholder="e.g. SNAP-123456"
+                    placeholder="e.g. EPY-123456"
                     value={inputCode}
                     onChange={(e) => setInputCode(e.target.value.toUpperCase())}
                     className="font-mono text-center text-lg tracking-widest uppercase bg-black/40 border-white/15 h-12"

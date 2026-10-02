@@ -55,7 +55,7 @@ export default function NotFound() {
 
       {/* Footer text */}
       <p className="mt-8 text-xs text-white/30 tracking-widest uppercase font-semibold">
-        SnapReels Universe
+        EPYVRA Universe
       </p>
     </div>
   );

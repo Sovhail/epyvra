@@ -144,7 +144,7 @@ async function createFlutterwaveLink(
 ): Promise<string> {
     const flwKey = paySettings.flutterwaveSecretKey || paySettings.flutterwavePublicKey;
     if (!flwKey) throw new Error('Flutterwave API ID/Key not configured');
-    const txRef = `tx_snapreels_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    const txRef = `tx_epyvra_${Date.now()}_${Math.random().toString(36).substring(7)}`;
     const res = await fetch('https://api.flutterwave.com/v3/payments', {
         method: 'POST',
         headers: {
@@ -157,7 +157,7 @@ async function createFlutterwaveLink(
             currency: currency.toUpperCase(),
             redirect_url: `${successUrlBase}&gateway=flutterwave`,
             customer: {
-                email: userEmail || 'user@snapreels.com',
+                email: userEmail || 'user@epyvra.com',
                 name: userDisplayName || 'Customer'
             },
             customizations: {

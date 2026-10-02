@@ -48,12 +48,12 @@ const defaults: MobileSettings = {
     facebookInterstitialEnabled: false,
     facebookRewardedId: 'facebook_test_rewarded_id',
     facebookRewardedEnabled: false,
-    shareLandingTitle: 'Watch {title} on SnapReels',
+    shareLandingTitle: 'Watch {title} on EPYVRA',
     shareLandingDescription: 'Stream full HD episodes, exciting short reels, and original dramas on the app or web.',
-    androidPackageName: 'com.snapreels.devsnaplix',
-    androidPlayStoreUrl: 'https://play.google.com/store/apps/details?id=com.snapreels.devsnaplix',
+    androidPackageName: 'com.epyvra.app',
+    androidPlayStoreUrl: 'https://play.google.com/store/apps/details?id=com.epyvra.app',
     iosAppStoreUrl: '',
-    iosAppScheme: 'snapreels://',
+    iosAppScheme: 'epyvra://',
     enableWebPlayer: true,
     enableAndroidApp: true,
     enableIosApp: true,
@@ -267,7 +267,7 @@ export default function MobileSettingsPage() {
                                     label="Page Title Template"
                                     value={settings.shareLandingTitle || ''}
                                     onChange={v => update('shareLandingTitle', v)}
-                                    placeholder="Watch {title} on SnapReels"
+                                    placeholder="Watch {title} on EPYVRA"
                                 />
                                 <SettingInput
                                     label="Page Subtitle / Tagline"
@@ -305,19 +305,19 @@ export default function MobileSettingsPage() {
                                     label="Android Package Name (Application ID)"
                                     value={settings.androidPackageName || ''}
                                     onChange={v => update('androidPackageName', v)}
-                                    placeholder="com.snapreels.devsnaplix"
+                                    placeholder="com.epyvra.app"
                                 />
                                 <SettingInput
                                     label="Google Play Store URL"
                                     value={settings.androidPlayStoreUrl || ''}
                                     onChange={v => update('androidPlayStoreUrl', v)}
-                                    placeholder="https://play.google.com/store/apps/details?id=com.snapreels.devsnaplix"
+                                    placeholder="https://play.google.com/store/apps/details?id=com.epyvra.app"
                                 />
                             </div>
 
                             <div className="flex items-center justify-between rounded-xl border bg-black/10 p-4">
                                 <div>
-                                    <Label className="font-bold">Show &quot;Watch in SnapReels App&quot; Button</Label>
+                                    <Label className="font-bold">Show &quot;Watch in EPYVRA App&quot; Button</Label>
                                     <p className="text-xs text-muted-foreground mt-1">
                                         Displays the primary high-converting action button with instant app deep link.
                                     </p>
@@ -357,9 +357,9 @@ export default function MobileSettingsPage() {
                                 />
                                 <SettingInput
                                     label="iOS URL Scheme"
-                                    value={settings.iosAppScheme || 'snapreels://'}
+                                    value={settings.iosAppScheme || 'epyvra://'}
                                     onChange={v => update('iosAppScheme', v)}
-                                    placeholder="snapreels://"
+                                    placeholder="epyvra://"
                                 />
                             </div>
 

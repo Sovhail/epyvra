@@ -354,7 +354,7 @@ CRITICAL INSTRUCTIONS:
    - If Target is Arabic: Use ONLY Arabic script. No Latin, Chinese, Japanese, or Cyrillic characters allowed.
    - If Target is Chinese: Use ONLY Chinese script.
 2. NO HALLUCINATIONS: Do not mix words from other languages in the middle of sentences. 
-3. BRAND INTEGRITY: The brand name is "SnapReels". Transliterate it naturally or translate it if appropriate for the target culture, but do not mix scripts within the brand name.
+3. BRAND INTEGRITY: The brand name is "EPYVRA". Transliterate it naturally or translate it if appropriate for the target culture, but do not mix scripts within the brand name.
 4. JSON FORMAT: Return a valid JSON object ONLY. Every key from the input must exist in the output.
 5. HTML TAGS: Preserve HTML tags (<p>, <br>, <strong>, etc.) exactly. Do not translate the tag names.
 6. PROFESSIONAL TONE: Use a tone suitable for a high-end streaming service.
@@ -922,7 +922,7 @@ export async function installInitializeDbAction() {
         await db.collection('languages').insertOne({ name: 'English', languageCode: 'en', countryCode: 'US' });
         await db.collection('settings').updateOne(
             { _id: 'general' as any },
-            { $set: { siteName: 'SnapReels', defaultLanguageCode: 'en', showCopyright: true, showVersion: true, seriesUrlFormat: 'hash' } },
+            { $set: { siteName: 'EPYVRA', defaultLanguageCode: 'en', showCopyright: true, showVersion: true, seriesUrlFormat: 'hash' } },
             { upsert: true }
         );
         await db.collection('settings').updateOne(
@@ -960,7 +960,7 @@ export async function installSaveSiteConfigAction(data: { siteName: string; site
             }
         }
 
-        const siteName = (data.siteName || 'SnapReels').trim();
+        const siteName = (data.siteName || 'EPYVRA').trim();
         let siteUrl = (data.siteUrl || '').trim();
         if (siteUrl.endsWith('/')) {
             siteUrl = siteUrl.slice(0, -1);

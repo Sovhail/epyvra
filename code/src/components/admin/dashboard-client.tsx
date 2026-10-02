@@ -84,7 +84,7 @@ export function DashboardClient({ initialData, dateRange }: DashboardClientProps
         <div>
           <h1 className="text-4xl font-black tracking-tight text-white italic">Dashboard</h1>
           <p className="text-muted-foreground text-sm font-bold tracking-widest">
-            SnapReels Engine Statistics
+            EPYVRA Engine Statistics
           </p>
         </div>
         <div className="flex items-center gap-2">

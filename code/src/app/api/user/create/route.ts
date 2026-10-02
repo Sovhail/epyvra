@@ -42,14 +42,14 @@ export async function POST(request: NextRequest) {
 
     const newPublicId = Math.floor(10000000 + Math.random() * 90000000).toString();
 
-    let domain = 'snapreels.local';
+    let domain = 'epyvra.local';
     try {
         if (settings?.siteUrl) {
             const url = new URL(settings.siteUrl);
             domain = url.hostname;
         }
     } catch (e) {
-        // Fallback to snapreels.local if URL is invalid
+        // Fallback to epyvra.local if URL is invalid
     }
 
     const resolvedEmail = email || `${newPublicId}@${domain}`;
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
       disabled: false,
       createdAt: new Date(),
       publicId: newPublicId,
-      referralCode: `SNAP-${newPublicId.substring(0, 6)}`,
+      referralCode: `EPY-${newPublicId.substring(0, 6)}`,
       referralCount: 0,
       referralEarnings: 0,
     };

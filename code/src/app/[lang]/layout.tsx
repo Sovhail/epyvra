@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
     getTranslations(lang)
   ]);
 
-  const siteName = settings?.siteName || 'SnapReels';
+  const siteName = settings?.siteName || 'EPYVRA';
   
   // Use translated SEO title if available, otherwise fallback to settings or default
   const translatedTitle = translations?.seo_site_title || settings?.seoTitle || siteName;

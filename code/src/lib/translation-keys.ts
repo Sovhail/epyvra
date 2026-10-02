@@ -58,7 +58,7 @@ export const translationKeys = [
   { key: 'footer_download_store_apple', default: 'App Store', category: 'ui' },
   { key: 'footer_download_store_google', default: 'Google Play', category: 'ui' },
   { key: 'footer_download_on', default: 'Download on the', category: 'ui' },
-  { key: 'footer_copyright_text', default: '© 2026 SnapReels. All rights reserved.', category: 'ui' },
+  { key: 'footer_copyright_text', default: '© 2026 EPYVRA. All rights reserved.', category: 'ui' },
 
   { key: 'home_top_picks', default: 'New Release', category: 'ui' },
   { key: 'home_top_picks_subtitle', default: 'Hand-picked by our editors', category: 'ui' },
@@ -194,7 +194,7 @@ export const translationKeys = [
   { key: 'payment_dialog_toast_success_title', default: 'Purchase Successful', category: 'ui' },
 
   // --- SEO CATEGORY ---
-  { key: 'seo_site_title', default: 'SnapReels - Best Dramas', category: 'seo' },
+  { key: 'seo_site_title', default: 'EPYVRA - Best Dramas', category: 'seo' },
   { key: 'seo_site_description', default: 'Explore a universe of high-quality drama series and short movies.', category: 'seo' },
   { key: 'seo_site_keywords', default: 'drama, series, reels, streaming, movies', category: 'seo' },
   { key: 'seo_meta_robots', default: 'index, follow', category: 'seo' },

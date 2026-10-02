@@ -31,7 +31,7 @@ export function InstallWizard() {
     const [importStatus, setImportStatus] = useState<'idle' | 'processing' | 'done'>('idle');
 
     // Step 4: Website Config
-    const [siteName, setSiteName] = useState('SnapReels');
+    const [siteName, setSiteName] = useState('EPYVRA');
     const [siteUrl, setSiteUrl] = useState('');
 
     // Step 5: Admin Account
@@ -174,7 +174,7 @@ export function InstallWizard() {
                     <div className="inline-flex p-3 rounded-2xl bg-primary/10 mb-4 animate-bounce">
                         <Rocket className="h-8 w-8 text-primary" />
                     </div>
-                    <h1 className="text-4xl font-black text-white tracking-tighter">SnapReels Setup</h1>
+                    <h1 className="text-4xl font-black text-white tracking-tighter">EPYVRA Setup</h1>
                     <p className="text-slate-400">Platform Initialization Wizard</p>
                 </div>
 

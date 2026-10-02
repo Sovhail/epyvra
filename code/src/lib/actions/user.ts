@@ -335,8 +335,8 @@ export async function claimReferralCodeAction(userId: string, referralCodeInput:
         const referrer = await db.collection('users').findOne({ 
             $or: [
                 { referralCode: cleanCode },
-                { referralCode: cleanCode.replace(/^SNAP-/, '') },
-                { publicId: cleanCode.replace(/^SNAP-/, '') }
+                { referralCode: cleanCode.replace(/^EPY-/, '') },
+                { publicId: cleanCode.replace(/^EPY-/, '') }
             ]
         });
 

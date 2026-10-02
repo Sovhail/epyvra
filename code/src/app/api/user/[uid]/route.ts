@@ -81,7 +81,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     // Auto-generate referral code if missing
     if (!user.referralCode) {
       const pubId = user.publicId || uid.substring(0, 6);
-      const generatedCode = `SNAP-${pubId.substring(0, 6).toUpperCase()}`;
+      const generatedCode = `EPY-${pubId.substring(0, 6).toUpperCase()}`;
       await db.collection('users').updateOne(
         { _id: uid as any },
         { $set: { referralCode: generatedCode, referralCount: 0, referralEarnings: 0 } }

@@ -292,7 +292,7 @@ export default function GeneralSettingsPage() {
                             <FormField name="siteName" control={form.control} render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="flex items-center gap-2"><Type className="h-4 w-4"/> Site Name</FormLabel>
-                                    <FormControl><Input {...field} placeholder="SnapReels" /></FormControl>
+                                    <FormControl><Input {...field} placeholder="EPYVRA" /></FormControl>
                                 </FormItem>
                             )}/>
                             <FormField name="siteUrl" control={form.control} render={({ field }) => (
@@ -541,7 +541,7 @@ export default function GeneralSettingsPage() {
                         <FormField name="copyrightText" control={form.control} render={({ field }) => (
                             <FormItem>
                                 <FormLabel className="flex items-center gap-2"><Copyright className="h-4 w-4"/> Copyright Text</FormLabel>
-                                <FormControl><Input {...field} placeholder="© 2025 SnapReels. All rights reserved." /></FormControl>
+                                <FormControl><Input {...field} placeholder="© 2025 EPYVRA. All rights reserved." /></FormControl>
                             </FormItem>
                         )}/>
                         <FormField name="appVersion" control={form.control} render={({ field }) => (

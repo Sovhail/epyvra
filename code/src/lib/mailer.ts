@@ -33,8 +33,8 @@ export async function sendMail({ to, subject, html }: { to: string, subject: str
         });
     }
 
-    const fromName = settings.siteName || 'SnapReels';
-    const fromEmail = settings.supportEmail || settings.smtpUser || 'noreply@snapreels.com';
+    const fromName = settings.siteName || 'EPYVRA';
+    const fromEmail = settings.supportEmail || settings.smtpUser || 'noreply@epyvra.com';
 
     const info = await transporter.sendMail({
         from: `"${fromName}" <${fromEmail}>`,

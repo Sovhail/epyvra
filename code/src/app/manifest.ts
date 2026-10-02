@@ -4,7 +4,7 @@ import { getGeneralSettings } from '@/lib/data.actions';
 export default async function manifest(): Promise<MetadataRoute.Manifest> {
   const settings = await getGeneralSettings();
   const favicon = settings?.faviconUrl || '/favicon.ico';
-  const siteName = settings?.siteName || 'SnapReels';
+  const siteName = settings?.siteName || 'EPYVRA';
 
   return {
     name: siteName,

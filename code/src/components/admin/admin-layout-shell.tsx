@@ -77,7 +77,7 @@ export function AdminLayoutShell({
       return <>{children}</>;
     }
 
-  const siteName = initialSettings?.siteName || 'SnapReels';
+  const siteName = initialSettings?.siteName || 'EPYVRA';
 
   return (
     <SidebarProvider>
