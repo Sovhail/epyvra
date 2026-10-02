@@ -1,7 +1,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/mongodb';
-import { getPluginsSettings } from '@/lib/data.actions';
+import { getServerPluginsSettings as getPluginsSettings } from '@/lib/server-settings';
 import { ServerPluginsSettings } from '@/lib/server-types';
 
 export async function POST(request: NextRequest) {

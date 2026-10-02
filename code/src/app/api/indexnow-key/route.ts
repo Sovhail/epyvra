@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getPluginsSettings } from '@/lib/data.actions';
+import { getServerPluginsSettings as getPluginsSettings } from '@/lib/server-settings';
 
 export async function GET(request: Request) {
     const { searchParams, pathname } = new URL(request.url);

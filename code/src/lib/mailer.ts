@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer';
-import { getGeneralSettings } from './data.actions';
+import { getServerGeneralSettings as getGeneralSettings } from './server-settings';
 
 export async function sendMail({ to, subject, html }: { to: string, subject: string, html: string }) {
     const settings = await getGeneralSettings();

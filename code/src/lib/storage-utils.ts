@@ -2,7 +2,7 @@
 'use server';
 import fs from 'fs/promises';
 import { join } from 'path';
-import { getStorageSettings } from './data.actions';
+import { getServerStorageSettings as getStorageSettings } from './server-settings';
 import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3';
 
 /**

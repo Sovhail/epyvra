@@ -5,7 +5,12 @@ import { getDb } from '../mongodb';
 import { ObjectId } from 'mongodb';
 import { revalidatePath } from 'next/cache';
 import { createHash, randomBytes } from 'crypto';
-import { getPluginsSettings, getCustomPages, getStorageSettings, getGeneralSettings } from '../data.actions';
+import { getCustomPages } from '../data.actions';
+import {
+    getServerPluginsSettings as getPluginsSettings,
+    getServerStorageSettings as getStorageSettings,
+    getServerGeneralSettings as getGeneralSettings,
+} from '../server-settings';
 import { deleteFile } from '../storage-utils';
 import { encryptPath } from '../crypto';
 import { translationKeys } from '../translation-keys';

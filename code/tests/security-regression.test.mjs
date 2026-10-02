@@ -54,3 +54,14 @@ test('Firestore denies client writes to monetary and entitlement records', async
   assert.match(rules, /match \/purchases\/\{purchaseId\}[\s\S]*?allow read, write: if false/);
   assert.match(rules, /match \/settings\/\{settingId\}[\s\S]*?allow read, write: if false/);
 });
+
+test('browser settings use explicit projections and raw settings remain server-only', async () => {
+  const dataActions = await source('src', 'lib', 'data.actions.ts');
+  const serverSettings = await source('src', 'lib', 'server-settings.ts');
+  const publicGeneral = dataActions.match(/function publicGeneralSettings[\s\S]*?\n\}/)?.[0] ?? '';
+  const publicPayments = dataActions.match(/function publicPaymentSettings[\s\S]*?\n\}/)?.[0] ?? '';
+  assert.match(serverSettings, /import 'server-only'/);
+  assert.doesNotMatch(publicGeneral, /smtpPassword|firebaseServiceAccount|purchaseCode|licenseKey/);
+  assert.doesNotMatch(publicPayments, /Secret|secret|Password|password/);
+  assert.match(dataActions, /delete publicSettings\.apiKey/);
+});

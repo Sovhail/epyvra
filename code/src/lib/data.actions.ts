@@ -5,6 +5,67 @@ import { getDb } from './mongodb';
 import type { Series, Episode, CoinPack, MonetizationSettings, Purchase, Ad, GeneralSettings, Language, UITranslations, CustomPage, ContactMessage, Report, Category, PluginsSettings, RewardTask, RewardsSettings, UserRewardClaim, CoinTransaction, PaymentGatewaySettings, AdminProfile, Favorite, WatchHistory, StorageSettings } from './types';
 import { isDemoMode } from './demo-mode';
 
+async function canReadPrivateSettings(): Promise<boolean> {
+    return import('./actions/auth').then(({ verifyAdminSession }) => verifyAdminSession());
+}
+
+function publicGeneralSettings(settings: GeneralSettings): GeneralSettings {
+    const {
+        id, siteName, siteUrl, logoUrl, faviconUrl, copyrightText, appVersion, seriesUrlFormat,
+        defaultLanguageCode, showSocialsInFooter, showSiteNameNextToLogo, showCopyright, showVersion,
+        episodesPerPage, socials, appStoreUrl, playStoreUrl, emailLoginEnabled, googleLoginEnabled,
+        facebookLoginEnabled, appleLoginEnabled, phoneLoginEnabled, referralEnabled, watermarkEnabled,
+        watermarkUrl, watermarkPosition, watermarkOpacity, supportEmail, firebaseApiKey, firebaseAuthDomain,
+        firebaseProjectId, firebaseStorageBucket, firebaseMessagingSenderId, firebaseAppId,
+        firebaseMeasurementId, seoTitle, seoDescription, seoKeywords, robotsTxt, gzipEnabled, pwaEnabled,
+        pwaInstallDelay, webpConversionEnabled,
+    } = settings;
+    return {
+        id, siteName, siteUrl, logoUrl, faviconUrl, copyrightText, appVersion, seriesUrlFormat,
+        defaultLanguageCode, showSocialsInFooter, showSiteNameNextToLogo, showCopyright, showVersion,
+        episodesPerPage, socials, appStoreUrl, playStoreUrl, emailLoginEnabled, googleLoginEnabled,
+        facebookLoginEnabled, appleLoginEnabled, phoneLoginEnabled, referralEnabled, watermarkEnabled,
+        watermarkUrl, watermarkPosition, watermarkOpacity, supportEmail, firebaseApiKey, firebaseAuthDomain,
+        firebaseProjectId, firebaseStorageBucket, firebaseMessagingSenderId, firebaseAppId,
+        firebaseMeasurementId, seoTitle, seoDescription, seoKeywords, robotsTxt, gzipEnabled, pwaEnabled,
+        pwaInstallDelay, webpConversionEnabled,
+    };
+}
+
+function publicPaymentSettings(settings: PaymentGatewaySettings): PaymentGatewaySettings {
+    const {
+        id, stripeEnabled, stripePublishableKey, stripeLogoUrl, paypalEnabled, paypalClientId, paypalLogoUrl,
+        razorpayEnabled, razorpayKeyId, razorpayLogoUrl, flutterwaveEnabled, flutterwavePublicKey,
+        flutterwaveLogoUrl, googlePayEnabled, googlePlayPackageName, phonepeEnabled, phonepeMerchantId,
+        phonepeAppId, phonepeLogoUrl, cashfreeEnabled, cashfreeAppId, cashfreeLogoUrl, payuEnabled,
+        payuMerchantKey, payuLogoUrl,
+    } = settings;
+    return {
+        id, stripeEnabled, stripePublishableKey, stripeLogoUrl, paypalEnabled, paypalClientId, paypalLogoUrl,
+        razorpayEnabled, razorpayKeyId, razorpayLogoUrl, flutterwaveEnabled, flutterwavePublicKey,
+        flutterwaveLogoUrl, googlePayEnabled, googlePlayPackageName, phonepeEnabled, phonepeMerchantId,
+        phonepeAppId, phonepeLogoUrl, cashfreeEnabled, cashfreeAppId, cashfreeLogoUrl, payuEnabled,
+        payuMerchantKey, payuLogoUrl,
+    };
+}
+
+function publicPluginsSettings(settings: PluginsSettings): PluginsSettings {
+    const {
+        gaId, captchaProvider, recaptchaVersion, recaptchaSiteKey, cloudflareSiteKey, hcaptchaSiteKey,
+        videoProtectionEnabled, videoRotationPeriod, aiProvider, oneSignalAppId, oneSignalPromptDelay, indexNowEnabled,
+    } = settings;
+    return {
+        gaId, captchaProvider, recaptchaVersion, recaptchaSiteKey, cloudflareSiteKey, hcaptchaSiteKey,
+        videoProtectionEnabled, videoRotationPeriod, aiProvider, oneSignalAppId, oneSignalPromptDelay, indexNowEnabled,
+    };
+}
+
+function publicMobileSettings(settings: import('./types').MobileSettings): import('./types').MobileSettings {
+    const publicSettings = { ...settings };
+    delete publicSettings.apiKey;
+    return publicSettings;
+}
+
 const mapDoc = (doc: any) => {
     if (!doc) return null;
     const { _id, ...rest } = doc;
@@ -49,6 +110,7 @@ export async function getDemoModeStatus(): Promise<boolean> {
 
 export async function getAdminProfile(): Promise<AdminProfile | null> {
     try {
+        if (!(await canReadPrivateSettings())) return null;
         const db = await getDb();
         const admin = await db.collection('settings').findOne({ _id: 'admin' as any });
         return admin ? mapDoc(admin) as unknown as AdminProfile : null;
@@ -142,7 +204,9 @@ export async function getPaymentSettings(): Promise<PaymentGatewaySettings | nul
     try {
         const db = await getDb();
         const settings = await db.collection('settings').findOne({ _id: 'payment' as any });
-        return settings ? (mapDoc(settings) as unknown as PaymentGatewaySettings) : null;
+        if (!settings) return null;
+        const mapped = mapDoc(settings) as unknown as PaymentGatewaySettings;
+        return (await canReadPrivateSettings()) ? mapped : publicPaymentSettings(mapped);
     } catch (e) {
         return null;
     }
@@ -173,6 +237,7 @@ export async function getRewardTasks(platform: 'website' | 'android' | 'ios' = '
 
 export async function getStorageSettings(): Promise<StorageSettings | null> {
     try {
+        if (!(await canReadPrivateSettings())) return null;
         const db = await getDb();
         const settings = await db.collection('settings').findOne({ _id: 'storage' as any });
         return settings ? (mapDoc(settings) as unknown as StorageSettings) : null;
@@ -230,7 +295,9 @@ export async function getPluginsSettings(): Promise<PluginsSettings | null> {
     try {
         const db = await getDb();
         const settings = await db.collection('settings').findOne({ _id: 'plugins' as any });
-        return settings ? (mapDoc(settings) as unknown as PluginsSettings) : null;
+        if (!settings) return null;
+        const mapped = mapDoc(settings) as unknown as PluginsSettings;
+        return (await canReadPrivateSettings()) ? mapped : publicPluginsSettings(mapped);
     } catch (e) {
         return null;
     }
@@ -238,6 +305,7 @@ export async function getPluginsSettings(): Promise<PluginsSettings | null> {
 
 export async function getAllPurchases(): Promise<Purchase[]> {
     try {
+        if (!(await canReadPrivateSettings())) return [];
         const db = await getDb();
         const purchases = await db.collection('purchases').find({}).sort({ createdAt: -1 }).toArray();
         return purchases.map(p => mapDoc(p)) as Purchase[];
@@ -281,7 +349,9 @@ export async function getGeneralSettings(): Promise<GeneralSettings | null> {
     try {
         const db = await getDb();
         const settings = await db.collection('settings').findOne({ _id: 'general' as any });
-        return settings ? (mapDoc(settings) as unknown as GeneralSettings) : null;
+        if (!settings) return null;
+        const mapped = mapDoc(settings) as unknown as GeneralSettings;
+        return (await canReadPrivateSettings()) ? mapped : publicGeneralSettings(mapped);
     } catch (e) {
         return null;
     }
@@ -329,6 +399,7 @@ export async function getPageById(id: string): Promise<CustomPage | null> {
 
 export async function getContactMessages(): Promise<ContactMessage[]> {
     try {
+        if (!(await canReadPrivateSettings())) return [];
         const db = await getDb();
         const messages = await db.collection('contacts').find({}).sort({ createdAt: -1 }).toArray();
         return messages.map(m => mapDoc(m)) as ContactMessage[];
@@ -339,6 +410,7 @@ export async function getContactMessages(): Promise<ContactMessage[]> {
 
 export async function getContactMessagesCount(): Promise<number> {
     try {
+        if (!(await canReadPrivateSettings())) return 0;
         const db = await getDb();
         return await db.collection('contacts').countDocuments({ isRead: false });
     } catch (e) {
@@ -348,6 +420,7 @@ export async function getContactMessagesCount(): Promise<number> {
 
 export async function getReports(): Promise<Report[]> {
     try {
+        if (!(await canReadPrivateSettings())) return [];
         const db = await getDb();
         const reports = await db.collection('reports').find({}).sort({ createdAt: -1 }).toArray();
         return reports.map(r => mapDoc(r)) as Report[];
@@ -378,6 +451,7 @@ export async function getCategoryBySlug(slug: string): Promise<Category | null> 
 
 export async function getAllUsersForAdmin(): Promise<any[]> {
     try {
+        if (!(await canReadPrivateSettings())) return [];
         const db = await getDb();
         const users = await db.collection('users').find({}).sort({ createdAt: -1 }).toArray();
         return users.map(u => mapDoc(u));
@@ -390,7 +464,9 @@ export async function getMobileSettings(): Promise<import('./types').MobileSetti
     try {
         const db = await getDb();
         const settings = await db.collection('settings').findOne({ _id: 'mobile' as any });
-        return settings ? mapDoc(settings) as unknown as import('./types').MobileSettings : null;
+        if (!settings) return null;
+        const mapped = mapDoc(settings) as unknown as import('./types').MobileSettings;
+        return (await canReadPrivateSettings()) ? mapped : publicMobileSettings(mapped);
     } catch (e) {
         return null;
     }

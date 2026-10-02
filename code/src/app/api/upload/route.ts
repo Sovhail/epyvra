@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { writeFile, stat, mkdir, chmod, readdir, unlink } from 'fs/promises';
 import { join } from 'path';
-import { getStorageSettings } from '@/lib/data.actions';
+import { getServerStorageSettings as getStorageSettings } from '@/lib/server-settings';
 import { DEMO_MODE_MUTATION_MESSAGE, isDemoMode } from '@/lib/demo-mode';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { verifyAdminSession } from '@/lib/actions/auth';

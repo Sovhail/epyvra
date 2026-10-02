@@ -155,7 +155,7 @@ export type RewardTask = {
 };
 
 export type MobileSettings = {
-    apiKey: string;
+    apiKey?: string;
     privacyPolicyUrl?: string;
     termsOfServiceUrl?: string;
     rateUsUrl?: string;

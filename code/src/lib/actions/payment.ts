@@ -2,7 +2,10 @@
 
 import { getDb } from '../mongodb';
 import { revalidatePath } from 'next/cache';
-import { getPaymentSettings, getGeneralSettings } from '../data.actions';
+import {
+    getServerPaymentSettings as getPaymentSettings,
+    getServerGeneralSettings as getGeneralSettings,
+} from '../server-settings';
 import Stripe from 'stripe';
 import Razorpay from 'razorpay';
 import { handleError, getQueryById, mapDoc } from './utils';

@@ -1,6 +1,6 @@
 'use server';
 
-import { getPluginsSettings } from '../data.actions';
+import { getServerPluginsSettings as getPluginsSettings } from '../server-settings';
 import Groq from 'groq-sdk';
 import OpenAI from 'openai';
 import { GoogleGenerativeAI } from '@google/generative-ai';

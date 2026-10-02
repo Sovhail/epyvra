@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import { Readable } from 'stream';
 import { join } from 'path';
-import { getPluginsSettings } from '@/lib/data.actions';
+import { getServerPluginsSettings as getPluginsSettings } from '@/lib/server-settings';
 import { decryptPath } from '@/lib/crypto';
 import { getVideoSecret } from '@/lib/video-secret';
 
