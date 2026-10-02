@@ -1,4 +1,4 @@
-package com.example;
+package com.epyvra.app;
 import com.android.billingclient.api.*;
 import java.lang.reflect.Method;
 public class Test {

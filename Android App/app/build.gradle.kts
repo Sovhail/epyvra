@@ -3,15 +3,21 @@ plugins {
   alias(libs.plugins.kotlin.compose)
   alias(libs.plugins.google.devtools.ksp)
   alias(libs.plugins.roborazzi)
-  alias(libs.plugins.google.services)
+}
+
+// Firebase credentials are supplied per environment and are intentionally not
+// committed. Apply the Google Services plugin only when the owner-provided
+// configuration is present.
+if (file("google-services.json").exists()) {
+  apply(plugin = "com.google.gms.google-services")
 }
 
 android {
-  namespace = "com.example"
+  namespace = "com.epyvra.app"
   compileSdk { version = release(36) { minorApiLevel = 1 } }
 
   defaultConfig {
-    applicationId = "com.snapreels.devsnaplix"
+    applicationId = "com.epyvra.app"
     minSdk = 24
     targetSdk = 36
     versionCode = 9
