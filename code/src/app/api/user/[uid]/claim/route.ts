@@ -1,16 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { claimRewardAction } from '@/lib/actions';
-import { getDb } from '@/lib/mongodb';
+import { ApiAuthError, authenticateFirebaseRequest } from '@/lib/api-auth';
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ uid: string }> }) {
   try {
-    const apiKey = request.headers.get('x-api-key');
-    const db = await getDb();
-    const mobileSettings = await db.collection('settings').findOne({ _id: 'mobile' as any });
-    if (!apiKey || !mobileSettings?.apiKey || apiKey !== mobileSettings.apiKey) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
     const { uid } = await params;
+    await authenticateFirebaseRequest(request, { targetUid: uid, requireMobileApiKey: true });
     const body = await request.json();
     const { taskId } = body;
     if (!taskId) {
@@ -21,7 +16,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: result.error || 'Failed to claim reward' }, { status: 400 });
     }
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    if (error instanceof ApiAuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+    return NextResponse.json({ error: 'Failed to claim reward' }, { status: 500 });
   }
 }

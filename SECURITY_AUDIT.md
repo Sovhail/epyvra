@@ -4,8 +4,8 @@ Status: remediation in progress. Production release is prohibited while Critical
 
 | ID | Severity | Finding | Status |
 | --- | --- | --- | --- |
-| SCR-001 | Critical | Unauthenticated user creation accepts caller-controlled UID/coins | Open |
-| SCR-002 | Critical | Extractable mobile API key is treated as user authorization | Open |
+| SCR-001 | Critical | Unauthenticated user creation accepts caller-controlled UID/coins | Implemented: Firebase UID and server bonus are authoritative; negative tests pending |
+| SCR-002 | Critical | Extractable mobile API key is treated as user authorization | Implemented for UID-scoped/mobile monetary APIs with Firebase Admin token verification and UID binding; negative tests pending |
 | SCR-003 | Critical | Reward/ad claims lack trustworthy proof and atomic anti-replay | Open |
 | SCR-004 | Critical | Firestore rules permit client entitlement/balance writes | Open |
 | SCR-005 | Critical | Sensitive settings can be returned to browser clients without consistent redaction | Open |

@@ -1,63 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/mongodb';
 import { deleteFile } from '@/lib/storage-utils';
+import { ApiAuthError, authenticateFirebaseRequest } from '@/lib/api-auth';
+import { getFirebaseAdmin } from '@/lib/firebase-admin';
+import type { Document } from 'mongodb';
 
 export const dynamic = 'force-dynamic';
 
-const mapDoc = (doc: any) => {
+type UserDocument = Document & { _id: string; referralCode?: string; publicId?: string };
+
+const mapDoc = (doc: UserDocument | null) => {
     if (!doc) return null;
     const { _id, ...rest } = doc;
     return { uid: _id.toString(), ...rest };
-}
-
-async function verifyRequest(request: NextRequest, targetUid: string) {
-  const db = await getDb();
-
-  // Android sends its API key as an additional trust signal. Web requests are
-  // authenticated by the Firebase ID token and do not expose the mobile key.
-  const apiKey = request.headers.get('x-api-key');
-  if (apiKey) {
-    const mobileSettings = await db.collection('settings').findOne({ _id: 'mobile' as any });
-    if (apiKey !== mobileSettings?.apiKey) {
-      return { error: 'Unauthorized: Invalid API Key', status: 401 };
-    }
-  }
-
-  // Firebase ID token is required for both web and Android.
-  const authorization = request.headers.get('authorization') || '';
-  if (!authorization.startsWith('Bearer ')) {
-    return { error: 'Unauthorized: Missing auth token', status: 401 };
-  }
-  const idToken = authorization.slice(7).trim();
-  if (!idToken) {
-    return { error: 'Unauthorized: Empty auth token', status: 401 };
-  }
-
-  const generalSettings = await db.collection('settings').findOne({ _id: 'general' as any });
-  const firebaseApiKey = generalSettings?.firebaseApiKey || '';
-  if (!firebaseApiKey) {
-    return { error: 'Service Unavailable: Firebase API Key is not configured', status: 503 };
-  }
-
-  const lookupResponse = await fetch(
-    `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${encodeURIComponent(firebaseApiKey)}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ idToken }),
-      cache: 'no-store',
-    },
-  );
-  if (!lookupResponse.ok) {
-    return { error: 'Unauthorized: Invalid auth token', status: 401 };
-  }
-  const lookupData = await lookupResponse.json();
-  const verifiedUid = lookupData?.users?.[0]?.localId;
-  if (!verifiedUid || verifiedUid !== targetUid) {
-    return { error: 'Forbidden: Access denied to user profile', status: 403 };
-  }
-
-  return null;
 }
 
 // GET user profile
@@ -67,12 +22,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const { uid } = await params; 
 
     // Verify that the Firebase user owns this profile.
-    const authError = await verifyRequest(request, uid);
-    if (authError) {
-      return NextResponse.json({ error: authError.error }, { status: authError.status });
-    }
+    await authenticateFirebaseRequest(request, { targetUid: uid });
 
-    let user = await db.collection('users').findOne({ _id: uid as any });
+    const users = db.collection<UserDocument>('users');
+    const user = await users.findOne({ _id: uid });
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
@@ -80,10 +33,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     // Auto-generate referral code if missing
     if (!user.referralCode) {
-      const pubId = user.publicId || uid.substring(0, 6);
-      const generatedCode = `EPY-${pubId.substring(0, 6).toUpperCase()}`;
-      await db.collection('users').updateOne(
-        { _id: uid as any },
+      const generatedCode = `EPY-${uid}`;
+      await users.updateOne(
+        { _id: uid },
         { $set: { referralCode: generatedCode, referralCount: 0, referralEarnings: 0 } }
       );
       user.referralCode = generatedCode;
@@ -122,6 +74,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         claimedTaskIds
     });
   } catch (error) {
+    if (error instanceof ApiAuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     if (process.env.NODE_ENV !== 'production') {
       console.error(`API GET /api/user Error:`, error);
     }
@@ -136,25 +91,23 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const { uid } = await params;
 
     // Verify that the Firebase user owns this profile.
-    const authError = await verifyRequest(request, uid);
-    if (authError) {
-      return NextResponse.json({ error: authError.error }, { status: authError.status });
-    }
+    await authenticateFirebaseRequest(request, { targetUid: uid });
 
     const body = await request.json();
 
-    const { displayName, photoURL, publicId } = body;
-    const updateData: { [key: string]: any } = {};
-    if (displayName !== undefined) updateData.displayName = displayName;
-    if (photoURL !== undefined) updateData.photoURL = photoURL;
-    if (publicId !== undefined) updateData.publicId = publicId;
+    const { displayName, photoURL } = body;
+    const updateData: Record<string, string> = {};
+    if (typeof displayName === 'string' && displayName.trim()) {
+      updateData.displayName = displayName.trim().slice(0, 100);
+    }
+    if (typeof photoURL === 'string') updateData.photoURL = photoURL.slice(0, 2048);
     
     if (Object.keys(updateData).length === 0) {
         return NextResponse.json({ error: 'No valid fields to update.' }, { status: 400 });
     }
 
-    const result = await db.collection('users').updateOne(
-      { _id: uid as any },
+    const result = await db.collection<UserDocument>('users').updateOne(
+      { _id: uid },
       { $set: updateData }
     );
 
@@ -164,6 +117,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     return NextResponse.json({ message: 'User updated successfully' });
   } catch (error) {
+    if (error instanceof ApiAuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     if (process.env.NODE_ENV !== 'production') {
       console.error(`API PATCH /api/user Error:`, error);
     }
@@ -175,59 +131,16 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   try {
     const db = await getDb();
     const { uid } = await params;
-    const mobileSettings = await db.collection('settings').findOne({ _id: 'mobile' as any });
-    const mobileApiKey = request.headers.get('x-api-key');
-    const authorization = request.headers.get('authorization') || '';
-    const idToken = authorization.startsWith('Bearer ') ? authorization.slice(7).trim() : '';
-    const generalSettings = await db.collection('settings').findOne({ _id: 'general' as any });
-    const firebaseApiKey = generalSettings?.firebaseApiKey || '';
+    await authenticateFirebaseRequest(request, { targetUid: uid });
+    const firebase = await getFirebaseAdmin();
+    await firebase.auth().deleteUser(uid);
 
-    if (!mobileApiKey || mobileApiKey !== mobileSettings?.apiKey || !idToken) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    if (!firebaseApiKey) {
-      return NextResponse.json(
-        { error: 'Firebase API Key is not configured in Authentication Settings.' },
-        { status: 503 },
-      );
-    }
-
-    const lookupResponse = await fetch(
-      `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${encodeURIComponent(firebaseApiKey)}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken }),
-        cache: 'no-store',
-      },
-    );
-    const lookupData = await lookupResponse.json();
-    const verifiedUid = lookupData?.users?.[0]?.localId;
-    if (!lookupResponse.ok || verifiedUid !== uid) {
-      return NextResponse.json({ error: 'Account verification failed.' }, { status: 401 });
-    }
-
-    const authDeleteResponse = await fetch(
-      `https://identitytoolkit.googleapis.com/v1/accounts:delete?key=${encodeURIComponent(firebaseApiKey)}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken }),
-        cache: 'no-store',
-      },
-    );
-    if (!authDeleteResponse.ok) {
-      return NextResponse.json(
-        { error: 'For security, sign out and sign in again before deleting your account.' },
-        { status: 409 },
-      );
-    }
-
-    const user = await db.collection('users').findOne({ _id: uid as any });
+    const users = db.collection<UserDocument>('users');
+    const user = await users.findOne({ _id: uid });
     await deleteFile(user?.photoURL);
 
     await Promise.all([
-      db.collection('users').deleteOne({ _id: uid as any }),
+      users.deleteOne({ _id: uid }),
       db.collection('favorites').deleteMany({ userId: uid }),
       db.collection('history').deleteMany({ userId: uid }),
       db.collection('likes').deleteMany({ userId: uid }),
@@ -240,6 +153,9 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    if (error instanceof ApiAuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     if (process.env.NODE_ENV !== 'production') {
       console.error('API DELETE /api/user/[uid] Error:', error);
     }

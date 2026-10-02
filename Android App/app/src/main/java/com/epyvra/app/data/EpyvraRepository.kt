@@ -241,10 +241,14 @@ private suspend fun getFirebaseIdToken(): String? = suspendCancellableCoroutine 
                     }
                     val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
                     val body = okhttp3.RequestBody.create(mediaType, createBodyObj.toString())
-                    val createReq = Request.Builder()
+                    val createReqBuilder = Request.Builder()
                         .url(createUrl)
                         .post(body)
-                        .build()
+                        .header("X-API-Key", AppConfig.API_KEY)
+                    if (token != null) {
+                        createReqBuilder.header("Authorization", "Bearer $token")
+                    }
+                    val createReq = createReqBuilder.build()
                     client.newCall(createReq).execute().use { response ->
                         if (response.isSuccessful) {
                             val resObj = JSONObject(response.body?.string() ?: "")
@@ -264,7 +268,7 @@ private suspend fun getFirebaseIdToken(): String? = suspendCancellableCoroutine 
                                 UserProfileEntity(
                                     email = email,
                                     username = displayName ?: email.substringBefore("@"),
-                                    coinBalance = 150,
+                                    coinBalance = 0,
                                     uid = uid,
                                     publicId = ""
                                 )
@@ -280,7 +284,7 @@ private suspend fun getFirebaseIdToken(): String? = suspendCancellableCoroutine 
                         UserProfileEntity(
                             email = email,
                             username = displayName ?: email.substringBefore("@"),
-                            coinBalance = 150,
+                            coinBalance = 0,
                             uid = uid
                         )
                     )
@@ -293,9 +297,11 @@ private suspend fun getFirebaseIdToken(): String? = suspendCancellableCoroutine 
         kotlinx.coroutines.withContext(Dispatchers.IO) {
             try {
                 val userUrl = AppConfig.API_URL.replace("/api/mobile/v1", "/api/user")
+                val token = getFirebaseIdToken() ?: return@withContext
                 val request = Request.Builder()
                     .url("$userUrl/$uid/library")
                     .header("X-API-Key", AppConfig.API_KEY)
+                    .header("Authorization", "Bearer $token")
                     .build()
                 client.newCall(request).execute().use { response ->
                     if (!response.isSuccessful) return@use
@@ -351,10 +357,12 @@ private suspend fun getFirebaseIdToken(): String? = suspendCancellableCoroutine 
                 val userUrl = AppConfig.API_URL.replace("/api/mobile/v1", "/api/user")
                 val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
                 val body = okhttp3.RequestBody.create(mediaType, payload.toString())
+                val token = getFirebaseIdToken() ?: return@withContext false
                 val request = Request.Builder()
                     .url("$userUrl/$uid/library")
                     .post(body)
                     .header("X-API-Key", AppConfig.API_KEY)
+                    .header("Authorization", "Bearer $token")
                     .build()
                 client.newCall(request).execute().use { it.isSuccessful }
             } catch (e: Exception) {
@@ -440,9 +448,11 @@ private suspend fun getFirebaseIdToken(): String? = suspendCancellableCoroutine 
         return kotlinx.coroutines.withContext(Dispatchers.IO) {
             try {
                 val userUrl = AppConfig.API_URL.replace("/api/mobile/v1", "/api/user")
+                val token = getFirebaseIdToken() ?: return@withContext emptyList()
                 val request = Request.Builder()
                     .url("$userUrl/$uid/transactions?limit=$limit")
                     .header("x-api-key", AppConfig.API_KEY)
+                    .header("Authorization", "Bearer $token")
                     .build()
                 client.newCall(request).execute().use { response ->
                     if (!response.isSuccessful) return@use emptyList()
@@ -1201,10 +1211,12 @@ private suspend fun getFirebaseIdToken(): String? = suspendCancellableCoroutine 
                 }
                 val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
                 val body = okhttp3.RequestBody.create(mediaType, payload.toString())
+                val token = getFirebaseIdToken() ?: return@withContext false
                 val request = Request.Builder()
                     .url("$userUrl/${profile.uid}/unlock")
                     .post(body)
                     .header("X-API-Key", AppConfig.API_KEY)
+                    .header("Authorization", "Bearer $token")
                     .build()
                 client.newCall(request).execute().use { response ->
                     if (!response.isSuccessful) return@use false
@@ -1236,10 +1248,12 @@ private suspend fun getFirebaseIdToken(): String? = suspendCancellableCoroutine 
                 }
                 val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
                 val body = okhttp3.RequestBody.create(mediaType, bodyObj.toString())
+                val token = getFirebaseIdToken() ?: return@withContext false
                 val request = Request.Builder()
                     .url("$userUrl/$uid/claim")
                     .post(body)
                     .header("X-API-Key", AppConfig.API_KEY)
+                    .header("Authorization", "Bearer $token")
                     .build()
                 client.newCall(request).execute().use { response ->
                     response.isSuccessful
@@ -1261,10 +1275,12 @@ private suspend fun getFirebaseIdToken(): String? = suspendCancellableCoroutine 
                     put("gateway", gateway)
                 }
                 val body = okhttp3.RequestBody.create(mediaType, bodyObj.toString())
+                val token = getFirebaseIdToken() ?: return@withContext null
                 val request = Request.Builder()
                     .url("${AppConfig.API_URL}/checkout")
                     .post(body)
                     .header("X-API-Key", AppConfig.API_KEY)
+                    .header("Authorization", "Bearer $token")
                     .build()
                 client.newCall(request).execute().use { response ->
                     if (response.isSuccessful) {
@@ -1293,10 +1309,12 @@ private suspend fun getFirebaseIdToken(): String? = suspendCancellableCoroutine 
                     put("sessionId", sessionId)
                 }
                 val body = okhttp3.RequestBody.create(mediaType, bodyObj.toString())
+                val token = getFirebaseIdToken() ?: return@withContext false
                 val request = Request.Builder()
                     .url("${AppConfig.API_URL}/verify-purchase")
                     .post(body)
                     .header("X-API-Key", AppConfig.API_KEY)
+                    .header("Authorization", "Bearer $token")
                     .build()
                 client.newCall(request).execute().use { response ->
                     if (response.isSuccessful) {
@@ -1348,10 +1366,12 @@ private suspend fun getFirebaseIdToken(): String? = suspendCancellableCoroutine 
                     put("referralCode", referralCode.trim())
                 }
                 val requestBody = okhttp3.RequestBody.create("application/json; charset=utf-8".toMediaTypeOrNull(), json.toString())
+                val token = getFirebaseIdToken() ?: return@withContext Pair(false, "Please sign in again.")
                 val request = okhttp3.Request.Builder()
                     .url(claimUrl)
                     .post(requestBody)
                     .header("X-API-Key", AppConfig.API_KEY)
+                    .header("Authorization", "Bearer $token")
                     .build()
                 client.newCall(request).execute().use { response ->
                     val bodyStr = response.body?.string() ?: ""

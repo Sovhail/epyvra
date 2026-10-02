@@ -1,40 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/mongodb';
-import { ObjectId } from 'mongodb';
+import { ObjectId, type Filter } from 'mongodb';
+import { ApiAuthError, authenticateFirebaseRequest } from '@/lib/api-auth';
 
-async function hasValidMobileApiKey(request: NextRequest) {
-  const apiKey = request.headers.get('x-api-key');
-  if (!apiKey) return false;
-  const db = await getDb();
-  const settings = await db.collection('settings').findOne({ _id: 'mobile' as any });
-  return !!settings?.apiKey && settings.apiKey === apiKey;
-}
+type SeriesDocument = { _id: ObjectId | string; freeEpisodesCount?: number; title?: string };
+type UserDocument = { _id: string; coins?: number; isVip?: boolean; vipExpiry?: string | Date };
+type EpisodeDocument = { _id: ObjectId | string; seriesId: string; episodeInSeason?: number };
 
-function queryById(id: string) {
-  return ObjectId.isValid(id) ? { _id: new ObjectId(id) } : { _id: id as any };
+function queryById(id: string): Filter<SeriesDocument> {
+  return ObjectId.isValid(id) ? { _id: new ObjectId(id) } : { _id: id };
 }
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ uid: string }> }) {
   try {
-    if (!(await hasValidMobileApiKey(request))) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const db = await getDb();
     const { uid } = await params;
-    const body = await request.json();
-    const { seriesId, episodeId, method } = body;
+    await authenticateFirebaseRequest(request, { targetUid: uid, requireMobileApiKey: true });
+    const db = await getDb();
+    const body = (await request.json()) as Record<string, unknown>;
+    const seriesId = typeof body.seriesId === 'string' ? body.seriesId : '';
+    const episodeId = typeof body.episodeId === 'string' ? body.episodeId : '';
+    const method = typeof body.method === 'string' ? body.method : '';
     if (!seriesId || !episodeId || !['coins', 'ad'].includes(method)) {
       return NextResponse.json({ error: 'Invalid unlock request' }, { status: 400 });
     }
 
-    const user = await db.collection('users').findOne({ _id: uid } as any);
+    const users = db.collection<UserDocument>('users');
+    const user = await users.findOne({ _id: uid });
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
     const vipActive = user.isVip === true && (!user.vipExpiry || new Date(user.vipExpiry) > new Date());
-    const series = await db.collection('series').findOne(queryById(seriesId));
+    const series = await db.collection<SeriesDocument>('series').findOne(queryById(seriesId));
     const freeCount = Number(series?.freeEpisodesCount ?? 3);
-    const episodes = await db.collection('episodes')
+    const episodes = await db.collection<EpisodeDocument>('episodes')
       .find({ seriesId })
       .sort({ episodeInSeason: 1 })
       .toArray();
@@ -70,10 +67,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     let coins = Number(user.coins ?? 0);
     let todayAdCount = 0;
     if (method === 'coins') {
-      const monetization = await db.collection('settings').findOne({ _id: 'monetization' as any });
-      const cost = Number(monetization?.episodeCost ?? body.cost ?? 10);
-      const result = await db.collection('users').updateOne(
-        { _id: uid, coins: { $gte: cost } } as any,
+      const monetization = await db
+        .collection<{ _id: string; episodeCost?: number }>('settings')
+        .findOne({ _id: 'monetization' });
+      const cost = Number(monetization?.episodeCost ?? 10);
+      const result = await users.updateOne(
+        { _id: uid, coins: { $gte: cost } },
         { $inc: { coins: -cost } },
       );
       if (result.modifiedCount === 0) {
@@ -89,7 +88,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       });
     } else {
       const today = new Date().toISOString().split('T')[0];
-      const adSettings = await db.collection('ads').findOne({ _id: 'video_player_ad' as any });
+      const adSettings = await db
+        .collection<{ _id: string; dailyWatchLimit?: number }>('ads')
+        .findOne({ _id: 'video_player_ad' });
       const dailyLimit = Number(adSettings?.dailyWatchLimit ?? 5);
       const adWatch = await db.collection('ad-watches').findOne({ userId: uid, date: today });
       todayAdCount = Number(adWatch?.count ?? 0);
@@ -121,6 +122,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     return NextResponse.json({ success: true, coins, todayAdCount });
   } catch (error) {
+    if (error instanceof ApiAuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     if (process.env.NODE_ENV !== 'production') {
       console.error('API POST /api/user/[uid]/unlock Error:', error);
     }

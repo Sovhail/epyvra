@@ -1,21 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/mongodb';
-import { ObjectId } from 'mongodb';
+import { ObjectId, type Filter } from 'mongodb';
+import { ApiAuthError, authenticateFirebaseRequest } from '@/lib/api-auth';
 
 export const dynamic = 'force-dynamic';
 
-async function hasValidMobileApiKey(request: NextRequest) {
-  const apiKey = request.headers.get('x-api-key');
-  if (!apiKey) return false;
-
-  const db = await getDb();
-  const settings = await db.collection('settings').findOne({ _id: 'mobile' as any });
-  return !!settings?.apiKey && settings.apiKey === apiKey;
-}
-
 /** Build a MongoDB filter that matches _id as ObjectId OR as string */
-function buildSeriesFilter(seriesId: string) {
-  const filters: any[] = [{ _id: seriesId as any }];
+type SeriesDocument = { _id: ObjectId | string; likes?: number };
+
+function buildSeriesFilter(seriesId: string): Filter<SeriesDocument> {
+  const filters: Filter<SeriesDocument>[] = [{ _id: seriesId }];
   if (ObjectId.isValid(seriesId)) {
     filters.push({ _id: new ObjectId(seriesId) });
   }
@@ -24,12 +18,9 @@ function buildSeriesFilter(seriesId: string) {
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ uid: string }> }) {
   try {
-    if (!(await hasValidMobileApiKey(request))) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const db = await getDb();
     const { uid } = await params;
+    await authenticateFirebaseRequest(request, { targetUid: uid, requireMobileApiKey: true });
+    const db = await getDb();
     const [favorites, history, likes] = await Promise.all([
       db.collection('favorites').find({ userId: uid }).sort({ favoritedAt: -1 }).toArray(),
       db.collection('history').find({ userId: uid }).sort({ watchedAt: -1 }).toArray(),
@@ -48,6 +39,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       })),
     });
   } catch (error) {
+    if (error instanceof ApiAuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     if (process.env.NODE_ENV !== 'production') {
       console.error('API GET /api/user/[uid]/library Error:', error);
     }
@@ -57,18 +51,17 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ uid: string }> }) {
   try {
-    if (!(await hasValidMobileApiKey(request))) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const db = await getDb();
     const { uid } = await params;
-    const body = await request.json();
+    await authenticateFirebaseRequest(request, { targetUid: uid, requireMobileApiKey: true });
+    const db = await getDb();
+    const body = (await request.json()) as Record<string, unknown>;
+    const actionName = typeof body.action === 'string' ? body.action : '';
+    const seriesId = typeof body.seriesId === 'string' ? body.seriesId : '';
 
-    switch (body.action) {
+    switch (actionName) {
       case 'toggleFavorite': {
-        if (!body.seriesId) return NextResponse.json({ error: 'Missing seriesId' }, { status: 400 });
-        const query = { userId: uid, seriesId: body.seriesId };
+        if (!seriesId) return NextResponse.json({ error: 'Missing seriesId' }, { status: 400 });
+        const query = { userId: uid, seriesId };
         const existing = await db.collection('favorites').findOne(query);
         if (existing) {
           await db.collection('favorites').deleteOne(query);
@@ -79,9 +72,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       }
 
       case 'toggleLike': {
-        if (!body.seriesId) return NextResponse.json({ error: 'Missing seriesId' }, { status: 400 });
+        if (!seriesId) return NextResponse.json({ error: 'Missing seriesId' }, { status: 400 });
 
-        const query = { userId: uid, seriesId: body.seriesId };
+        const query = { userId: uid, seriesId };
         const existing = await db.collection('likes').findOne(query);
 
         let likesCountInc = 1;
@@ -98,26 +91,27 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         }
 
         // Use $or filter to match both ObjectId and string _id — this is the key fix
-        const seriesFilter = buildSeriesFilter(body.seriesId);
-        const updatedSeries = await db.collection('series').findOneAndUpdate(
+        const seriesFilter = buildSeriesFilter(seriesId);
+        const updatedSeries = await db.collection<SeriesDocument>('series').findOneAndUpdate(
           seriesFilter,
           { $inc: { likes: likesCountInc } },
           { returnDocument: 'after' }
         );
 
-        const newLikesCount = Math.max(0, (updatedSeries as any)?.likes ?? 0);
+        const newLikesCount = Math.max(0, updatedSeries?.likes ?? 0);
         return NextResponse.json({ success: true, action, likes: newLikesCount });
       }
 
       case 'updateHistory': {
-        if (!body.seriesId || !body.episodeId) {
+        const episodeId = typeof body.episodeId === 'string' ? body.episodeId : '';
+        if (!seriesId || !episodeId) {
           return NextResponse.json({ error: 'Missing history fields' }, { status: 400 });
         }
         await db.collection('history').updateOne(
-          { userId: uid, seriesId: body.seriesId },
+          { userId: uid, seriesId },
           {
             $set: {
-              episodeId: body.episodeId,
+              episodeId,
               episodeInSeason: Number(body.episodeInSeason) || 1,
               progress: Number(body.progress) || 0,
               watchedAt: new Date(),
@@ -129,8 +123,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       }
 
       case 'removeHistory': {
-        if (!body.seriesId) return NextResponse.json({ error: 'Missing seriesId' }, { status: 400 });
-        await db.collection('history').deleteOne({ userId: uid, seriesId: body.seriesId });
+        if (!seriesId) return NextResponse.json({ error: 'Missing seriesId' }, { status: 400 });
+        await db.collection('history').deleteOne({ userId: uid, seriesId });
         return NextResponse.json({ success: true });
       }
 
@@ -143,6 +137,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
   } catch (error) {
+    if (error instanceof ApiAuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     if (process.env.NODE_ENV !== 'production') {
       console.error('API POST /api/user/[uid]/library Error:', error);
     }

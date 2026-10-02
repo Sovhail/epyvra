@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/mongodb';
+import { ApiAuthError, authenticateFirebaseRequest } from '@/lib/api-auth';
 
 // Simple in-memory rate limiting to stop bot spam
 const ipRateLimit = new Map<string, { count: number, resetTime: number }>();
+type GeneralSettings = { _id: string; signupBonus?: number; siteUrl?: string };
 
 export async function POST(request: NextRequest) {
   try {
+    const identity = await authenticateFirebaseRequest(request);
     const ip = request.headers.get('x-forwarded-for') || 'unknown';
     const now = Date.now();
     
@@ -23,21 +26,21 @@ export async function POST(request: NextRequest) {
     }
 
     const db = await getDb();
-    const usersCollection = db.collection('users');
+    const usersCollection = db.collection<{ _id: string; [key: string]: unknown }>('users');
     const body = await request.json();
-    const { uid, email, displayName, photoURL, phoneNumber, coins } = body;
-
-    if (!uid) {
-      return NextResponse.json({ error: 'Missing uid' }, { status: 400 });
-    }
+    const uid = identity.uid;
+    const email = identity.email;
+    const displayName = identity.name || body.displayName;
+    const photoURL = identity.picture || body.photoURL;
+    const phoneNumber = identity.phone_number;
 
     // Check if user already exists
-    const existingUser = await usersCollection.findOne({ _id: uid as any });
+    const existingUser = await usersCollection.findOne({ _id: uid });
     if (existingUser) {
       return NextResponse.json({ message: 'User profile already exists.' }, { status: 200 });
     }
 
-    const settings = await db.collection('settings').findOne({ _id: 'general' as any });
+    const settings = await db.collection<GeneralSettings>('settings').findOne({ _id: 'general' });
     const signupBonus = settings?.signupBonus ?? 100;
 
     const newPublicId = Math.floor(10000000 + Math.random() * 90000000).toString();
@@ -48,7 +51,7 @@ export async function POST(request: NextRequest) {
             const url = new URL(settings.siteUrl);
             domain = url.hostname;
         }
-    } catch (e) {
+    } catch {
         // Fallback to epyvra.local if URL is invalid
     }
 
@@ -61,12 +64,12 @@ export async function POST(request: NextRequest) {
       email: resolvedEmail,
       phoneNumber: phoneNumber || '',
       photoURL: photoURL || '',
-      coins: coins === undefined ? Number(signupBonus) : Number(coins), 
+      coins: Number(signupBonus),
       isVip: false,
       disabled: false,
       createdAt: new Date(),
       publicId: newPublicId,
-      referralCode: `EPY-${newPublicId.substring(0, 6)}`,
+      referralCode: `EPY-${uid}`,
       referralCount: 0,
       referralEarnings: 0,
     };
@@ -76,6 +79,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(newUserProfile, { status: 201 });
 
   } catch (error) {
+    if (error instanceof ApiAuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     if (process.env.NODE_ENV !== 'production') {
       console.error('API User Create Error:', error);
     }
