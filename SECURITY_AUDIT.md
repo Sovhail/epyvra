@@ -24,7 +24,11 @@ Every remediation must include negative authorization tests, replay/race tests w
 
 ## Verification evidence
 
+- Independent verification on 2026-10-03 at accepted baseline `4eeafcd` started from a clean `develop/epyvra` working tree.
 - `npm run test:security`: 16/16 security regression checks pass, covering identity/UID binding, transactional monetary operations, Firestore entitlements, secret projections, admin/install authorization, SSRF/storage targets, Play Billing, Android release/WebView policy, installer least privilege, and LevelPlay S2S replay protection.
-- `npm run typecheck`: passes after the authentication and coin-operation changes.
-- Changed security modules and routes pass targeted ESLint.
+- `npm run typecheck`: passes with no emitted files and no suppressed diagnostics.
+- `npx eslint src/lib/admin-session.ts src/lib/api-auth.ts src/lib/coin-operations.ts src/lib/google-play-purchases.ts src/lib/safe-fetch.ts src/lib/install-auth.ts src/app/api/levelplay/reward/route.ts src/app/api/install/activate/route.ts --max-warnings=0`: passes.
+- Source inspection confirmed Firebase Admin `verifyIdToken(..., true)` and target-UID binding, signed expiring admin sessions, one-time install authorization, transaction-scoped operation reservation and ledger writes, manual redirect revalidation for remote fetches, Play `purchaseToken` verification with server-controlled product mapping and consume/acknowledge handling, Android pending/reconciliation paths, fail-closed release signing, mixed-content denial, database-scoped MongoDB `readWrite`, and unique signed LevelPlay event processing.
+- Review boundary: TypeScript/Next.js API, session, monetary, billing, SSRF, install, storage, and LevelPlay modules; Kotlin Android billing/signing/WebView paths; Firestore rules; and the VPS installer. Trust boundaries include HTTP bearer tokens and bodies, vendor callbacks, Play purchase tokens, installer input, remote URLs, and Android intents. Applicable ASVS areas: V2, V3, V4, V5, V6, V7, V8, V9, V11, V12, V13, and V14.
 - Runtime concurrency tests remain required against a MongoDB replica set before SCR-003 can be closed.
+- Device/vendor tests remain required for Billing, LevelPlay, deep links, and release signing; source-level checks do not prove external service behavior.
