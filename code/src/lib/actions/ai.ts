@@ -7,6 +7,14 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { handleError } from './utils';
 import { ServerPluginsSettings } from '../server-types';
 
+function getAiErrorMessage(error: unknown): string | undefined {
+    if (error instanceof Error) return error.message;
+    if (!error || typeof error !== 'object') return undefined;
+    const message = Reflect.get(error, 'message');
+    if (typeof message === 'string') return message;
+    return getAiErrorMessage(Reflect.get(error, 'error'));
+}
+
 export async function callAi(prompt: string, jsonMode: boolean = false) {
     const settings = await getPluginsSettings() as ServerPluginsSettings | null;
     const provider = settings?.aiProvider || 'groq';
@@ -31,7 +39,7 @@ export async function callAi(prompt: string, jsonMode: boolean = false) {
         let candidateModels = preferredModels;
         try {
             const list = await groq.models.list();
-            const availableIds = (list?.data || []).map((m: any) => m.id);
+            const availableIds = (list?.data || []).map(m => m.id);
             const filtered = preferredModels.filter(m => availableIds.includes(m));
             if (filtered.length > 0) {
                 candidateModels = filtered;
@@ -45,7 +53,7 @@ export async function callAi(prompt: string, jsonMode: boolean = false) {
             // fallback to preferredModels
         }
 
-        let lastError: any = null;
+        let lastError: unknown = null;
         for (const model of candidateModels) {
             try {
                 const res = await groq.chat.completions.create({
@@ -58,9 +66,9 @@ export async function callAi(prompt: string, jsonMode: boolean = false) {
                 const content = res.choices[0].message.content || '';
                 if (jsonMode) return content.replace(/```json/g, '').replace(/```/g, '').trim();
                 return content;
-            } catch (err: any) {
+            } catch (err) {
                 lastError = err;
-                const errStr = (err?.error?.error?.message || err?.error?.message || err?.message || '').toLowerCase();
+                const errStr = (getAiErrorMessage(err) || '').toLowerCase();
                 if (
                     errStr.includes('does not exist') || 
                     errStr.includes('not have access') || 
@@ -86,7 +94,7 @@ export async function callAi(prompt: string, jsonMode: boolean = false) {
         
         // Models ordered by preference with fallback
         const models = ['gpt-4o-mini', 'gpt-4o', 'o3-mini'];
-        let lastError: any = null;
+        let lastError: unknown = null;
 
         for (const model of models) {
             try {
@@ -100,9 +108,9 @@ export async function callAi(prompt: string, jsonMode: boolean = false) {
                 const content = res.choices[0].message.content || '';
                 if (jsonMode) return content.replace(/```json/g, '').replace(/```/g, '').trim();
                 return content;
-            } catch (err: any) {
+            } catch (err) {
                 lastError = err;
-                const errStr = (err?.error?.message || err?.message || '').toLowerCase();
+                const errStr = (getAiErrorMessage(err) || '').toLowerCase();
                 if (errStr.includes('does not exist') || errStr.includes('model_not_found') || errStr.includes('not have access')) {
                     continue;
                 }
@@ -119,7 +127,7 @@ export async function callAi(prompt: string, jsonMode: boolean = false) {
         
         // Supported 2026 Gemini models with auto-failover
         const models = ['gemini-2.5-flash', 'gemini-3.5-flash', 'gemini-3.8-flash', 'gemini-flash-latest', 'gemini-2.5-flash-lite', 'gemini-2.5-pro'];
-        let lastError: any = null;
+        let lastError: unknown = null;
 
         for (const modelName of models) {
             try {
@@ -133,9 +141,9 @@ export async function callAi(prompt: string, jsonMode: boolean = false) {
                 const content = result.response.text() || '';
                 if (jsonMode) return content.replace(/```json/g, '').replace(/```/g, '').trim();
                 return content;
-            } catch (err: any) {
+            } catch (err) {
                 lastError = err;
-                const errStr = (err?.message || '').toLowerCase();
+                const errStr = (getAiErrorMessage(err) || '').toLowerCase();
                 if (
                     errStr.includes('not found') || 
                     errStr.includes('404') ||
@@ -169,7 +177,7 @@ export async function generateFullSeriesMetadataAction(seedText: string) {
         const content = await callAi(systemPrompt, true);
         if (!content) throw new Error('AI returned no content.');
         return { success: true, data: JSON.parse(content) };
-    } catch (e: any) {
+    } catch (e) {
         return handleError('generateFullSeriesMetadataAction', e, 'AI Generation failed.');
     }
 }
@@ -184,7 +192,7 @@ export async function testGroqKeyAction(apiKey: string) {
         
         // First verify authentication and fetch available models directly from Groq
         const modelsList = await groq.models.list();
-        const availableModelIds: string[] = (modelsList?.data || []).map((m: any) => m.id);
+        const availableModelIds: string[] = (modelsList?.data || []).map(m => m.id);
         console.log('[Groq] Verified API Key. Available models on this account:', availableModelIds);
 
         // Preference order for chat/completions (NO decommissioned models)
@@ -209,7 +217,7 @@ export async function testGroqKeyAction(apiKey: string) {
             if (genericChat) candidates.push(genericChat);
         }
 
-        let lastError: any = null;
+        let lastError: unknown = null;
         for (const model of candidates) {
             try {
                 console.log(`[Groq] Testing completion with model: ${model}`);
@@ -219,8 +227,8 @@ export async function testGroqKeyAction(apiKey: string) {
                     max_tokens: 1
                 });
                 return { success: true, message: `Groq API Key is valid! Connected via ${model}.` };
-            } catch (err: any) {
-                console.error(`[Groq] Model ${model} test failed:`, err?.message || err);
+            } catch (err) {
+                console.error(`[Groq] Model ${model} test failed:`, getAiErrorMessage(err) || err);
                 lastError = err;
             }
         }
@@ -233,10 +241,10 @@ export async function testGroqKeyAction(apiKey: string) {
             };
         }
 
-        const msg = lastError?.error?.message || lastError?.message || 'Groq API Key verification failed.';
+        const msg = getAiErrorMessage(lastError) || 'Groq API Key verification failed.';
         return handleError('testGroqKeyAction', lastError, msg);
-    } catch (e: any) {
-        const msg = e?.error?.message || e?.message || 'Invalid Groq API Key.';
+    } catch (e) {
+        const msg = getAiErrorMessage(e) || 'Invalid Groq API Key.';
         return handleError('testGroqKeyAction', e, msg);
     }
 }
@@ -249,7 +257,7 @@ export async function testOpenAiKeyAction(apiKey: string) {
     try {
         const openai = new OpenAI({ apiKey });
         const models = ['gpt-4o-mini', 'gpt-4o', 'o3-mini'];
-        let lastError: any = null;
+        let lastError: unknown = null;
 
         for (const model of models) {
             try {
@@ -259,19 +267,19 @@ export async function testOpenAiKeyAction(apiKey: string) {
                     max_tokens: 1
                 });
                 return { success: true, message: `OpenAI API Key is valid! Connected via ${model}.` };
-            } catch (err: any) {
+            } catch (err) {
                 lastError = err;
-                const errStr = (err?.error?.message || err?.message || '').toLowerCase();
+                const errStr = (getAiErrorMessage(err) || '').toLowerCase();
                 if (errStr.includes('does not exist') || errStr.includes('model_not_found') || errStr.includes('not have access')) {
                     continue;
                 }
                 break;
             }
         }
-        const msg = lastError?.error?.message || lastError?.message || 'OpenAI API Key verification failed.';
+        const msg = getAiErrorMessage(lastError) || 'OpenAI API Key verification failed.';
         return handleError('testOpenAiKeyAction', lastError, msg);
-    } catch (e: any) {
-        const msg = e?.error?.message || e?.message || 'OpenAI API Key verification failed.';
+    } catch (e) {
+        const msg = getAiErrorMessage(e) || 'OpenAI API Key verification failed.';
         return handleError('testOpenAiKeyAction', e, msg);
     }
 }
@@ -284,26 +292,26 @@ export async function testGeminiKeyAction(apiKey: string) {
     try {
         const gemini = new GoogleGenerativeAI(apiKey);
         const models = ['gemini-2.5-flash', 'gemini-3.5-flash', 'gemini-3.8-flash', 'gemini-flash-latest', 'gemini-2.5-flash-lite'];
-        let lastError: any = null;
+        let lastError: unknown = null;
 
         for (const modelName of models) {
             try {
                 const model = gemini.getGenerativeModel({ model: modelName });
                 await model.generateContent('Reply with OK.');
                 return { success: true, message: `Gemini API Key is valid! Connected via ${modelName}.` };
-            } catch (err: any) {
+            } catch (err) {
                 lastError = err;
-                const errStr = (err?.message || '').toLowerCase();
+                const errStr = (getAiErrorMessage(err) || '').toLowerCase();
                 if (errStr.includes('not found') || errStr.includes('404') || errStr.includes('503') || errStr.includes('high demand') || errStr.includes('429')) {
                     continue;
                 }
                 break;
             }
         }
-        const msg = lastError?.message || 'Gemini API Key verification failed.';
+        const msg = getAiErrorMessage(lastError) || 'Gemini API Key verification failed.';
         return handleError('testGeminiKeyAction', lastError, msg);
-    } catch (e: any) {
-        const msg = e?.message || 'Gemini API Key verification failed.';
+    } catch (e) {
+        const msg = getAiErrorMessage(e) || 'Gemini API Key verification failed.';
         return handleError('testGeminiKeyAction', e, msg);
     }
 }
