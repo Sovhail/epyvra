@@ -10,6 +10,7 @@
 - [ ] Google Play RTDN Pub/Sub topic/subscription and authenticated webhook or reconciliation worker for cancellations, refunds, voided purchases, and delayed state transitions.
 - [ ] Release keystore path, alias, passwords, and certificate fingerprints.
 - [ ] LevelPlay app key, rewarded/interstitial placements, test mode, mediation network credentials, and consent configuration.
+- [ ] `LEVELPLAY_APP_KEY`, `LEVELPLAY_S2S_PRIVATE_KEY` (at least 32 random characters), and `LEVELPLAY_REWARD_COINS`; configure the HTTPS callback with timestamp, eventId, userId, rewards, signature, and appKey parameters.
 - [ ] Bunny.net or alternate storage credentials and delivery/security policy.
 - [ ] SMTP/support identity, payment gateway credentials, CAPTCHA keys, and optional AI keys for enabled services.
 - [ ] `ADMIN_SESSION_SECRET`: an independently generated secret of at least 32 random characters, supplied only to the backend runtime.

@@ -35,11 +35,15 @@ import com.facebook.ads.InterstitialAdListener as FbInterstitialAdListener
 import com.facebook.ads.RewardedVideoAd as FbRewardedVideoAd
 import com.facebook.ads.RewardedVideoAdListener as FbRewardedVideoAdListener
 import com.facebook.ads.Ad as FbAd
+import com.unity3d.mediation.*
+import com.google.firebase.auth.FirebaseAuth
+import java.security.MessageDigest
 
 object AdsManager {
     private var isAdMobInitialized = false
     private var isAppLovinInitialized = false
     private var isFacebookInitialized = false
+    private var isLevelPlayInitialized = false
 
     private var bannerRotationIndex = 0
     private var interstitialRotationIndex = 0
@@ -72,6 +76,21 @@ object AdsManager {
                 isFacebookInitialized = true
             }
         }
+
+        if (!isLevelPlayInitialized && appSettings.levelPlayEnabled && appSettings.levelPlayAppKey.isNotBlank()) {
+            val uid = FirebaseAuth.getInstance().currentUser?.uid
+            if (!uid.isNullOrBlank()) {
+                val s2sUserId = MessageDigest.getInstance("SHA-256")
+                    .digest(uid.toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) }
+                val request = LevelPlayInitRequest.Builder(appSettings.levelPlayAppKey.trim())
+                    .withUserId(s2sUserId)
+                    .build()
+                LevelPlay.init(context, request, object : LevelPlayInitListener {
+                    override fun onInitFailed(error: LevelPlayInitError) { isLevelPlayInitialized = false }
+                    override fun onInitSuccess(configuration: LevelPlayConfiguration) { isLevelPlayInitialized = true }
+                })
+            }
+        }
     }
 
     private fun getProviderForType(type: String, appSettings: AppSettings): String {
@@ -96,6 +115,7 @@ object AdsManager {
                 if (appSettings.admobRewardedEnabled && appSettings.admobRewardedId.isNotBlank()) enabledProviders.add("admob")
                 if (appSettings.applovinRewardedEnabled && appSettings.applovinRewardedId.isNotBlank()) enabledProviders.add("applovin")
                 if (appSettings.facebookRewardedEnabled && appSettings.facebookRewardedId.isNotBlank()) enabledProviders.add("facebook")
+                if (appSettings.levelPlayEnabled && appSettings.levelPlayRewardedAdUnitId.isNotBlank()) enabledProviders.add("levelplay")
             }
         }
 
@@ -392,6 +412,32 @@ object AdsManager {
                     }
                 }
                 fbRewarded.loadAd(fbRewarded.buildLoadAdConfig().withAdListener(listener).build())
+            }
+            "levelplay" -> {
+                if (!isLevelPlayInitialized || !appSettings.levelPlayEnabled || appSettings.levelPlayRewardedAdUnitId.isBlank()) {
+                    onError("LevelPlay Rewarded is not initialized or missing an ad unit ID")
+                    return
+                }
+                val rewardedAd = LevelPlayRewardedAd(appSettings.levelPlayRewardedAdUnitId.trim())
+                rewardedAd.setListener(object : LevelPlayRewardedAdListener {
+                    override fun onAdLoaded(adInfo: LevelPlayAdInfo) {
+                        val placement = appSettings.levelPlayRewardedPlacement.trim()
+                        if (rewardedAd.isAdReady() && (placement.isBlank() || !LevelPlayRewardedAd.isPlacementCapped(placement))) {
+                            if (placement.isBlank()) rewardedAd.showAd(activity) else rewardedAd.showAd(activity, placement)
+                        } else onError("LevelPlay rewarded ad is unavailable or capped")
+                    }
+                    override fun onAdLoadFailed(error: LevelPlayAdError) { onError(error.errorMessage) }
+                    override fun onAdDisplayed(adInfo: LevelPlayAdInfo) = Unit
+                    override fun onAdRewarded(reward: LevelPlayReward, adInfo: LevelPlayAdInfo) {
+                        // UI notification only. The signed LevelPlay S2S callback is the sole coin grant authority.
+                        onRewarded()
+                    }
+                    override fun onAdDisplayFailed(error: LevelPlayAdError, adInfo: LevelPlayAdInfo) { onError(error.errorMessage) }
+                    override fun onAdClicked(adInfo: LevelPlayAdInfo) = Unit
+                    override fun onAdClosed(adInfo: LevelPlayAdInfo) = Unit
+                    override fun onAdInfoChanged(adInfo: LevelPlayAdInfo) = Unit
+                })
+                rewardedAd.loadAd()
             }
             else -> onError("Unknown provider: $provider")
         }

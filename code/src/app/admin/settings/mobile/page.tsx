@@ -26,6 +26,10 @@ const defaults: MobileSettings = {
     forceUpdateEnabled: false,
     forceLoginEnabled: false,
     adsProvider: 'admob',
+    levelPlayEnabled: false,
+    levelPlayAppKey: '',
+    levelPlayRewardedAdUnitId: '',
+    levelPlayRewardedPlacement: '',
     admobBannerId: '',
     admobBannerEnabled: false,
     admobInterstitialId: '',
@@ -201,6 +205,7 @@ export default function MobileSettingsPage() {
                                                 <SelectItem value="admob">Google AdMob</SelectItem>
                                                 <SelectItem value="applovin">AppLovin MAX</SelectItem>
                                                 <SelectItem value="facebook">Facebook Audience Network</SelectItem>
+                                                <SelectItem value="levelplay">Unity LevelPlay</SelectItem>
                                                 <SelectItem value="multi">Multi Ads (Rotation)</SelectItem>
                                             </SelectContent>
                                         </Select>
@@ -214,6 +219,20 @@ export default function MobileSettingsPage() {
                                             <AdPlacement label="Interstitial Ad" value={settings.admobInterstitialId || ''} enabled={!!settings.admobInterstitialEnabled} onValue={v => update('admobInterstitialId', v)} onEnabled={v => update('admobInterstitialEnabled', v)} />
                                             <AdPlacement label="Rewarded Ad" value={settings.admobRewardedId || ''} enabled={!!settings.admobRewardedEnabled} onValue={v => update('admobRewardedId', v)} onEnabled={v => update('admobRewardedEnabled', v)} />
                                             <AdPlacement label="App Open Ad (On Launch)" value={settings.admobAppOpenId || ''} enabled={!!settings.admobAppOpenEnabled} onValue={v => update('admobAppOpenId', v)} onEnabled={v => update('admobAppOpenEnabled', v)} />
+                                        </div>
+                                    )}
+
+                                    {(settings.adsProvider === 'levelplay' || settings.adsProvider === 'multi') && (
+                                        <div className="space-y-4 pt-4 border-t border-green-500/10">
+                                            <Badge variant="secondary">Unity LevelPlay (S2S rewards required)</Badge>
+                                            <div className="grid gap-3 rounded-xl border bg-black/10 p-4">
+                                                <AdPlacement label="Rewarded Ad Unit ID" value={settings.levelPlayRewardedAdUnitId || ''} enabled={!!settings.levelPlayEnabled} onValue={v => update('levelPlayRewardedAdUnitId', v)} onEnabled={v => update('levelPlayEnabled', v)} />
+                                                <Label>LevelPlay App Key</Label>
+                                                <Input value={settings.levelPlayAppKey || ''} onChange={e => update('levelPlayAppKey', e.target.value)} placeholder="Dashboard app key" />
+                                                <Label>Rewarded Placement</Label>
+                                                <Input value={settings.levelPlayRewardedPlacement || ''} onChange={e => update('levelPlayRewardedPlacement', e.target.value)} placeholder="epyvra_reward" />
+                                                <p className="text-xs text-muted-foreground">Client callbacks only update UI. Coins are granted exclusively by the signed LevelPlay server callback.</p>
+                                            </div>
                                         </div>
                                     )}
 

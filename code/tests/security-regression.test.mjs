@@ -176,3 +176,18 @@ test('VPS installer generates least-privilege MongoDB credentials', async () => 
   assert.match(installer, /chmod 600 "\$APP_DIR\/\.env"/);
   assert.doesNotMatch(installer, /userAdminAnyDatabase|readWriteAnyDatabase|snapreels123456/);
 });
+
+test('LevelPlay rewards require a signed unique server callback', async () => {
+  const callback = await source('src', 'app', 'api', 'levelplay', 'reward', 'route.ts');
+  const createUser = await source('src', 'app', 'api', 'user', 'create', 'route.ts');
+  const adsManager = await source('..', 'Android App', 'app', 'src', 'main', 'java', 'com', 'epyvra', 'app', 'data', 'AdsManager.kt');
+  assert.match(callback, /LEVELPLAY_S2S_PRIVATE_KEY/);
+  assert.match(callback, /createHash\('md5'\)/);
+  assert.match(callback, /timingSafeEqual/);
+  assert.match(callback, /operationId = `levelplay:\$\{eventId\}`/);
+  assert.match(callback, /session\.withTransaction/);
+  assert.match(callback, /writeConcern: \{ w: 'majority' \}/);
+  assert.match(createUser, /levelPlayUserId: createHash\('sha256'\)\.update\(uid\)/);
+  assert.match(adsManager, /override fun onAdRewarded/);
+  assert.match(adsManager, /signed LevelPlay S2S callback is the sole coin grant authority/);
+});

@@ -163,7 +163,11 @@ export type MobileSettings = {
     versionCode?: number;
     forceUpdateEnabled?: boolean;
     forceLoginEnabled?: boolean;
-    adsProvider?: 'admob' | 'applovin' | 'facebook' | 'multi';
+    adsProvider?: 'admob' | 'applovin' | 'facebook' | 'levelplay' | 'multi';
+    levelPlayEnabled?: boolean;
+    levelPlayAppKey?: string;
+    levelPlayRewardedAdUnitId?: string;
+    levelPlayRewardedPlacement?: string;
     admobBannerId?: string;
     admobBannerEnabled?: boolean;
     admobInterstitialId?: string;

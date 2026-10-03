@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/mongodb';
 import { ApiAuthError, authenticateFirebaseRequest } from '@/lib/api-auth';
+import { createHash } from 'node:crypto';
 
 // Simple in-memory rate limiting to stop bot spam
 const ipRateLimit = new Map<string, { count: number, resetTime: number }>();
@@ -72,6 +73,7 @@ export async function POST(request: NextRequest) {
       referralCode: `EPY-${uid}`,
       referralCount: 0,
       referralEarnings: 0,
+      levelPlayUserId: createHash('sha256').update(uid).digest('hex'),
     };
 
     await usersCollection.insertOne(newUserProfile);
