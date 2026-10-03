@@ -49,6 +49,28 @@ import com.epyvra.app.viewmodel.EpyvraViewModel
 import com.epyvra.app.data.AppConfig
 import com.onesignal.OneSignal
 
+private val EPYVRA_DEEP_LINK_ID = Regex("^[A-Za-z0-9_-]{1,128}$")
+
+internal fun parseEpyvraDeepLink(uri: Uri): String? {
+    val candidate = when {
+        uri.scheme.equals("epyvra", ignoreCase = true) &&
+            (uri.host.equals("drama", ignoreCase = true) || uri.host.equals("share", ignoreCase = true)) ->
+            uri.pathSegments.singleOrNull()
+
+        uri.scheme.equals("https", ignoreCase = true) && uri.host.equals("epyvra.com", ignoreCase = true) -> {
+            val segments = uri.pathSegments
+            when {
+                segments.size == 2 && segments[0] == "share" -> segments[1]
+                segments.size == 4 && segments[0] == "share" && segments[2] == "ep" -> segments[1]
+                else -> null
+            }
+        }
+
+        else -> null
+    }
+    return candidate?.takeIf { EPYVRA_DEEP_LINK_ID.matches(it) }
+}
+
 class MainActivity : ComponentActivity() {
     private var pendingDeepLink by mutableStateOf<Uri?>(null)
 
@@ -217,26 +239,7 @@ class MainActivity : ComponentActivity() {
                                 val uri = pendingDeepLink ?: return@LaunchedEffect
                                 pendingDeepLink = null
 
-                                val dramaId = when {
-                                    uri.scheme == "epyvra" -> {
-                                        if (uri.host == "drama" || uri.host == "share") {
-                                            uri.pathSegments.firstOrNull() ?: uri.lastPathSegment
-                                        } else {
-                                            uri.lastPathSegment
-                                        }
-                                    }
-                                    uri.scheme == "http" || uri.scheme == "https" -> {
-                                        val segments = uri.pathSegments
-                                        if (segments.contains("ep") && segments.indexOf("ep") + 1 < segments.size) {
-                                            segments[segments.indexOf("ep") + 1]
-                                        } else if (segments.contains("share") && segments.indexOf("share") + 1 < segments.size) {
-                                            segments[segments.indexOf("share") + 1]
-                                        } else {
-                                            uri.lastPathSegment
-                                        }
-                                    }
-                                    else -> uri.lastPathSegment
-                                }
+                                val dramaId = parseEpyvraDeepLink(uri)
 
                                 if (!dramaId.isNullOrBlank()) {
                                     viewModel.selectDramaById(dramaId) {
