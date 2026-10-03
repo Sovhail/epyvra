@@ -488,19 +488,19 @@ export default function PaymentGatewayPage() {
                         <div className="rounded-2xl bg-gradient-to-r from-emerald-500/10 via-green-500/10 to-teal-500/10 border border-green-500/20 p-5 text-sm text-green-300 shadow-xl">
                             <div className="flex items-center gap-3 mb-2">
                                 <span className="flex h-3 w-3 rounded-full bg-green-500 animate-pulse" />
-                                <p className="font-black uppercase tracking-widest text-xs text-green-400">Direct In-App Billing (Product ID Recognition)</p>
+                                <p className="font-black uppercase tracking-widest text-xs text-green-400">Server-verified Google Play Billing</p>
                             </div>
                             <p className="text-xs leading-relaxed text-green-300/80 mb-4 font-medium">
-                                Google Play recognizes in-app purchases automatically via <strong>Google Play Product IDs</strong> configured in your coin packs. No service account private keys or JSON credentials are required!
+                                EPYVRA sends purchase tokens to the backend, verifies them with Google Play, binds them to the signed-in user, and grants each entitlement once.
                             </p>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px] bg-black/30 p-4 rounded-xl border border-white/5">
                                 <div className="flex items-center gap-2">
                                     <span className="text-green-400 font-bold">✓</span>
-                                    <span>Zero PEM/Private Key maintenance</span>
+                                    <span>Backend Developer API verification</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <span className="text-green-400 font-bold">✓</span>
-                                    <span>Direct Billing Client recognition</span>
+                                    <span>Token replay protection</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <span className="text-green-400 font-bold">✓</span>
@@ -508,8 +508,22 @@ export default function PaymentGatewayPage() {
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <span className="text-green-400 font-bold">✓</span>
-                                    <span>Automatic native token verification</span>
+                                    <span>Server consume/acknowledgement</span>
                                 </div>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="googlePlayPackageName">Android package name</Label>
+                                <Input id="googlePlayPackageName" value={googlePlayPackageName} onChange={e => setGooglePlayPackageName(e.target.value)} placeholder="com.epyvra.app" />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="googlePlayServiceAccountEmail">Play service account email</Label>
+                                <Input id="googlePlayServiceAccountEmail" value={googlePlayServiceAccountEmail} onChange={e => setGooglePlayServiceAccountEmail(e.target.value)} placeholder="billing-verifier@project.iam.gserviceaccount.com" />
+                            </div>
+                            <div className="space-y-2 md:col-span-2">
+                                <Label htmlFor="googlePlayServiceAccountPrivateKey">Service account private key</Label>
+                                <Input id="googlePlayServiceAccountPrivateKey" type="password" value={googlePlayServiceAccountPrivateKey} onChange={e => setGooglePlayServiceAccountPrivateKey(e.target.value)} placeholder="-----BEGIN PRIVATE KEY-----..." autoComplete="off" />
                             </div>
                         </div>
                     </CardContent>

@@ -10,7 +10,7 @@ import Stripe from 'stripe';
 import Razorpay from 'razorpay';
 import { handleError, getQueryById, mapDoc } from './utils';
 import { ServerPaymentGatewaySettings } from '../server-types';
-import { sign } from 'crypto';
+import { processGooglePlayPurchase } from '../google-play-purchases';
 
 /**
  * Creates Stripe Checkout Session URL.
@@ -330,63 +330,6 @@ async function verifyFlutterwavePayment(sessionId: string, packPrice: number, pa
 }
 
 /**
- * Generates temporary JWT assertion for Google Play Developer API OAuth2 authentication.
- */
-async function getGoogleAccessToken(email: string, privateKey: string): Promise<string> {
-    const cleanKey = privateKey.replace(/\\n/g, '\n');
-    const header = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
-    const now = Math.floor(Date.now() / 1000);
-    const payload = Buffer.from(JSON.stringify({
-        iss: email,
-        scope: 'https://www.googleapis.com/auth/androidpublisher',
-        aud: 'https://oauth2.googleapis.com/token',
-        exp: now + 3600,
-        iat: now
-    })).toString('base64url');
-
-    const signatureInput = `${header}.${payload}`;
-    const signature = sign('RSA-SHA256', Buffer.from(signatureInput), cleanKey).toString('base64url');
-    const assertion = `${signatureInput}.${signature}`;
-
-    const res = await fetch('https://oauth2.googleapis.com/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${assertion}`
-    });
-    const data = await res.json();
-    if (!res.ok) {
-        throw new Error(data.error_description || 'Google Play OAuth Failed');
-    }
-    return data.access_token;
-}
-
-/**
- * Verifies purchase transaction against Google Play Developer API.
- */
-async function verifyGooglePlayPayment(sessionId: string, productId: string, paySettings: ServerPaymentGatewaySettings): Promise<boolean> {
-    const packageName = paySettings.googlePlayPackageName;
-    const email = paySettings.googlePlayServiceAccountEmail;
-    const privateKey = paySettings.googlePlayServiceAccountPrivateKey;
-
-    if (!packageName || !email || !privateKey) {
-        throw new Error('Google Play Developer API credentials are not configured in Admin panel.');
-    }
-
-    const token = await getGoogleAccessToken(email, privateKey);
-    const url = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${packageName}/purchases/products/${productId}/tokens/${sessionId}`;
-    const res = await fetch(url, {
-        headers: { 'Authorization': `Bearer ${token}` }
-    });
-    const data = await res.json();
-    if (!res.ok) {
-        throw new Error(data.error?.message || 'Google Play Developer API purchase retrieval failed.');
-    }
-
-    // purchaseState === 0 means success/completed
-    return data.purchaseState === 0;
-}
-
-/**
  * Verifies purchase transactions for Stripe, PayPal, Razorpay, or Google Play IAP.
  * Credits user profiles with coins/VIP duration and logs transactions.
  */
@@ -469,6 +412,9 @@ export async function verifyAndExecutePurchaseAction(userId: string, packId: str
     const pack = mapDoc(packRaw);
     
     try {
+        if (gateway === 'gplay') {
+            return await processGooglePlayPurchase(userId, pack, sessionId, paySettings);
+        }
         const existingPurchase = await db.collection('purchases').findOne({ sessionId });
         if (existingPurchase) return { success: true, message: 'Transaction already processed.' };
         
@@ -488,9 +434,6 @@ export async function verifyAndExecutePurchaseAction(userId: string, packId: str
             isVerified = await verifyCashfreePayment(sessionId, paySettings);
         } else if (gateway === 'payu') {
             isVerified = await verifyPayUPayment(sessionId, paySettings);
-        } else if (gateway === 'gplay') {
-            const googleProductId = pack.googleProductId || pack.id;
-            isVerified = await verifyGooglePlayPayment(sessionId, googleProductId, paySettings);
         }
 
         if (!isVerified) return { success: false, error: 'Payment verification failed.' };

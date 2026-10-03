@@ -1298,7 +1298,7 @@ private suspend fun getFirebaseIdToken(): String? = suspendCancellableCoroutine 
         }
     }
 
-    suspend fun verifyPurchase(userId: String, packId: String, gateway: String, sessionId: String): Boolean {
+    suspend fun verifyPurchase(userId: String, packId: String, gateway: String, purchaseReference: String): Boolean {
         return kotlinx.coroutines.withContext(Dispatchers.IO) {
             try {
                 val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
@@ -1306,7 +1306,8 @@ private suspend fun getFirebaseIdToken(): String? = suspendCancellableCoroutine 
                     put("userId", userId)
                     put("packId", packId)
                     put("gateway", gateway)
-                    put("sessionId", sessionId)
+                    if (gateway == "gplay") put("purchaseToken", purchaseReference)
+                    else put("sessionId", purchaseReference)
                 }
                 val body = okhttp3.RequestBody.create(mediaType, bodyObj.toString())
                 val token = getFirebaseIdToken() ?: return@withContext false

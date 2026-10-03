@@ -53,6 +53,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.Dialog
 import com.epyvra.app.data.CoinTransaction
+import java.security.MessageDigest
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+
+private fun obfuscatedPlayAccountId(uid: String): String =
+    MessageDigest.getInstance("SHA-256").digest(uid.toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -110,6 +117,48 @@ fun TopUpScreen(navController: NavController, viewModel: EpyvraViewModel) {
     var selectedPack by remember { mutableStateOf<CoinPackModel?>(null) }
     var showPaymentSheet by remember { mutableStateOf(false) }
     var paymentProcessingState by remember { mutableStateOf<PaymentState>(PaymentState.Idle) }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner, appSettings.googlePayEnabled, userProfile?.uid, dbPacks) {
+        if (!appSettings.googlePayEnabled || userProfile?.uid.isNullOrBlank() || dbPacks.none { it.googleProductId.isNotBlank() }) {
+            return@DisposableEffect onDispose { }
+        }
+        lateinit var reconciliationClient: BillingClient
+        fun submitCompleted(purchase: Purchase) {
+            if (purchase.purchaseState != Purchase.PurchaseState.PURCHASED) return
+            val pack = dbPacks.firstOrNull { it.googleProductId.isNotBlank() && purchase.products.contains(it.googleProductId) } ?: return
+            viewModel.verifyGooglePlayPurchase(pack.id, purchase.purchaseToken) { }
+        }
+        fun queryOwnedPurchases() {
+            if (!reconciliationClient.isReady) return
+            listOf(BillingClient.ProductType.INAPP, BillingClient.ProductType.SUBS).forEach { productType ->
+                val query = QueryPurchasesParams.newBuilder().setProductType(productType).build()
+                reconciliationClient.queryPurchasesAsync(query) { result, purchases ->
+                    if (result.responseCode == BillingClient.BillingResponseCode.OK) purchases.forEach(::submitCompleted)
+                }
+            }
+        }
+        reconciliationClient = BillingClient.newBuilder(context)
+            .setListener { result, purchases ->
+                if (result.responseCode == BillingClient.BillingResponseCode.OK) purchases.orEmpty().forEach(::submitCompleted)
+            }
+            .enablePendingPurchases(PendingPurchasesParams.newBuilder().enableOneTimeProducts().build())
+            .build()
+        reconciliationClient.startConnection(object : BillingClientStateListener {
+            override fun onBillingSetupFinished(result: BillingResult) {
+                if (result.responseCode == BillingClient.BillingResponseCode.OK) queryOwnedPurchases()
+            }
+            override fun onBillingServiceDisconnected() = Unit
+        })
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) queryOwnedPurchases()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            reconciliationClient.endConnection()
+        }
+    }
     
     var showAllTransactionsDialog by remember { mutableStateOf(false) }
     var transactionsLimit by remember { mutableIntStateOf(50) }
@@ -479,17 +528,25 @@ fun TopUpScreen(navController: NavController, viewModel: EpyvraViewModel) {
                                                             .setListener { billingResult, purchases ->
                                                                 if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && purchases != null && purchases.isNotEmpty()) {
                                                                     val purchase = purchases[0]
-                                                                    val orderId = purchase.orderId ?: purchase.purchaseToken
-                                                                    viewModel.verifyGooglePlayPurchase(selectedPack!!.id, orderId) { success ->
-                                                                        if (success) {
-                                                                            paymentProcessingState = PaymentState.Success(selectedPack!!.amount)
-                                                                        } else {
-                                                                            paymentProcessingState = PaymentState.Idle
-                                                                            Toast.makeText(context, "Purchase verification failed. Please contact support.", Toast.LENGTH_LONG).show()
+                                                                    when (purchase.purchaseState) {
+                                                                        Purchase.PurchaseState.PURCHASED -> viewModel.verifyGooglePlayPurchase(selectedPack!!.id, purchase.purchaseToken) { success ->
+                                                                            if (success) {
+                                                                                paymentProcessingState = PaymentState.Success(selectedPack!!.amount)
+                                                                            } else {
+                                                                                paymentProcessingState = PaymentState.Idle
+                                                                                Toast.makeText(context, "Purchase verification failed. Please contact support.", Toast.LENGTH_LONG).show()
+                                                                            }
                                                                         }
+                                                                        Purchase.PurchaseState.PENDING -> {
+                                                                            paymentProcessingState = PaymentState.Idle
+                                                                            Toast.makeText(context, "Purchase is pending. Coins will be added only after Google confirms payment.", Toast.LENGTH_LONG).show()
+                                                                        }
+                                                                        else -> paymentProcessingState = PaymentState.Cancelled
                                                                     }
-                                                                } else {
+                                                                } else if (billingResult.responseCode == BillingClient.BillingResponseCode.USER_CANCELED) {
                                                                     paymentProcessingState = PaymentState.Cancelled
+                                                                } else {
+                                                                    paymentProcessingState = PaymentState.Idle
                                                                     val msg = context.getString(R.string.gplay_purchase_failed, billingResult.debugMessage)
                                                                     Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
                                                                 }
@@ -535,6 +592,7 @@ fun TopUpScreen(navController: NavController, viewModel: EpyvraViewModel) {
                                                                                 val productDetailsParamsList = listOf(productDetailsParams.build())
                                                                                 val flowParams = BillingFlowParams.newBuilder()
                                                                                     .setProductDetailsParamsList(productDetailsParamsList)
+                                                                                    .setObfuscatedAccountId(obfuscatedPlayAccountId(userProfile?.uid.orEmpty()))
                                                                                     .build()
                                                                                 val flowResult = billingClient.launchBillingFlow(activity, flowParams)
                                                                                 if (flowResult.responseCode != BillingClient.BillingResponseCode.OK) {

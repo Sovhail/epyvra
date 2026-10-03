@@ -8,13 +8,14 @@ export async function POST(request: NextRequest) {
     try {
         const identity = await authenticateFirebaseRequest(request, { requireMobileApiKey: true });
         const body = await request.json();
-        const { packId, gateway, sessionId } = body;
+        const { packId, gateway } = body;
+        const purchaseReference = gateway === 'gplay' ? body.purchaseToken : body.sessionId;
 
-        if (!packId || !gateway || !sessionId) {
+        if (!packId || !gateway || !purchaseReference) {
             return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
         }
 
-        const result = await verifyAndExecutePurchaseAction(identity.uid, packId, gateway, sessionId);
+        const result = await verifyAndExecutePurchaseAction(identity.uid, packId, gateway, purchaseReference);
 
         if (result.success) {
             return NextResponse.json({ success: true, message: result.message || 'Purchase verified and awarded' });

@@ -124,3 +124,31 @@ test('storage provider host components are constrained before credentials are se
   assert.match(storage, /await assertPublicHttpUrl/);
   assert.match(storage, /filePath\.startsWith\(`\$\{uploadRoot\}\$\{sep\}`\)/);
 });
+
+test('Google Play credits only verified purchase tokens through an atomic idempotent grant', async () => {
+  const googlePlay = await source('src', 'lib', 'google-play-purchases.ts');
+  const route = await source('src', 'app', 'api', 'mobile', 'v1', 'verify-purchase', 'route.ts');
+  const payment = await source('src', 'lib', 'actions', 'payment.ts');
+  assert.match(route, /gateway === 'gplay' \? body\.purchaseToken : body\.sessionId/);
+  assert.match(payment, /processGooglePlayPurchase\(userId, pack, sessionId, paySettings\)/);
+  assert.match(googlePlay, /purchaseState !== 0/);
+  assert.match(googlePlay, /purchase\.productId !== productId/);
+  assert.match(googlePlay, /obfuscatedExternalAccountId !== accountHash\(userId\)/);
+  assert.match(googlePlay, /session\.withTransaction/);
+  assert.match(googlePlay, /writeConcern: \{ w: 'majority' \}/);
+  assert.match(googlePlay, /_id: purchaseId/);
+  assert.match(googlePlay, /:consume`/);
+  assert.match(googlePlay, /:acknowledge`/);
+});
+
+test('Android billing submits purchaseToken, handles pending state, and reconciles owned purchases', async () => {
+  const screen = await source('..', 'Android App', 'app', 'src', 'main', 'java', 'com', 'epyvra', 'app', 'ui', 'screens', 'TopUpScreen.kt');
+  const repository = await source('..', 'Android App', 'app', 'src', 'main', 'java', 'com', 'epyvra', 'app', 'data', 'EpyvraRepository.kt');
+  assert.match(screen, /purchase\.purchaseToken/);
+  assert.match(screen, /Purchase\.PurchaseState\.PENDING/);
+  assert.match(screen, /setObfuscatedAccountId\(obfuscatedPlayAccountId/);
+  assert.match(screen, /queryPurchasesAsync/);
+  assert.match(screen, /Lifecycle\.Event\.ON_RESUME/);
+  assert.match(repository, /put\("purchaseToken", purchaseReference\)/);
+  assert.doesNotMatch(screen, /purchase\.orderId \?: purchase\.purchaseToken/);
+});

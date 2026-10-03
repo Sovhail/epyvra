@@ -7,6 +7,7 @@
 - [ ] Firebase project for `com.epyvra.app`, Android `google-services.json`, web config, Admin service account, enabled auth providers, OAuth client, SHA-1/SHA-256, and FCM setup.
 - [ ] OneSignal App ID/API key and authenticated external-user-ID strategy.
 - [ ] Google Play application, exact product IDs/types/base plans/offers, license testers, and Play Developer API service account.
+- [ ] Google Play RTDN Pub/Sub topic/subscription and authenticated webhook or reconciliation worker for cancellations, refunds, voided purchases, and delayed state transitions.
 - [ ] Release keystore path, alias, passwords, and certificate fingerprints.
 - [ ] LevelPlay app key, rewarded/interstitial placements, test mode, mediation network credentials, and consent configuration.
 - [ ] Bunny.net or alternate storage credentials and delivery/security policy.

@@ -825,14 +825,14 @@ class EpyvraViewModel(application: Application) : AndroidViewModel(application) 
         return success
     }
 
-    fun verifyGooglePlayPurchase(packId: String, sessionId: String, onResult: (Boolean) -> Unit) {
+    fun verifyGooglePlayPurchase(packId: String, purchaseToken: String, onResult: (Boolean) -> Unit) {
         val uid = userProfile.value?.uid.orEmpty()
         if (uid.isEmpty()) {
             onResult(false)
             return
         }
         viewModelScope.launch {
-            val success = repository.verifyPurchase(uid, packId, "gplay", sessionId)
+            val success = repository.verifyPurchase(uid, packId, "gplay", purchaseToken)
             if (success) {
                 repository.syncUserProfile(
                     uid = uid,
