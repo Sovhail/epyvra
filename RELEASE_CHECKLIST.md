@@ -43,4 +43,17 @@
 - [ ] `epyvra://` and verified `https://epyvra.com/share/...` links pass; `assetlinks.json` matches the release certificate.
 - [ ] Final repository-wide brand residue is classified and documented in `REBRAND_REPORT.md`.
 
+## Current verification snapshot (2026-10-03)
+
+- [x] Security regression suite: 18/18 passed.
+- [x] Backend TypeScript: passed.
+- [x] Security-sensitive targeted ESLint: passed.
+- [ ] Full ESLint: failed with 422 errors and 266 warnings; rules were not disabled or weakened.
+- [ ] Next.js production build: application compilation passed, then the enforced ESLint phase failed on the same debt.
+- [ ] Android unit/lint/debug/release matrix: the correct local SDK was detected during verification, but dependency resolution failed because `artifacts.applovin.com` could not resolve. A preceding configuration-cache serialization failure was bypassed with `--no-configuration-cache`; no source result was produced.
+- [ ] Android release build additionally requires the owner-supplied release keystore inputs and must fail closed until they exist.
+- [ ] Premium HLS/DASH manifests and segments require production CDN/session authorization; catalog-level entitlement gating alone is not sufficient.
+- [ ] LevelPlay, Play Billing, OneSignal, Firebase, Bunny.net, and deep-link lifecycle require device/vendor-console tests with owner-supplied sandbox configuration.
+- [ ] Rewrite or exclude the upstream `Documontation/*.html` manuals and replace all legacy artwork before distribution.
+
 No publish, production deployment, DNS change, or production credential activation is authorized by this checklist.

@@ -32,3 +32,11 @@ Every remediation must include negative authorization tests, replay/race tests w
 - Review boundary: TypeScript/Next.js API, session, monetary, billing, SSRF, install, storage, and LevelPlay modules; Kotlin Android billing/signing/WebView paths; Firestore rules; and the VPS installer. Trust boundaries include HTTP bearer tokens and bodies, vendor callbacks, Play purchase tokens, installer input, remote URLs, and Android intents. Applicable ASVS areas: V2, V3, V4, V5, V6, V7, V8, V9, V11, V12, V13, and V14.
 - Runtime concurrency tests remain required against a MongoDB replica set before SCR-003 can be closed.
 - Device/vendor tests remain required for Billing, LevelPlay, deep links, and release signing; source-level checks do not prove external service behavior.
+
+## Current release-gate summary (2026-10-03)
+
+- Critical: 0 known findings left wholly unimplemented; 6 remediations still require runtime/device or deployment evidence before formal closure.
+- High: 2 open/partial (`SCR-009` per-segment premium-stream authorization and `SCR-015` full ESLint/build debt); 5 remediated in code with noted runtime evidence still pending.
+- Full `npm run lint` result: failed with 422 errors and 266 warnings. No ESLint or TypeScript checks were disabled.
+- `npm run build` result: source compilation succeeded, then Next.js failed during its mandatory ESLint phase on the same existing debt.
+- Android test/lint/debug build attempt: blocked during external dependency resolution because `artifacts.applovin.com` could not resolve; this is not counted as a passing build.

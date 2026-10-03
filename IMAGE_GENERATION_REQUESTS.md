@@ -12,27 +12,28 @@ The canonical EPYVRA logo source has not been supplied in this repository. Do no
 
 ## Android launcher assets
 
-- Adaptive foreground: 1024 × 1024 transparent PNG/SVG for `drawable/ic_launcher_foreground`; keep critical artwork inside the central 66% safe zone. No background and no separate text.
-- Adaptive background: Android vector or 1024 × 1024 opaque artwork for `drawable/ic_launcher_background`; simple approved brand color/gradient, no text.
-- Legacy icon source: 512 × 512 opaque PNG for generation of `mipmap-mdpi` through `mipmap-xxxhdpi`, including round variants.
-- Notification icon: 96 × 96 transparent monochrome white silhouette for Android status-bar use; no gradients or text.
+- Adaptive foreground: 1024 × 1024 (1:1) transparent PNG named `ic_launcher_foreground.png`, destination `Android App/app/src/main/res/drawable-nodpi/`; keep critical artwork inside the central 66% safe zone. No background or separate text.
+- Adaptive background: 1024 × 1024 (1:1) opaque PNG named `ic_launcher_background.png`, destination `Android App/app/src/main/res/drawable-nodpi/`; approved violet/magenta gradient, no text.
+- Legacy icon source: 512 × 512 (1:1) opaque PNG named `epyvra_launcher_master.png`, destination `brand-assets/source/`; generate `ic_launcher.png` and `ic_launcher_round.png` under each `Android App/app/src/main/res/mipmap-*` density directory. No separate text.
+- Notification icon: 96 × 96 (1:1) transparent monochrome-white silhouette named `ic_stat_epyvra.png`, destination `Android App/app/src/main/res/drawable-nodpi/`; no gradients or text, at least 10% clear space.
 
 ## Android splash and authentication
 
-- Splash mark: 1024 × 1024 transparent PNG, logo only, for centered display on a dark cinematic background.
-- Splash background: 1440 × 2560 opaque portrait artwork, subtle cinematic lighting/texture, generous empty center area, no text, posters, actors, or recognizable copyrighted content.
-- Login background: 1440 × 2560 opaque portrait artwork, dark premium theater/abstract light motif, low visual noise behind form fields, no text or people presented as licensed talent.
+- Splash mark: 1024 × 1024 (1:1) transparent PNG named `epyvra_splash_logo.png`, destination `Android App/app/src/main/res/drawable-nodpi/`; logo only inside the central 60% safe area, no additional text.
+- Splash background: 1440 × 2560 (9:16) opaque WebP named `epyvra_splash_background.webp`, destination `Android App/app/src/main/res/drawable-nodpi/`; subtle cinematic lighting, empty center area, no text, posters, actors, or recognizable copyrighted content.
+- Login background: 1440 × 2560 (9:16) opaque WebP named `epyvra_login_background.webp`, destination `Android App/app/src/main/res/drawable-nodpi/`; low visual noise behind form fields, no text or recognizable people.
 
 ## Onboarding and empty states
 
-- Three onboarding illustrations: each 1080 × 1080 transparent PNG; themes are vertical drama discovery, secure premium episode unlocking, and rewards/watchlist. No embedded text so localization remains native.
-- Empty watchlist, offline/error, and no-results illustrations: each 1024 × 1024 transparent PNG, consistent line/lighting style, no embedded text.
+- Three onboarding illustrations: each 1080 × 1080 (1:1) transparent PNG named `onboarding_discover.png`, `onboarding_premium.png`, and `onboarding_rewards.png`, destination `Android App/app/src/main/res/drawable-nodpi/`; subject inside the central 80%, no embedded text.
+- Empty states: 1024 × 1024 (1:1) transparent PNG files `empty_watchlist.png`, `empty_offline.png`, and `empty_results.png`, destination `Android App/app/src/main/res/drawable-nodpi/`; consistent line/lighting style, no text.
 
 ## Web/PWA exports
 
-- Header/admin logo: horizontal SVG plus 512 × 128 transparent PNG.
-- Favicon source: simplified square mark at 512 × 512, legible at 16 × 16.
-- PWA icons: opaque 192 × 192 and 512 × 512 PNG, including maskable 512 × 512 with safe-zone padding.
-- OpenGraph default: 1200 × 630 opaque image with approved logo and abstract cinematic background; brand text only, no catalog/movie artwork.
+- Header/admin logo: 2048 × 512 (4:1) transparent files `epyvra-logo-horizontal.svg` and `epyvra-logo-horizontal.png`, destination `code/public/brand/`; approved mark and wordmark only.
+- Favicon source: 512 × 512 (1:1) square mark named `favicon-source.png`, destination `code/public/brand/`; legible at 16 × 16, no separate text.
+- PWA icons: opaque `icon-192.png`, `icon-512.png`, and `icon-maskable-512.png`, destination `code/public/icons/`; maskable artwork inside the central 66%, no separate text.
+- OpenGraph default: 1200 × 630 (1.91:1) opaque JPEG named `opengraph-default.jpg`, destination `code/public/brand/`; approved logo and abstract cinematic background, brand text permitted, no catalog/movie artwork, 60 px edge safe area.
+- Generic promotion: 1920 × 1080 (16:9) and 1080 × 1920 (9:16) opaque WebP files `promo-landscape.webp` and `promo-portrait.webp`, destination `code/public/brand/`; charcoal with restrained violet/magenta/pink light, no text or recognizable people, central 70% safe area.
 
 All final assets require owner approval and must be checked for transparency, safe zones, small-size legibility, RTL-neutral composition, and licensing before replacing current files.
