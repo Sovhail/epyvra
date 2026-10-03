@@ -59,6 +59,10 @@ function ipBytes(ip: string): Buffer {
 }
 
 function advancedToken(key: string, path: string, expiresAt: number, ip: string): string {
+  // Bunny Advanced Token Authentication (current official algorithm):
+  // https://bunny.net/docs/cdn/security/token-authentication/advanced
+  // Official implementation: https://github.com/BunnyWay/BunnyCDN.TokenAuthentication/tree/master/nodejs
+  // This is deliberately not Bunny's separate legacy/basic MD5 token mode.
   const hmac = createHmac('sha256', key);
   hmac.update(path);
   hmac.update(String(expiresAt));

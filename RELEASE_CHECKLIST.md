@@ -12,7 +12,7 @@
 - [ ] LevelPlay app key, rewarded/interstitial placements, test mode, mediation network credentials, and consent configuration.
 - [ ] `LEVELPLAY_APP_KEY`, `LEVELPLAY_S2S_PRIVATE_KEY` (at least 32 random characters), and `LEVELPLAY_REWARD_COINS`; configure the HTTPS callback with timestamp, eventId, userId, rewards, signature, and appKey parameters.
 - [ ] Bunny.net or alternate storage credentials and delivery/security policy.
-- [ ] Bunny pull-zone hostname and an independent token-authentication key (`BUNNY_CDN_HOST`, `BUNNY_CDN_TOKEN_KEY`); enable Token Authentication, block origin bypass, and store every premium episode in its own episode-ID directory.
+- [ ] Bunny pull-zone hostname and an independent token-authentication key (`BUNNY_CDN_HOST`, `BUNNY_CDN_TOKEN_KEY`); enable **Advanced Token Authentication** (HMAC-SHA256) and Token IP Validation—not legacy/basic token mode—block origin bypass, and store every premium episode in its own episode-ID directory.
 - [ ] SMTP/support identity, payment gateway credentials, CAPTCHA keys, and optional AI keys for enabled services.
 - [ ] `ADMIN_SESSION_SECRET`: an independently generated secret of at least 32 random characters, supplied only to the backend runtime.
 - [ ] `INSTALL_SETUP_TOKEN`: a one-time random value of at least 32 characters; remove it from the runtime environment after installation.
