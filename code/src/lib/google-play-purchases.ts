@@ -143,6 +143,9 @@ export async function processGooglePlayPurchase(
     }
     orderId = purchase.latestOrderId;
     expiryTime = lineItem.expiryTime;
+    if (!expiryTime || !Number.isFinite(new Date(expiryTime).getTime()) || new Date(expiryTime).getTime() <= Date.now()) {
+      return { success: false, error: 'Google Play subscription expiry is invalid or has elapsed.' };
+    }
     needsFinalization = purchase.acknowledgementState !== 'ACKNOWLEDGEMENT_STATE_ACKNOWLEDGED';
   } else {
     const url = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodedPackage}/purchases/products/${encodedProduct}/tokens/${encodedToken}`;
@@ -171,10 +174,7 @@ export async function processGooglePlayPurchase(
       const now = new Date();
       let description: string;
       if (isSubscription) {
-        const currentExpiry = user.vipExpiry ? new Date(user.vipExpiry) : now;
-        const calculated = new Date(Math.max(now.getTime(), currentExpiry.getTime()) + durationDays * 86_400_000);
-        const verifiedExpiry = expiryTime ? new Date(expiryTime) : calculated;
-        const vipExpiry = verifiedExpiry > calculated ? verifiedExpiry : calculated;
+        const vipExpiry = new Date(expiryTime as string);
         await users.updateOne({ _id: userId }, { $set: { isVip: true, vipExpiry } }, { session });
         description = `Purchased Membership: ${String(pack.name ?? productId)}`;
       } else {

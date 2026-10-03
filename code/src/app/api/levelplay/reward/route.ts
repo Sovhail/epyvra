@@ -4,6 +4,7 @@ import { MongoServerError } from 'mongodb';
 import { getDb } from '@/lib/mongodb';
 
 export const dynamic = 'force-dynamic';
+const MAX_CALLBACK_AGE_MS = 5 * 60 * 1000;
 
 function plainText(body: string, status = 200) {
   return new NextResponse(body, { status, headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' } });
@@ -20,12 +21,17 @@ export async function GET(request: NextRequest) {
   const privateKey = process.env.LEVELPLAY_S2S_PRIVATE_KEY ?? '';
   const expectedAppKey = process.env.LEVELPLAY_APP_KEY ?? '';
   const configuredReward = Number(process.env.LEVELPLAY_REWARD_COINS);
+  const timestampValue = Number(timestamp);
+  const timestampMs = timestampValue < 10_000_000_000 ? timestampValue * 1000 : timestampValue;
 
   if (privateKey.length < 32 || !expectedAppKey || !Number.isSafeInteger(configuredReward) || configuredReward <= 0) {
     return plainText('LevelPlay callback is not configured.', 503);
   }
   if (!/^[A-Za-z0-9_-]{1,128}$/.test(eventId) || !/^[a-f0-9]{64}$/.test(userId) || appKey !== expectedAppKey) {
     return plainText('Invalid callback parameters.', 400);
+  }
+  if (!Number.isSafeInteger(timestampValue) || Math.abs(Date.now() - timestampMs) > MAX_CALLBACK_AGE_MS) {
+    return plainText('Expired callback.', 403);
   }
   const rewardAmount = Number(rewards);
   if (!Number.isSafeInteger(rewardAmount) || rewardAmount !== configuredReward) return plainText('Invalid reward amount.', 400);

@@ -186,10 +186,19 @@ test('LevelPlay rewards require a signed unique server callback', async () => {
   assert.match(callback, /timingSafeEqual/);
   assert.match(callback, /operationId = `levelplay:\$\{eventId\}`/);
   assert.match(callback, /session\.withTransaction/);
+  assert.match(callback, /Math\.abs\(Date\.now\(\) - timestampMs\) > MAX_CALLBACK_AGE_MS/);
+  assert.match(callback, /Expired callback/);
   assert.match(callback, /writeConcern: \{ w: 'majority' \}/);
   assert.match(createUser, /levelPlayUserId: createHash\('sha256'\)\.update\(uid\)/);
   assert.match(adsManager, /override fun onAdRewarded/);
   assert.match(adsManager, /signed LevelPlay S2S callback is the sole coin grant authority/);
+});
+
+test('Google Play subscriptions use only the verified future expiry', async () => {
+  const googlePlay = await source('src', 'lib', 'google-play-purchases.ts');
+  assert.match(googlePlay, /Google Play subscription expiry is invalid or has elapsed/);
+  assert.match(googlePlay, /const vipExpiry = new Date\(expiryTime as string\)/);
+  assert.doesNotMatch(googlePlay, /verifiedExpiry > calculated/);
 });
 
 test('premium episode URLs require a verified entitlement', async () => {
