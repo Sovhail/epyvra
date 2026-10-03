@@ -11,11 +11,23 @@ import { getDemoModeMutationError } from '../demo-mode';
 import { ADMIN_SESSION_COOKIE, createAdminSessionToken, verifyAdminSessionToken } from '../admin-session';
 import { authorizeInstall } from '../install-auth';
 
+type SettingsDocument = { _id: string } & Record<string, unknown>;
+type RateLimitDocument = { _id: string; count?: number; createdAt?: Date };
+type AdminProfileUpdate = {
+    displayName: string;
+    email: string;
+    username: string;
+    passwordHash?: string;
+    passwordSalt?: string;
+    passwordAlgorithm?: string;
+    sessionVersion?: number;
+};
+
 /**
  * Handles Administrator authentication login.
  * Verifies the password and transparently upgrades legacy SHA-256 hashes.
  */
-export async function login(prevState: any, formData: FormData) {
+export async function login(_prevState: unknown, formData: FormData) {
   const loginSchema = z.object({ username: z.string(), password: z.string() });
   const validatedFields = loginSchema.safeParse(Object.fromEntries(formData.entries()));
 
@@ -32,30 +44,32 @@ export async function login(prevState: any, formData: FormData) {
     const today = new Date().toISOString().split('T')[0];
     const rateLimitId = `login_${today}_${ip}`;
     
-    const generalSettings = await db.collection('settings').findOne({ _id: 'general' as any });
+    const settings = db.collection<SettingsDocument>('settings');
+    const rateLimits = db.collection<RateLimitDocument>('rate_limits');
+    const generalSettings = await settings.findOne({ _id: 'general' });
     const maxFailedLogins = Number(generalSettings?.maxFailedLoginsPerIp) || 5;
 
-    const rateLimit = await db.collection('rate_limits').findOne({ _id: rateLimitId as any });
+    const rateLimit = await rateLimits.findOne({ _id: rateLimitId });
     if (rateLimit && rateLimit.count >= maxFailedLogins) {
         return { error: `Too many failed login attempts. Your IP is blocked for today.` };
     }
 
-    const adminData = await db.collection('settings').findOne({ _id: 'admin' as any });
+    const adminData = await settings.findOne({ _id: 'admin' });
     
     if (adminData && typeof adminData.passwordHash === 'string' && typeof adminData.passwordSalt === 'string') {
       const verification = verifyPassword(password, adminData.passwordSalt, adminData.passwordHash);
       if (username === adminData.username && verification.valid) {
         if (verification.needsRehash) {
           const passwordSalt = randomBytes(16).toString('hex');
-          await db.collection('settings').updateOne(
-            { _id: 'admin' as any },
+          await settings.updateOne(
+            { _id: 'admin' },
             { $set: { passwordHash: hashPassword(password, passwordSalt), passwordSalt, passwordAlgorithm: 'pbkdf2-sha512' } }
           );
         }
         
         // Reset rate limit on success
         if (rateLimit) {
-            await db.collection('rate_limits').deleteOne({ _id: rateLimitId as any });
+            await rateLimits.deleteOne({ _id: rateLimitId });
         }
 
         const sessionVersion = Number(adminData.sessionVersion ?? 1);
@@ -73,15 +87,15 @@ export async function login(prevState: any, formData: FormData) {
     }
     
     // Increment failed login attempts
-    await db.collection('rate_limits').updateOne(
-        { _id: rateLimitId as any },
+    await rateLimits.updateOne(
+        { _id: rateLimitId },
         { $inc: { count: 1 }, $setOnInsert: { createdAt: new Date() } },
         { upsert: true }
     );
 
     return { error: 'Invalid username or password.' };
-  } catch (error: any) {
-    if (error.message && error.message.includes('NEXT_REDIRECT')) {
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('NEXT_REDIRECT')) {
         throw error;
     }
     console.error('Login error:', error);
@@ -103,7 +117,7 @@ export async function logout() {
  * Updates the admin profile details (username, email, or password).
  * Salts and hashes new password if updated.
  */
-export async function updateAdminProfile(prevState: any, formData: FormData) {
+export async function updateAdminProfile(_prevState: unknown, formData: FormData) {
     if (!(await verifyAdminSession())) return { error: 'Unauthorized access.' };
     const demoError = getDemoModeMutationError();
     if (demoError) return demoError;
@@ -121,13 +135,14 @@ export async function updateAdminProfile(prevState: any, formData: FormData) {
     }
 
     try {
-        const admin = await db.collection('settings').findOne({ _id: 'admin' as any });
+        const settings = db.collection<SettingsDocument>('settings');
+        const admin = await settings.findOne({ _id: 'admin' });
         if (!admin) return { error: 'Admin record not found' };
 
         const verification = verifyPassword(currentPassword, admin.passwordSalt, admin.passwordHash);
         if (!verification.valid) return { error: 'Current password incorrect' };
 
-        const updateData: any = { displayName, email, username };
+        const updateData: AdminProfileUpdate = { displayName, email, username };
         if (newPassword || verification.needsRehash) {
             const salt = randomBytes(16).toString('hex');
             const hash = hashPassword(newPassword || currentPassword, salt);
@@ -138,7 +153,7 @@ export async function updateAdminProfile(prevState: any, formData: FormData) {
 
         const sessionVersion = Number(admin.sessionVersion ?? 1) + 1;
         updateData.sessionVersion = sessionVersion;
-        await db.collection('settings').updateOne({ _id: 'admin' as any }, { $set: updateData });
+        await settings.updateOne({ _id: 'admin' }, { $set: updateData });
         const token = await createAdminSessionToken(username, sessionVersion);
         const cookieStore = await cookies();
         cookieStore.set(ADMIN_SESSION_COOKIE, token, {
@@ -149,7 +164,7 @@ export async function updateAdminProfile(prevState: any, formData: FormData) {
             maxAge: 60 * 60 * 12,
         });
         return { success: true, message: 'Profile updated successfully' };
-    } catch (e: any) {
+    } catch (e) {
         return handleProfileError('updateAdminProfile', e, 'Failed to update admin profile.');
     }
 }
@@ -177,7 +192,7 @@ export async function installSetupAdminAction(data: { username: string, email: s
         };
         await db.collection<Record<string, unknown> & { _id: string }>('settings').insertOne({ _id: 'admin', ...adminProfile });
         return { success: true };
-    } catch (e: any) {
+    } catch (e) {
         return handleError('installSetupAdminAction', e, 'Admin profile setup failed.');
     }
 }
@@ -189,7 +204,7 @@ export async function testLicenseAction(licenseKey: string) {
     if (!(await verifyAdminSession())) return { success: false, message: 'Unauthorized access.' };
     const demoError = getDemoModeMutationError();
     if (demoError) return demoError;
-    if (licenseKey.length > 10) { const db = await getDb(); await db.collection('settings').updateOne({ _id: 'general' as any }, { $set: { isLicenseActive: true, licenseKey } }, { upsert: true }); return { success: true, message: 'License activated successfully!' }; }
+        if (licenseKey.length > 10) { const db = await getDb(); await db.collection<SettingsDocument>('settings').updateOne({ _id: 'general' }, { $set: { isLicenseActive: true, licenseKey } }, { upsert: true }); return { success: true, message: 'License activated successfully!' }; }
     return { success: false, message: 'Invalid license key.' };
 }
 
@@ -213,7 +228,7 @@ export async function verifyAdminSession(): Promise<boolean> {
     }
 }
 
-export async function adminForgotPassword(prevState: any, formData: FormData) {
+export async function adminForgotPassword(_prevState: unknown, formData: FormData) {
     const email = typeof formData.get('email') === 'string' ? formData.get('email') as string : '';
     if (!email) return { error: 'Email is required' };
 
@@ -226,15 +241,17 @@ export async function adminForgotPassword(prevState: any, formData: FormData) {
         const today = new Date().toISOString().split('T')[0];
         const rateLimitId = `reset_${today}_${ip}`;
         
-        const generalSettings = await db.collection('settings').findOne({ _id: 'general' as any });
+        const settingsCollection = db.collection<SettingsDocument>('settings');
+        const rateLimits = db.collection<RateLimitDocument>('rate_limits');
+        const generalSettings = await settingsCollection.findOne({ _id: 'general' });
         const maxResets = Number(generalSettings?.maxPasswordResetsPerDay) || 3;
 
-        const rateLimit = await db.collection('rate_limits').findOne({ _id: rateLimitId as any });
+        const rateLimit = await rateLimits.findOne({ _id: rateLimitId });
         if (rateLimit && rateLimit.count >= maxResets) {
             return { error: `You have reached the maximum number of password reset requests for today.` };
         }
 
-        const admin = await db.collection('settings').findOne({ _id: 'admin' as any });
+        const admin = await settingsCollection.findOne({ _id: 'admin' });
         
         if (!admin || admin.email !== email.trim()) {
             return { error: 'Invalid admin email address.' };
@@ -243,12 +260,12 @@ export async function adminForgotPassword(prevState: any, formData: FormData) {
         const token = randomBytes(32).toString('hex');
         const expiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
-        await db.collection('settings').updateOne(
-            { _id: 'admin' as any },
+        await settingsCollection.updateOne(
+            { _id: 'admin' },
             { $set: { resetToken: token, resetTokenExpiry: expiry } }
         );
 
-        const settings = await db.collection('settings').findOne({ _id: 'general' as any });
+        const settings = await settingsCollection.findOne({ _id: 'general' });
         const domain = settings?.siteUrl || (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000');
         const resetLink = `${domain.replace(/\/$/, '')}/admin/reset-password?token=${token}`;
 
@@ -269,20 +286,20 @@ export async function adminForgotPassword(prevState: any, formData: FormData) {
         });
         
         // Increment reset attempts
-        await db.collection('rate_limits').updateOne(
-            { _id: rateLimitId as any },
+        await rateLimits.updateOne(
+            { _id: rateLimitId },
             { $inc: { count: 1 }, $setOnInsert: { createdAt: new Date() } },
             { upsert: true }
         );
 
         return { success: true, message: 'A password reset link has been sent to your email.' };
-    } catch (e: any) {
+    } catch (e) {
         console.error('Forgot password error:', e);
         return { error: 'Failed to process request. Please try again later.' };
     }
 }
 
-export async function adminResetPassword(prevState: any, formData: FormData) {
+export async function adminResetPassword(_prevState: unknown, formData: FormData) {
     const token = typeof formData.get('token') === 'string' ? formData.get('token') as string : '';
     const password = typeof formData.get('password') === 'string' ? formData.get('password') as string : '';
     
@@ -291,8 +308,9 @@ export async function adminResetPassword(prevState: any, formData: FormData) {
 
     try {
         const db = await getDb();
-        const admin = await db.collection('settings').findOne({ 
-            _id: 'admin' as any,
+        const settings = db.collection<SettingsDocument>('settings');
+        const admin = await settings.findOne({
+            _id: 'admin',
             resetToken: token,
             resetTokenExpiry: { $gt: new Date() }
         });
@@ -304,8 +322,8 @@ export async function adminResetPassword(prevState: any, formData: FormData) {
         const salt = randomBytes(16).toString('hex');
         const hash = hashPassword(password, salt);
 
-        await db.collection('settings').updateOne(
-            { _id: 'admin' as any },
+        await settings.updateOne(
+            { _id: 'admin' },
             { 
                 $set: { 
                     passwordHash: hash, 
@@ -321,7 +339,7 @@ export async function adminResetPassword(prevState: any, formData: FormData) {
         );
 
         return { success: true, message: 'Password has been reset successfully' };
-    } catch (e: any) {
+    } catch (e) {
         console.error('Reset password error:', e);
         return { error: 'Failed to reset password. Please try again later.' };
     }
