@@ -152,3 +152,17 @@ test('Android billing submits purchaseToken, handles pending state, and reconcil
   assert.match(repository, /put\("purchaseToken", purchaseReference\)/);
   assert.doesNotMatch(screen, /purchase\.orderId \?: purchase\.purchaseToken/);
 });
+
+test('Android release signing fails closed and WebViews reject mixed content', async () => {
+  const build = await source('..', 'Android App', 'app', 'build.gradle.kts');
+  const checkout = await source('..', 'Android App', 'app', 'src', 'main', 'java', 'com', 'epyvra', 'app', 'ui', 'screens', 'CheckoutWebViewDialog.kt');
+  const player = await source('..', 'Android App', 'app', 'src', 'main', 'java', 'com', 'epyvra', 'app', 'ui', 'screens', 'VideoPlayerScreen.kt');
+  assert.doesNotMatch(build, /signingConfig\s*=\s*if[\s\S]*debugConfig/);
+  assert.match(build, /Release signing is not configured/);
+  assert.match(build, /KEY_ALIAS/);
+  assert.match(checkout, /MIXED_CONTENT_NEVER_ALLOW/);
+  assert.match(checkout, /allowFileAccess = false/);
+  assert.match(checkout, /scheme == "https"/);
+  assert.match(player, /MIXED_CONTENT_NEVER_ALLOW/);
+  assert.doesNotMatch(player, /MIXED_CONTENT_ALWAYS_ALLOW/);
+});

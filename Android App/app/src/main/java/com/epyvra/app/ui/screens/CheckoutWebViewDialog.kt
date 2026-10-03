@@ -268,6 +268,9 @@ fun CheckoutWebViewDialog(
                                             settings.builtInZoomControls = false
                                             settings.displayZoomControls = false
                                             settings.setSupportMultipleWindows(false)
+                                            settings.mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_NEVER_ALLOW
+                                            settings.allowFileAccess = false
+                                            settings.allowContentAccess = false
 
                                             webViewClient = object : WebViewClient() {
                                                 override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
@@ -309,7 +312,11 @@ fun CheckoutWebViewDialog(
                                                     return false
                                                 }
                                             }
-                                            loadUrl(url)
+                                            if (android.net.Uri.parse(url).scheme == "https") loadUrl(url)
+                                            else {
+                                                android.widget.Toast.makeText(context, "Insecure checkout URL was blocked.", android.widget.Toast.LENGTH_LONG).show()
+                                                onCancel()
+                                            }
                                         }
                                     },
                                     modifier = Modifier

@@ -5,6 +5,16 @@ plugins {
   alias(libs.plugins.roborazzi)
 }
 
+val releaseKeystorePath = System.getenv("KEYSTORE_PATH")
+val releaseStorePassword = System.getenv("STORE_PASSWORD")
+val releaseKeyAlias = System.getenv("KEY_ALIAS")
+val releaseKeyPassword = System.getenv("KEY_PASSWORD")
+val releaseSigningConfigured = !releaseKeystorePath.isNullOrBlank()
+  && !releaseStorePassword.isNullOrBlank()
+  && !releaseKeyAlias.isNullOrBlank()
+  && !releaseKeyPassword.isNullOrBlank()
+  && file(releaseKeystorePath!!).isFile
+
 // Firebase credentials are supplied per environment and are intentionally not
 // committed. Apply the Google Services plugin only when the owner-provided
 // configuration is present.
@@ -27,12 +37,13 @@ android {
   }
 
   signingConfigs {
-    create("release") {
-      val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks"
-      storeFile = file(keystorePath)
-      storePassword = System.getenv("STORE_PASSWORD")
-      keyAlias = "upload"
-      keyPassword = System.getenv("KEY_PASSWORD")
+    if (releaseSigningConfigured) {
+      create("release") {
+        storeFile = file(releaseKeystorePath!!)
+        storePassword = releaseStorePassword
+        keyAlias = releaseKeyAlias
+        keyPassword = releaseKeyPassword
+      }
     }
     create("debugConfig") {
       storeFile = file("${rootDir}/debug.keystore")
@@ -47,7 +58,7 @@ android {
       isCrunchPngs = false
       isMinifyEnabled = false
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-      signingConfig = if (file("${rootDir}/my-upload-key.jks").exists()) signingConfigs.getByName("release") else signingConfigs.getByName("debugConfig")
+      signingConfig = signingConfigs.findByName("release")
     }
     debug {
       signingConfig = signingConfigs.getByName("debugConfig")
@@ -62,6 +73,15 @@ android {
     buildConfig = true
   }
   testOptions { unitTests { isIncludeAndroidResources = true } }
+}
+
+gradle.taskGraph.whenReady {
+  val requestsReleaseArtifact = allTasks.any { task ->
+    task.project == project && task.name.contains("release", ignoreCase = true)
+  }
+  if (requestsReleaseArtifact && !releaseSigningConfigured) {
+    throw GradleException("Release signing is not configured. Set KEYSTORE_PATH, STORE_PASSWORD, KEY_ALIAS, and KEY_PASSWORD; debug signing is forbidden for release artifacts.")
+  }
 }
 
 

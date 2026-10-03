@@ -15,8 +15,8 @@ Status: remediation in progress. Production release is prohibited while Critical
 | SCR-009 | High | HLS/DASH premium delivery can be accessed by URL possession | Open |
 | SCR-010 | High | Billing uses order ID instead of purchase token and lacks lifecycle handling | Open |
 | SCR-011 | High | Payment WebView success/navigation validation is weak | Open |
-| SCR-012 | High | Release signing can silently fall back to debug key | Open |
-| SCR-013 | High | Android cleartext/mixed-content WebView exposure | Partially mitigated: manifest cleartext disabled |
+| SCR-012 | High | Release signing can silently fall back to debug key | Remediated in code: release tasks fail closed unless all explicit signing inputs and keystore are present; no debug fallback |
+| SCR-013 | High | Android cleartext/mixed-content WebView exposure | Remediated in code: manifest cleartext disabled; checkout and video WebViews reject mixed content and local file/content access; checkout entry URL requires HTTPS |
 | SCR-014 | High | VPS installer ships static overprivileged MongoDB credentials | Open |
 | SCR-015 | High | Next build suppresses TypeScript/ESLint failures | Open |
 

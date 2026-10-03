@@ -1105,7 +1105,9 @@ fun EpisodePlayerPage(
                             settings.userAgentString = settings.userAgentString.replace("; wv", "")
                             settings.loadWithOverviewMode = false
                             settings.useWideViewPort = false
-                            settings.mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+                            settings.mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_NEVER_ALLOW
+                            settings.allowFileAccess = false
+                            settings.allowContentAccess = false
                             android.webkit.CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
                             
                             setOnTouchListener { _, event ->
