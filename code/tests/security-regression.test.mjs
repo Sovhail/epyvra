@@ -202,3 +202,11 @@ test('premium episode URLs require a verified entitlement', async () => {
   assert.match(repository, /header\("Authorization", "Bearer \$it"\)/);
   assert.match(repository, /getSharedPreferences\("epyvra_cache"[\s\S]*\.clear\(\)/);
 });
+
+test('Android checkout trusts only exact first-party result callbacks', async () => {
+  const checkout = await source('..', 'Android App', 'app', 'src', 'main', 'java', 'com', 'epyvra', 'app', 'ui', 'screens', 'CheckoutWebViewDialog.kt');
+  assert.match(checkout, /candidate\.host\.equals\(initial\.host, ignoreCase = true\)/);
+  assert.match(checkout, /candidate\.path == "\/wallet"/);
+  assert.match(checkout, /isAllowedCheckoutNavigation\(url, loadUrl\)/);
+  assert.doesNotMatch(checkout, /loadUrl\.contains\("status=success"\)/);
+});

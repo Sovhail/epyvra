@@ -37,6 +37,33 @@ import androidx.compose.ui.res.stringResource
 
 enum class CheckoutResult { NONE, SUCCESS, CANCELLED }
 
+private val CHECKOUT_PROVIDER_HOSTS = setOf(
+    "stripe.com", "paypal.com", "paypalobjects.com", "razorpay.com", "flutterwave.com",
+)
+
+internal fun isAllowedCheckoutNavigation(initialUrl: String, candidateUrl: String): Boolean {
+    val initial = android.net.Uri.parse(initialUrl)
+    val candidate = android.net.Uri.parse(candidateUrl)
+    if (!candidate.scheme.equals("https", ignoreCase = true)) return false
+    val host = candidate.host?.lowercase() ?: return false
+    val initialHost = initial.host?.lowercase()
+    return host == initialHost || CHECKOUT_PROVIDER_HOSTS.any { host == it || host.endsWith(".$it") }
+}
+
+internal fun trustedCheckoutResult(initialUrl: String, candidateUrl: String): CheckoutResult {
+    val initial = android.net.Uri.parse(initialUrl)
+    val candidate = android.net.Uri.parse(candidateUrl)
+    val trustedCallback = candidate.scheme.equals("https", ignoreCase = true) &&
+        candidate.host.equals(initial.host, ignoreCase = true) &&
+        candidate.port == initial.port && candidate.path == "/wallet"
+    if (!trustedCallback) return CheckoutResult.NONE
+    return when (candidate.getQueryParameter("status")) {
+        "success" -> CheckoutResult.SUCCESS
+        "cancel" -> CheckoutResult.CANCELLED
+        else -> CheckoutResult.NONE
+    }
+}
+
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun CheckoutWebViewDialog(
@@ -288,10 +315,10 @@ fun CheckoutWebViewDialog(
                                                     view: WebView?,
                                                     request: WebResourceRequest?
                                                 ): Boolean {
-                                                    val loadUrl = request?.url?.toString() ?: return false
+                                                    val loadUrl = request?.url?.toString() ?: return true
+                                                    val trustedResult = trustedCheckoutResult(url, loadUrl)
 
-                                                    // Detect success: Stripe/PayPal redirect to /wallet?status=success
-                                                    if (loadUrl.contains("status=success")) {
+                                                    if (trustedResult == CheckoutResult.SUCCESS) {
                                                         val uri = android.net.Uri.parse(loadUrl)
                                                         val packId = uri.getQueryParameter("pack_id")
                                                         val sessionId = uri.getQueryParameter("session_id")
@@ -301,14 +328,16 @@ fun CheckoutWebViewDialog(
                                                         return true
                                                     }
 
-                                                    // Detect cancel: redirect to /wallet?status=cancel
-                                                    if (loadUrl.contains("status=cancel")) {
+                                                    if (trustedResult == CheckoutResult.CANCELLED) {
                                                         result = CheckoutResult.CANCELLED
                                                         onCancel()
                                                         return true
                                                     }
 
-                                                    // Allow all other URLs to load inside WebView
+                                                    if (!isAllowedCheckoutNavigation(url, loadUrl)) {
+                                                        android.widget.Toast.makeText(context, "Untrusted checkout destination was blocked.", android.widget.Toast.LENGTH_LONG).show()
+                                                        return true
+                                                    }
                                                     return false
                                                 }
                                             }
