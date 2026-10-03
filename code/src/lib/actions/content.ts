@@ -1088,7 +1088,7 @@ export async function testStorageConnectionAction(provider: string, config: any)
             }
         }
 
-        let clientConfig: any = { credentials: { accessKeyId: config.accessKeyId || config.applicationKeyId, secretAccessKey: config.secretAccessKey || config.applicationKey }, region: config.region || 'us-east-1' };
+        const clientConfig: any = { credentials: { accessKeyId: config.accessKeyId || config.applicationKeyId, secretAccessKey: config.secretAccessKey || config.applicationKey }, region: config.region || 'us-east-1' };
         if (provider === 'gcs') { clientConfig.endpoint = 'https://storage.googleapis.com'; clientConfig.forcePathStyle = true; clientConfig.region = 'auto'; }
         else if (config.endpoint) { clientConfig.endpoint = (await assertPublicHttpUrl(config.endpoint.startsWith('http') ? config.endpoint : `https://${config.endpoint}`)).toString(); clientConfig.forcePathStyle = true; }
         const s3 = new S3Client(clientConfig); await s3.send(new PutObjectCommand({ Bucket: config.bucket, Key: 'test.txt', Body: 'test', ContentType: 'text/plain' }));

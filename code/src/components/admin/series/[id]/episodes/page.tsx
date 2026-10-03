@@ -111,7 +111,7 @@ function EpisodeDialog({ seriesId, episodeToEdit, children, nextEpisodeNumber, o
             }
         }
     }, [isOpen, episodeToEdit, isEditMode, nextEpisodeNumber]);
-    
+
     // --- Handlers for form state changes ---
 
     const handleEpisodeChange = (epIndex: number, field: 'episodeInSeason', value: any) => {
@@ -476,14 +476,14 @@ export default function SeriesEpisodesPage() {
     fetchData();
   }, [seriesId]);
 
-  if (typeof seriesId !== 'string') {
-    return <div>Invalid Series ID</div>;
-  }
-
   const nextEpisodeNumber = useMemo(() => {
       if (episodes.length === 0) return 1;
       return Math.max(...episodes.map(e => e.episodeInSeason)) + 1;
   }, [episodes]);
+
+  if (typeof seriesId !== 'string') {
+    return <div>Invalid Series ID</div>;
+  }
 
   return (
     <div className="space-y-6">

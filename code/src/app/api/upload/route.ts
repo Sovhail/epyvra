@@ -63,7 +63,7 @@ async function uploadToS3(buffer: Buffer, originalName: string, subDir: string, 
     }
 
     // Configure the AWS SDK S3 client options
-    let clientConfig: any = {
+    const clientConfig: any = {
         credentials: { 
             accessKeyId: config.accessKeyId || config.applicationKeyId, 
             secretAccessKey: config.secretAccessKey || config.applicationKey 
@@ -292,7 +292,7 @@ async function handleLocalStorage(buffer: Buffer, file: File, type: string, iden
     const isImage = detectedMime.startsWith('image/');
     
     const isSubtitle = detectedMime === 'text/vtt' || detectedExt === 'vtt' || detectedExt === 'srt';
-    let subDir = isImage ? 'images' : isSubtitle ? 'subtitles' : 'videos';
+    const subDir = isImage ? 'images' : isSubtitle ? 'subtitles' : 'videos';
     const cleanOrigName = file.name ? file.name.replace(/[^a-z0-9_.-]/gi, '_').toLowerCase() : 'file';
     let filename = `${Date.now()}-${cleanOrigName}`;
     if (!filename.endsWith(`.${extension}`)) {

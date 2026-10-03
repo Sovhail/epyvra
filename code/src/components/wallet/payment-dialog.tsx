@@ -129,7 +129,7 @@ export function PaymentDialog({
       return '/img/logo-stripe.png';
   }
 
-  const gatewaysList = useMemo(() => [
+  const gatewaysList = [
       { id: 'stripe', name: 'Stripe', logo: getGatewayLogo('stripe') },
       { id: 'paypal', name: 'PayPal', logo: getGatewayLogo('paypal') },
       { id: 'razorpay', name: 'Razorpay', logo: getGatewayLogo('razorpay') },
@@ -137,7 +137,7 @@ export function PaymentDialog({
       { id: 'phonepe', name: 'PhonePe', logo: getGatewayLogo('phonepe') },
       { id: 'cashfree', name: 'Cashfree', logo: getGatewayLogo('cashfree') },
       { id: 'payu', name: 'PayU', logo: getGatewayLogo('payu') },
-  ].filter(g => enabledGateways.includes(g.id)), [enabledGateways, paymentSettings]);
+  ].filter(g => enabledGateways.includes(g.id));
 
   // To prevent caching during logo updates in admin, add a timestamp
   const logoUrl = getGatewayLogo(currentTab);
