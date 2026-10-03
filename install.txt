@@ -1,24 +1,26 @@
 #!/usr/bin/env bash
 
-# SnapReels One-Click VPS Installer
+# EPYVRA VPS Installer
 # Target OS: Ubuntu 22.04 / 24.04
-# App path expected: /var/www/snapreels
+# App path expected: /var/www/epyvra
 
 set -Eeuo pipefail
 
-APP_NAME="snapreels"
-APP_DIR="/var/www/snapreels"
+APP_NAME="epyvra"
+APP_DIR="/var/www/epyvra"
 APP_PORT="3000"
 
 DOMAIN=""
 EMAIL=""
 ENABLE_SSL="yes"
 
-MONGO_DB="snapreels"
-MONGO_USER="snapreels"
-MONGO_PASS="snapreels123456"
+MONGO_DB="epyvra"
+MONGO_USER="epyvra_app"
+MONGO_SECRET_DIR="/etc/epyvra"
+MONGO_SECRET_FILE="$MONGO_SECRET_DIR/mongodb-password"
+MONGO_PASS=""
 
-LOG_FILE="/root/snapreels-install.log"
+LOG_FILE="/root/epyvra-install.log"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -45,6 +47,24 @@ trap 'on_error $LINENO' ERR
 require_root() {
   if [ "$(id -u)" -ne 0 ]; then
     err "Please run this installer as root."
+    exit 1
+  fi
+}
+
+initialize_mongodb_secret() {
+  install -d -m 700 "$MONGO_SECRET_DIR"
+  if [ -n "${EPYVRA_MONGO_PASSWORD:-}" ]; then
+    MONGO_PASS="$EPYVRA_MONGO_PASSWORD"
+  elif [ -s "$MONGO_SECRET_FILE" ]; then
+    MONGO_PASS="$(cat "$MONGO_SECRET_FILE")"
+  else
+    umask 077
+    MONGO_PASS="$(openssl rand -hex 32)"
+    printf '%s' "$MONGO_PASS" > "$MONGO_SECRET_FILE"
+    chmod 600 "$MONGO_SECRET_FILE"
+  fi
+  if [[ ! "$MONGO_PASS" =~ ^[A-Fa-f0-9]{64,}$ ]]; then
+    err "EPYVRA_MONGO_PASSWORD must contain at least 64 hexadecimal characters."
     exit 1
   fi
 }
@@ -154,16 +174,21 @@ configure_mongodb_user() {
 
   log "Creating MongoDB user if missing..."
 
+  if ! grep -q '^replication:' /etc/mongod.conf; then
+    printf '\nreplication:\n  replSetName: rs0\n' >> /etc/mongod.conf
+    systemctl restart mongod
+    sleep 5
+  fi
+  mongosh --quiet --eval "try { rs.status() } catch (e) { rs.initiate({_id: 'rs0', members: [{_id: 0, host: '127.0.0.1:27017'}]}) }" >/dev/null
+  sleep 5
+
   mongosh --quiet --eval "
-    db = db.getSiblingDB('admin');
+    db = db.getSiblingDB('$MONGO_DB');
     if (db.getUser('$MONGO_USER') == null) {
       db.createUser({
         user: '$MONGO_USER',
         pwd: '$MONGO_PASS',
-        roles: [
-          { role: 'userAdminAnyDatabase', db: 'admin' },
-          { role: 'readWriteAnyDatabase', db: 'admin' }
-        ]
+        roles: [{ role: 'readWrite', db: '$MONGO_DB' }]
       });
       print('Mongo user created');
     } else {
@@ -194,8 +219,8 @@ configure_mongodb_user() {
   fi
 
   for i in {1..15}; do
-    if mongosh "mongodb://$MONGO_USER:$MONGO_PASS@127.0.0.1:27017/admin?authSource=admin" \
-      --quiet --eval "db.adminCommand('ping')" >/dev/null 2>&1; then
+    if mongosh "mongodb://$MONGO_USER:$MONGO_PASS@127.0.0.1:27017/$MONGO_DB?authSource=$MONGO_DB&replicaSet=rs0" \
+      --quiet --eval "db.runCommand({ ping: 1 })" >/dev/null 2>&1; then
       log "MongoDB authentication verified."
       return 0
     fi
@@ -209,10 +234,12 @@ configure_mongodb_user() {
 write_env_file() {
   log "Writing .env file..."
 
+  umask 077
   cat >"$APP_DIR/.env" <<EOF
-MONGODB_URI="mongodb://$MONGO_USER:$MONGO_PASS@127.0.0.1:27017/$MONGO_DB?authSource=admin"
+MONGODB_URI="mongodb://$MONGO_USER:$MONGO_PASS@127.0.0.1:27017/$MONGO_DB?authSource=$MONGO_DB&replicaSet=rs0"
 NEXT_PUBLIC_DEMO_MODE="false"
 EOF
+  chmod 600 "$APP_DIR/.env"
 }
 
 build_app() {
@@ -335,7 +362,7 @@ final_checks() {
 show_summary() {
   echo
   echo "------------------------------------------------"
-  echo " SnapReels installation completed"
+  echo " EPYVRA installation completed"
   echo "------------------------------------------------"
   echo " Domain        : $DOMAIN"
   echo " App path      : $APP_DIR"
@@ -356,6 +383,7 @@ show_summary() {
 
 main() {
   require_root
+  initialize_mongodb_secret
   ask_inputs
   check_app_files
   install_base_packages

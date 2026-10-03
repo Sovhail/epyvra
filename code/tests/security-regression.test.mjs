@@ -166,3 +166,13 @@ test('Android release signing fails closed and WebViews reject mixed content', a
   assert.match(player, /MIXED_CONTENT_NEVER_ALLOW/);
   assert.doesNotMatch(player, /MIXED_CONTENT_ALWAYS_ALLOW/);
 });
+
+test('VPS installer generates least-privilege MongoDB credentials', async () => {
+  const installer = await source('..', 'install.txt');
+  assert.match(installer, /openssl rand -hex 32/);
+  assert.match(installer, /EPYVRA_MONGO_PASSWORD/);
+  assert.match(installer, /role: 'readWrite', db: '\$MONGO_DB'/);
+  assert.match(installer, /replSetName: rs0/);
+  assert.match(installer, /chmod 600 "\$APP_DIR\/\.env"/);
+  assert.doesNotMatch(installer, /userAdminAnyDatabase|readWriteAnyDatabase|snapreels123456/);
+});
