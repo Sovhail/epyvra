@@ -40,7 +40,7 @@ export function LanguageSwitcher({ isMobile = false }: { isMobile?: boolean }) {
   const handleLocaleChange = (newLocale: string) => {
     document.cookie = `userLocale=${newLocale}; path=/; max-age=31536000; SameSite=Lax`;
     const segments = pathname ? pathname.split('/').filter(Boolean) : [];
-    if (segments.length > 0 && i18n.locales.includes(segments[0] as any)) segments.shift();
+        if (segments.length > 0 && i18n.locales.includes(segments[0] as (typeof i18n.locales)[number])) segments.shift();
     let newPath = `/${segments.join('/')}`;
     if (newLocale !== i18n.defaultLocale) newPath = `/${newLocale}${newPath}`;
     if (newPath === `/${newLocale}/` || newPath === `/${newLocale}`) newPath = newLocale === i18n.defaultLocale ? '/' : `/${newLocale}`;

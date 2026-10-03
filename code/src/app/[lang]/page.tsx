@@ -48,7 +48,7 @@ const getT = async (lang: string) => {
     }, {} as Record<string, string>);
 
     return (key: string, replacements?: Record<string, string | number>) => {
-        const val = translations ? (translations as any)[key] : null;
+    const val = translations ? (translations as Record<string, unknown>)[key] : null;
         let translation = (val && val.trim() !== '') ? val : (defaultTranslations[key] || key);
         
         if (replacements) {

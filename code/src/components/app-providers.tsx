@@ -26,7 +26,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
     // Extract the core path without the locale prefix
     const segments = pathname.split('/').filter(Boolean);
     const potentialLocale = segments[0];
-    const corePath = i18n.locales.includes(potentialLocale as any)
+  const corePath = i18n.locales.includes(potentialLocale as (typeof i18n.locales)[number])
       ? `/${segments.slice(1).join('/')}`
       : pathname;
     

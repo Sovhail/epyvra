@@ -37,7 +37,7 @@ export default async function LangLayout({
 }) {
   const { lang } = await params;
   
-  if (!i18n.locales.includes(lang as any)) {
+  if (!i18n.locales.includes(lang as (typeof i18n.locales)[number])) {
     notFound();
   }
 

@@ -37,7 +37,7 @@ export function TranslationProvider({ children, lang }: { children: ReactNode, l
 
     const t = useCallback((key: string, replacements?: Record<string, string | number>): string => {
         // 1. Try to get translation from the current language object
-        const translatedValue = translations ? (translations as any)[key] : null;
+        const translatedValue = translations ? (translations as Record<string, unknown>)[key] : null;
         
         let translation = '';
 
