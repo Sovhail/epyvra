@@ -1,9 +1,10 @@
 
 'use server';
 import fs from 'fs/promises';
-import { join } from 'path';
+import { resolve, sep } from 'path';
 import { getServerStorageSettings as getStorageSettings } from './server-settings';
 import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { assertPublicHttpUrl, normalizeBunnyRegion, safeFetch } from './safe-fetch';
 
 /**
  * Utility to delete a file from the active storage provider.
@@ -19,7 +20,9 @@ export async function deleteFile(fileUrl: string | null | undefined) {
         // 1. Handle Local Filesystem Deletion
         if (fileUrl.startsWith('/uploads/')) {
             const relativePath = fileUrl.replace('/uploads/', '');
-            const filePath = join(process.cwd(), 'public', 'uploads', relativePath);
+            const uploadRoot = resolve(process.cwd(), 'public', 'uploads');
+            const filePath = resolve(uploadRoot, relativePath);
+            if (!filePath.startsWith(`${uploadRoot}${sep}`)) throw new Error('Invalid upload path.');
             
             try {
                 await fs.unlink(filePath);
@@ -52,17 +55,17 @@ export async function deleteFile(fileUrl: string | null | undefined) {
                 
                 const storageZoneName = config.storageZoneName;
                 const apiKey = config.apiKey;
-                const region = config.region || '';
+                const region = normalizeBunnyRegion(config.region);
                 
                 let host = 'storage.bunnycdn.com';
-                if (region && region.toLowerCase() !== 'de') {
-                    host = `${region.toLowerCase()}.storage.bunnycdn.com`;
+                if (region) {
+                    host = `${region}.storage.bunnycdn.com`;
                 }
                 
                 const url = `https://${host}/${storageZoneName}/${key}`;
                 
                 try {
-                    const response = await fetch(url, {
+                    const response = await safeFetch(url, {
                         method: 'DELETE',
                         headers: {
                             'AccessKey': apiKey
@@ -120,7 +123,7 @@ export async function deleteFile(fileUrl: string | null | undefined) {
             };
 
             if (endpoint) {
-                clientConfig.endpoint = endpoint.startsWith('http') ? endpoint : `https://${endpoint}`;
+                clientConfig.endpoint = (await assertPublicHttpUrl(endpoint.startsWith('http') ? endpoint : `https://${endpoint}`)).toString();
                 clientConfig.forcePathStyle = true;
             }
 

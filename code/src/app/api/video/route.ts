@@ -5,6 +5,7 @@ import { join } from 'path';
 import { getServerPluginsSettings as getPluginsSettings } from '@/lib/server-settings';
 import { decryptPath } from '@/lib/crypto';
 import { getVideoSecret } from '@/lib/video-secret';
+import { safeFetch } from '@/lib/safe-fetch';
 
 function streamFile(path: string, options?: any): ReadableStream {
     const readStream = fs.createReadStream(path, { highWaterMark: 1024 * 1024, ...options });
@@ -132,12 +133,10 @@ export async function GET(request: NextRequest) {
                 headers['range'] = range;
             }
             
-            const response = await fetch(filePath, { 
+            const response = await safeFetch(filePath, {
                 headers,
                 cache: 'no-store',
-                next: { revalidate: 0 },
-                redirect: 'follow'
-            });
+            }, 3);
             
             const responseHeaders = new Headers();
             const contentType = response.headers.get('content-type') || response.headers.get('Content-Type');

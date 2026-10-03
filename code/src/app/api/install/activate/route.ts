@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/mongodb';
 import { authorizeInstall } from '@/lib/install-auth';
+import { safeFetch } from '@/lib/safe-fetch';
 
 const errorMessage = (error: unknown) => error instanceof Error ? error.message : 'Unknown error';
 
@@ -36,7 +37,7 @@ export async function POST(request: NextRequest) {
 
         let response;
         try {
-            response = await fetch(apiUrl, {
+            response = await safeFetch(apiUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -13,6 +13,7 @@
 - [ ] SMTP/support identity, payment gateway credentials, CAPTCHA keys, and optional AI keys for enabled services.
 - [ ] `ADMIN_SESSION_SECRET`: an independently generated secret of at least 32 random characters, supplied only to the backend runtime.
 - [ ] `INSTALL_SETUP_TOKEN`: a one-time random value of at least 32 characters; remove it from the runtime environment after installation.
+- [ ] `EPYVRA_REMOTE_FETCH_HOSTS`: comma-separated exact hostnames for license verification, remote video/CDN delivery, and configured storage endpoints; include every legitimate redirect target.
 - [ ] Vendor confirmation for retained DevSnaplix licensing endpoints and the `tiksnap.pro` reference.
 
 ## Security gates

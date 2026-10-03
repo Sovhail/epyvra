@@ -20,6 +20,7 @@ import { getDemoModeMutationError } from '../demo-mode';
 import { getVideoSecret } from '../video-secret';
 import { handleError, getQueryById } from './utils';
 import { authorizeInstall } from '../install-auth';
+import { assertPublicHttpUrl, normalizeBunnyRegion } from '../safe-fetch';
 
 // Helper callAi import
 import { callAi } from './ai';
@@ -1065,10 +1066,10 @@ export async function testStorageConnectionAction(provider: string, config: any)
         if (provider === 'bunny') {
             const storageZoneName = config.storageZoneName;
             const apiKey = config.apiKey;
-            const region = config.region || '';
+            const region = normalizeBunnyRegion(config.region);
             let host = 'storage.bunnycdn.com';
-            if (region && region.toLowerCase() !== 'de') {
-                host = `${region.toLowerCase()}.storage.bunnycdn.com`;
+            if (region) {
+                host = `${region}.storage.bunnycdn.com`;
             }
             const url = `https://${host}/${storageZoneName}/test.txt`;
             const response = await fetch(url, {
@@ -1089,7 +1090,7 @@ export async function testStorageConnectionAction(provider: string, config: any)
 
         let clientConfig: any = { credentials: { accessKeyId: config.accessKeyId || config.applicationKeyId, secretAccessKey: config.secretAccessKey || config.applicationKey }, region: config.region || 'us-east-1' };
         if (provider === 'gcs') { clientConfig.endpoint = 'https://storage.googleapis.com'; clientConfig.forcePathStyle = true; clientConfig.region = 'auto'; }
-        else if (config.endpoint) { clientConfig.endpoint = config.endpoint.startsWith('http') ? config.endpoint : `https://${config.endpoint}`; clientConfig.forcePathStyle = true; }
+        else if (config.endpoint) { clientConfig.endpoint = (await assertPublicHttpUrl(config.endpoint.startsWith('http') ? config.endpoint : `https://${config.endpoint}`)).toString(); clientConfig.forcePathStyle = true; }
         const s3 = new S3Client(clientConfig); await s3.send(new PutObjectCommand({ Bucket: config.bucket, Key: 'test.txt', Body: 'test', ContentType: 'text/plain' }));
         return { success: true, message: `Connected to ${provider.toUpperCase()}` };
     } catch (e: any) { return handleError('testStorageConnectionAction', e, 'Storage connection test failed.'); }

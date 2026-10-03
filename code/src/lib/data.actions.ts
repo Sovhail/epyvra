@@ -4,6 +4,7 @@ import { ObjectId } from 'mongodb';
 import { getDb } from './mongodb';
 import type { Series, Episode, CoinPack, MonetizationSettings, Purchase, Ad, GeneralSettings, Language, UITranslations, CustomPage, ContactMessage, Report, Category, PluginsSettings, RewardTask, RewardsSettings, UserRewardClaim, CoinTransaction, PaymentGatewaySettings, AdminProfile, Favorite, WatchHistory, StorageSettings } from './types';
 import { isDemoMode } from './demo-mode';
+import { safeFetch } from './safe-fetch';
 
 async function canReadPrivateSettings(): Promise<boolean> {
     return import('./actions/auth').then(({ verifyAdminSession }) => verifyAdminSession());
@@ -508,7 +509,7 @@ export async function verifyLicensePeriodically(domain: string): Promise<boolean
         console.log(`[License Check] Verifying license for domain ${domain} against ${apiUrl}...`);
         
         try {
-            const response = await fetch(apiUrl, {
+            const response = await safeFetch(apiUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

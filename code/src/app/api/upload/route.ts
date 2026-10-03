@@ -5,6 +5,7 @@ import { getServerStorageSettings as getStorageSettings } from '@/lib/server-set
 import { DEMO_MODE_MUTATION_MESSAGE, isDemoMode } from '@/lib/demo-mode';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { verifyAdminSession } from '@/lib/actions/auth';
+import { assertPublicHttpUrl, normalizeBunnyRegion } from '@/lib/safe-fetch';
 
 // Increase the body size limit for file uploads (Next.js config)
 export const config = {
@@ -72,7 +73,7 @@ async function uploadToS3(buffer: Buffer, originalName: string, subDir: string, 
 
     // Apply path style and customized endpoint if applicable
     if (endpoint) {
-        clientConfig.endpoint = endpoint.startsWith('http') ? endpoint : `https://${endpoint}`;
+        clientConfig.endpoint = (await assertPublicHttpUrl(endpoint.startsWith('http') ? endpoint : `https://${endpoint}`)).toString();
         clientConfig.forcePathStyle = true;
     }
 
@@ -117,11 +118,11 @@ async function uploadToBunny(buffer: Buffer, originalName: string, subDir: strin
     
     const storageZoneName = config.storageZoneName;
     const apiKey = config.apiKey;
-    const region = config.region || '';
+    const region = normalizeBunnyRegion(config.region);
     
     let host = 'storage.bunnycdn.com';
-    if (region && region.toLowerCase() !== 'de') {
-        host = `${region.toLowerCase()}.storage.bunnycdn.com`;
+    if (region) {
+        host = `${region}.storage.bunnycdn.com`;
     }
     
     const url = `https://${host}/${storageZoneName}/${keyWithExt}`;

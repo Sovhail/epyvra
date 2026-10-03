@@ -92,3 +92,35 @@ test('installation mutations require a one-time setup token and cannot overwrite
   assert.match(content, /installInitializeDbAction[\s\S]*?authorizeInstall\(setupToken\)/);
   assert.match(activation, /authorizeInstall\([^)]*setupToken/);
 });
+
+test('server-side remote fetches reject private networks and validate every redirect', async () => {
+  const safeFetch = await source('src', 'lib', 'safe-fetch.ts');
+  const video = await source('src', 'app', 'api', 'video', 'route.ts');
+  const activation = await source('src', 'app', 'api', 'install', 'activate', 'route.ts');
+  const dataActions = await source('src', 'lib', 'data.actions.ts');
+  assert.match(safeFetch, /node:dns\/promises/);
+  assert.match(safeFetch, /Only HTTP\(S\) remote URLs are allowed/);
+  assert.match(safeFetch, /a === 127/);
+  assert.match(safeFetch, /a === 169 && b === 254/);
+  assert.match(safeFetch, /a === 10/);
+  assert.match(safeFetch, /normalized === '::1'/);
+  assert.match(safeFetch, /redirect: 'manual'/);
+  assert.match(safeFetch, /EPYVRA_REMOTE_FETCH_HOSTS must be configured in production/);
+  assert.match(safeFetch, /allowedHosts\.includes\(url\.hostname\.toLowerCase\(\)\)/);
+  assert.match(safeFetch, /assertPublicHttpUrl\(new URL\(location, current\)/);
+  assert.match(video, /safeFetch\(filePath/);
+  assert.match(activation, /safeFetch\(apiUrl/);
+  assert.match(dataActions, /safeFetch\(apiUrl/);
+});
+
+test('storage provider host components are constrained before credentials are sent', async () => {
+  const safeFetch = await source('src', 'lib', 'safe-fetch.ts');
+  const upload = await source('src', 'app', 'api', 'upload', 'route.ts');
+  const storage = await source('src', 'lib', 'storage-utils.ts');
+  assert.match(safeFetch, /\^\[a-z0-9-\]\{1,16\}\$/);
+  assert.match(upload, /normalizeBunnyRegion\(config\.region\)/);
+  assert.match(upload, /await assertPublicHttpUrl/);
+  assert.match(storage, /normalizeBunnyRegion\(config\.region\)/);
+  assert.match(storage, /await assertPublicHttpUrl/);
+  assert.match(storage, /filePath\.startsWith\(`\$\{uploadRoot\}\$\{sep\}`\)/);
+});

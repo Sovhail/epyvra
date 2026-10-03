@@ -10,7 +10,7 @@ Status: remediation in progress. Production release is prohibited while Critical
 | SCR-004 | Critical | Firestore rules permit client entitlement/balance writes | Remediated: monetary, entitlement, purchase, profile and settings writes fail closed |
 | SCR-005 | Critical | Sensitive settings can be returned to browser clients without consistent redaction | Remediated in code: explicit public projections, server-only raw access, and cryptographically verified admin sessions; deployment secret/runtime negative tests pending |
 | SCR-006 | Critical | Admin/install authorization is incomplete | Remediated in code: signed expiring admin sessions with server-side revocation and one-time install token gates; runtime negative tests pending |
-| SCR-007 | Critical | Video signing/proxy permits SSRF/open-proxy behavior | Open |
+| SCR-007 | Critical | Video signing/proxy permits SSRF/open-proxy behavior | Remediated in code: HTTP(S)-only exact-host allowlist, public DNS/IP validation, redirect revalidation, and reserved/private range blocking; runtime rebinding/redirect tests pending |
 | SCR-008 | Critical | Purchase crediting lacks authenticated binding, uniqueness, and atomicity | Open |
 | SCR-009 | High | HLS/DASH premium delivery can be accessed by URL possession | Open |
 | SCR-010 | High | Billing uses order ID instead of purchase token and lacks lifecycle handling | Open |
