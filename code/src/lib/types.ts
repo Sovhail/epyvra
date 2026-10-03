@@ -11,6 +11,7 @@ export type Episode = {
   episodeInSeason: number;
   videoSources?: { quality: string; url: string; }[];
   subtitles?: { language: string; languageCode: string; url: string; }[];
+  mediaAuthorizationRequired?: boolean;
 };
 
 export type Series = {

@@ -12,6 +12,7 @@
 - [ ] LevelPlay app key, rewarded/interstitial placements, test mode, mediation network credentials, and consent configuration.
 - [ ] `LEVELPLAY_APP_KEY`, `LEVELPLAY_S2S_PRIVATE_KEY` (at least 32 random characters), and `LEVELPLAY_REWARD_COINS`; configure the HTTPS callback with timestamp, eventId, userId, rewards, signature, and appKey parameters.
 - [ ] Bunny.net or alternate storage credentials and delivery/security policy.
+- [ ] Bunny pull-zone hostname and an independent token-authentication key (`BUNNY_CDN_HOST`, `BUNNY_CDN_TOKEN_KEY`); enable Token Authentication, block origin bypass, and store every premium episode in its own episode-ID directory.
 - [ ] SMTP/support identity, payment gateway credentials, CAPTCHA keys, and optional AI keys for enabled services.
 - [ ] `ADMIN_SESSION_SECRET`: an independently generated secret of at least 32 random characters, supplied only to the backend runtime.
 - [ ] `INSTALL_SETUP_TOKEN`: a one-time random value of at least 32 characters; remove it from the runtime environment after installation.
@@ -52,7 +53,8 @@
 - [ ] Next.js production build: application compilation passed, then the enforced ESLint phase failed on the same debt.
 - [ ] Android unit/lint/debug/release matrix: the correct local SDK was detected during verification, but dependency resolution failed because `artifacts.applovin.com` could not resolve. A preceding configuration-cache serialization failure was bypassed with `--no-configuration-cache`; no source result was produced.
 - [ ] Android release build additionally requires the owner-supplied release keystore inputs and must fail closed until they exist.
-- [ ] Premium HLS/DASH manifests and segments require production CDN/session authorization; catalog-level entitlement gating alone is not sufficient.
+- [x] CODE VERIFIED / AUTOMATED TEST VERIFIED: premium HLS/DASH issuance requires Firebase entitlement, emits short-lived episode-directory Bunny path tokens, defaults to IP binding, redacts permanent premium URLs, and preserves relative manifest/segment authorization.
+- [ ] SANDBOX VERIFIED / PRODUCTION CREDENTIAL REQUIRED: configure Bunny Token Authentication with the same server-side key and prove unsigned direct master/variant/DASH manifest, `.ts`, and `.m4s` requests fail while signed playback succeeds and expires. CDN/origin enforcement is not claimed without this evidence.
 - [ ] LevelPlay, Play Billing, OneSignal, Firebase, Bunny.net, and deep-link lifecycle require device/vendor-console tests with owner-supplied sandbox configuration.
 - [ ] Rewrite or exclude the upstream `Documontation/*.html` manuals and replace all legacy artwork before distribution.
 

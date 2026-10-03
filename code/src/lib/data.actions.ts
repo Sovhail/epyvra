@@ -136,20 +136,14 @@ export async function getEpisodesForSeries(seriesId: string): Promise<Episode[]>
     try {
         const db = await getDb();
         const episodes = await db.collection('episodes').find({ seriesId: seriesId }).sort({ episodeInSeason: 1 }).toArray();
-        const mapped = episodes.map(e => mapDoc(e)) as Episode[];
-        try {
-            const { getSecureVideoUrl } = await import('./actions/content');
-            await Promise.all(mapped.map(async (ep) => {
-                if (ep.videoSources && ep.videoSources.length > 0) {
-                    await Promise.all(ep.videoSources.map(async (source) => {
-                        source.url = await getSecureVideoUrl(source.url);
-                    }));
-                }
-            }));
-        } catch (err) {
-            logError('Failed to pre-compute secure URLs in data.actions.ts', err);
-        }
-        return mapped;
+        return episodes.map(e => {
+            const mapped = mapDoc(e) as Episode;
+            return {
+                ...mapped,
+                mediaAuthorizationRequired: true,
+                videoSources: mapped.videoSources?.map(source => ({ ...source, url: '' })),
+            };
+        });
     } catch (e) {
         logError('Failed to fetch episodes', e);
         return [];

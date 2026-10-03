@@ -207,9 +207,26 @@ test('premium episode URLs require a verified entitlement', async () => {
   assert.match(episodes, /authenticateFirebaseRequest\(request\)/);
   assert.match(episodes, /unlocked-episodes/);
   assert.match(episodes, /const isEntitled = !isPremium \|\| vipActive \|\| unlockedEpisodeIds\.has/);
-  assert.match(episodes, /const secureUrl = isEntitled \? await getSecureVideoUrl\(rawVideoUrl\) : ''/);
+  assert.match(episodes, /const secureUrl = isEntitled[\s\S]*signBunnyMediaUrl[\s\S]*getSecureVideoUrl\(rawVideoUrl\)/);
   assert.match(repository, /header\("Authorization", "Bearer \$it"\)/);
   assert.match(repository, /getSharedPreferences\("epyvra_cache"[\s\S]*\.clear\(\)/);
+});
+
+test('premium HLS and DASH delivery uses short-lived episode-bound Bunny path tokens', async () => {
+  const authorize = await source('src', 'app', 'api', 'media', 'authorize', 'route.ts');
+  const signer = await source('src', 'lib', 'premium-media.ts');
+  const page = await source('src', 'app', '[lang]', 'series', '[id]', 'page.tsx');
+  assert.match(authorize, /authenticateFirebaseRequest\(request\)/);
+  assert.match(authorize, /unlocked-episodes/);
+  assert.match(authorize, /vipActive/);
+  assert.match(authorize, /if \(!isPremium\)/);
+  assert.match(authorize, /signBunnyMediaUrl/);
+  assert.match(signer, /MAX_TTL_SECONDS = 600/);
+  assert.match(signer, /BUNNY_CDN_TOKEN_KEY/);
+  assert.match(signer, /token_path=/);
+  assert.match(signer, /timingSafeEqual/);
+  assert.match(signer, /Client IP is required/);
+  assert.match(page, /videoSources: episode\.videoSources\?\.map\(source => \(\{ \.\.\.source, url: '' \}\)\)/);
 });
 
 test('Android checkout trusts only exact first-party result callbacks', async () => {

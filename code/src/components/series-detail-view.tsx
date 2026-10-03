@@ -258,17 +258,35 @@ export function SeriesDetailView({ initialSeries, initialEpisodes = [], initialV
       showControlsBriefly();
   }, [isPlaying, showControlsBriefly]);
 
+  const authorizeMedia = useCallback(async (episode: Episode, sourceIndex: number): Promise<string> => {
+    const idToken = user ? await user.getIdToken() : null;
+    const response = await fetch('/api/media/authorize', {
+      method: 'POST',
+      cache: 'no-store',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}),
+      },
+      body: JSON.stringify({ episodeId: episode.id, sourceIndex }),
+    });
+    if (!response.ok) throw new Error('Media authorization denied');
+    const payload = await response.json() as { url?: string };
+    if (!payload.url) throw new Error('Media authorization returned no URL');
+    return payload.url;
+  }, [user]);
+
   const handleRetry = useCallback(async () => {
     const source = selectedEpisode?.videoSources?.[currentSourceIndex];
-    if (source?.url) {
+    if (source && selectedEpisode) {
         setVideoError(false);
         setSeekOnReady(playedSeconds);
         try {
-            let url = source.url;
-            if (!url.startsWith('/api/') && !url.startsWith('http://') && !url.startsWith('https://')) {
-                url = await getSecureVideoUrl(url);
-            }
-            const uniqueUrl = `${url}${url.includes('?') ? '&' : '?'}retry=${Date.now()}`;
+            const url = selectedEpisode.mediaAuthorizationRequired
+              ? await authorizeMedia(selectedEpisode, currentSourceIndex)
+              : await getSecureVideoUrl(source.url);
+            const uniqueUrl = selectedEpisode.mediaAuthorizationRequired
+              ? url
+              : `${url}${url.includes('?') ? '&' : '?'}retry=${Date.now()}`;
             setCurrentVideoUrl(uniqueUrl);
             setIsPlaying(true);
         } catch (err) {
@@ -276,7 +294,7 @@ export function SeriesDetailView({ initialSeries, initialEpisodes = [], initialV
             setVideoError(true);
         }
     }
-  }, [selectedEpisode, currentSourceIndex, playedSeconds]);
+  }, [selectedEpisode, currentSourceIndex, playedSeconds, authorizeMedia]);
 
   useEffect(() => {
     incrementSeriesViewAction(seriesId);
@@ -328,7 +346,7 @@ export function SeriesDetailView({ initialSeries, initialEpisodes = [], initialV
     }
 
     const source = selectedEpisode?.videoSources?.[currentSourceIndex];
-    if (!source?.url) {
+    if (!source) {
       if (selectedEpisode) setCurrentVideoUrl('');
       return;
     }
@@ -350,6 +368,19 @@ export function SeriesDetailView({ initialSeries, initialEpisodes = [], initialV
     setIsRewinding(false);
     setDuration(0);
 
+    if (selectedEpisode.mediaAuthorizationRequired) {
+      authorizeMedia(selectedEpisode, currentSourceIndex)
+        .then(url => {
+          setCurrentVideoUrl(url);
+          setIsPlaying(true);
+        })
+        .catch(() => {
+          setCurrentVideoUrl('');
+          setVideoError(true);
+        });
+      return;
+    }
+
     if (source.url.startsWith('/api/') || source.url.startsWith('http://') || source.url.startsWith('https://')) {
         setCurrentVideoUrl(source.url);
         setIsPlaying(true);
@@ -362,7 +393,7 @@ export function SeriesDetailView({ initialSeries, initialEpisodes = [], initialV
             setIsPlaying(true);
         })
         .catch(() => setVideoError(true));
-  }, [selectedEpisode, currentSourceIndex]);
+  }, [selectedEpisode, currentSourceIndex, authorizeMedia, initialVideoUrl]);
 
 
   // Background Pre-caching Engine: Pre-fetch upcoming episode (N+1) so transition is instant on slow networks
@@ -373,14 +404,16 @@ export function SeriesDetailView({ initialSeries, initialEpisodes = [], initialV
     if (currentIdx !== -1 && currentIdx + 1 < episodes.length) {
       const nextEp = episodes[currentIdx + 1];
       const nextSource = nextEp.videoSources?.[0]?.url;
-      if (nextSource && !preloadedUrlsRef.current.has(nextEp.id)) {
+      if (nextSource !== undefined && !preloadedUrlsRef.current.has(nextEp.id)) {
         preloadedUrlsRef.current.add(nextEp.id);
-        getSecureVideoUrl(nextSource).then(url => {
+        (nextEp.mediaAuthorizationRequired
+          ? authorizeMedia(nextEp, 0)
+          : getSecureVideoUrl(nextSource)).then(url => {
           fetch(url, { headers: { 'range': 'bytes=0-5242880' } }).catch(() => {});
         }).catch(() => {});
       }
     }
-  }, [selectedEpisode, isPlaying, playedSeconds, duration, episodes]);
+  }, [selectedEpisode, isPlaying, playedSeconds, duration, episodes, authorizeMedia]);
 
   const syncDuration = useCallback(() => {
     const d = playerRef.current?.getDuration();

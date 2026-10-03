@@ -3,6 +3,7 @@ import { getDb } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 import { getSecureVideoUrl } from '@/lib/actions';
 import { ApiAuthError, authenticateFirebaseRequest } from '@/lib/api-auth';
+import { getMediaClientIp, signBunnyMediaUrl } from '@/lib/premium-media';
 
 type SettingsDocument = { _id: string; apiKey?: string; episodeCost?: number };
 type UserDocument = { _id: string; isVip?: boolean; vipExpiry?: string | Date };
@@ -93,7 +94,15 @@ export async function GET(request: NextRequest) {
             const isPremium = epNum > freeCount;
             const isEntitled = !isPremium || vipActive || unlockedEpisodeIds.has(ep._id.toString());
             const rawVideoUrl = ep.videoSources?.[0]?.url || '';
-            const secureUrl = isEntitled ? await getSecureVideoUrl(rawVideoUrl) : '';
+            const secureUrl = isEntitled
+                ? (isPremium
+                    ? signBunnyMediaUrl({
+                        sourceUrl: rawVideoUrl,
+                        episodeId: ep._id.toString(),
+                        clientIp: getMediaClientIp(request.headers),
+                    }).url
+                    : await getSecureVideoUrl(rawVideoUrl))
+                : '';
             const videoUrl = secureUrl ? (secureUrl.startsWith('http') ? secureUrl : `${origin}${secureUrl}`) : '';
             return {
                 id: ep._id.toString(),
@@ -124,8 +133,8 @@ export async function GET(request: NextRequest) {
         }));
 
         return NextResponse.json(mappedEpisodes);
-    } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : 'Failed to load episodes';
-        return NextResponse.json({ error: message }, { status: 500 });
+    } catch {
+        console.error('Mobile episode delivery failed');
+        return NextResponse.json({ error: 'Failed to load episodes' }, { status: 500 });
     }
 }

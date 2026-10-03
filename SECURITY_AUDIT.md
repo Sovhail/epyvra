@@ -12,7 +12,7 @@ Status: remediation in progress. Production release is prohibited while Critical
 | SCR-006 | Critical | Admin/install authorization is incomplete | Remediated in code: signed expiring admin sessions with server-side revocation and one-time install token gates; runtime negative tests pending |
 | SCR-007 | Critical | Video signing/proxy permits SSRF/open-proxy behavior | Remediated in code: HTTP(S)-only exact-host allowlist, public DNS/IP validation, redirect revalidation, and reserved/private range blocking; runtime rebinding/redirect tests pending |
 | SCR-008 | Critical | Purchase crediting lacks authenticated binding, uniqueness, and atomicity | Core flow remediated: Firebase UID binding, purchaseToken verification, obfuscated account binding, atomic unique grant, server consume/acknowledgement, pending handling, and client reconciliation; RTDN/voided-purchase production reconciliation tests pending |
-| SCR-009 | High | HLS/DASH premium delivery can be accessed by URL possession | Partially mitigated: premium episode URLs are withheld unless Firebase identity has VIP/unlock entitlement; per-segment CDN/session authorization remains open |
+| SCR-009 | High | HLS/DASH premium delivery can be accessed by URL possession | Code remediated: Firebase entitlement-gated, short-lived Bunny path tokens bind an episode directory and client IP, propagate to relative manifests/segments, and raw premium URLs are redacted. Runtime verification that Bunny Token Authentication rejects unsigned origin/manifest/segment access remains required. |
 | SCR-010 | High | Billing uses order ID instead of purchase token and lacks lifecycle handling | Remediated in code: purchaseToken, pending/cancel/error states, resume reconciliation, and server consume/acknowledgement implemented; device tests pending |
 | SCR-011 | High | Payment WebView success/navigation validation is weak | Remediated in code: exact HTTPS first-party callback origin/path/status and payment-provider navigation allowlist; device gateway tests pending |
 | SCR-012 | High | Release signing can silently fall back to debug key | Remediated in code: release tasks fail closed unless all explicit signing inputs and keystore are present; no debug fallback |
@@ -36,7 +36,7 @@ Every remediation must include negative authorization tests, replay/race tests w
 ## Current release-gate summary (2026-10-03)
 
 - Critical: 0 known findings left wholly unimplemented; 6 remediations still require runtime/device or deployment evidence before formal closure.
-- High: 2 open/partial (`SCR-009` per-segment premium-stream authorization and `SCR-015` full ESLint/build debt); 5 remediated in code with noted runtime evidence still pending.
+- High: 1 open (`SCR-015` full ESLint/build debt); `SCR-009` is remediated in code with Bunny pull-zone enforcement/runtime evidence pending.
 - Full `npm run lint` result: failed with 422 errors and 266 warnings. No ESLint or TypeScript checks were disabled.
 - `npm run build` result: source compilation succeeded, then Next.js failed during its mandatory ESLint phase on the same existing debt.
 - Android test/lint/debug build attempt: blocked during external dependency resolution because `artifacts.applovin.com` could not resolve; this is not counted as a passing build.
