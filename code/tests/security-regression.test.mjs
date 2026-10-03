@@ -191,3 +191,14 @@ test('LevelPlay rewards require a signed unique server callback', async () => {
   assert.match(adsManager, /override fun onAdRewarded/);
   assert.match(adsManager, /signed LevelPlay S2S callback is the sole coin grant authority/);
 });
+
+test('premium episode URLs require a verified entitlement', async () => {
+  const episodes = await source('src', 'app', 'api', 'mobile', 'v1', 'episodes', 'route.ts');
+  const repository = await source('..', 'Android App', 'app', 'src', 'main', 'java', 'com', 'epyvra', 'app', 'data', 'EpyvraRepository.kt');
+  assert.match(episodes, /authenticateFirebaseRequest\(request\)/);
+  assert.match(episodes, /unlocked-episodes/);
+  assert.match(episodes, /const isEntitled = !isPremium \|\| vipActive \|\| unlockedEpisodeIds\.has/);
+  assert.match(episodes, /const secureUrl = isEntitled \? await getSecureVideoUrl\(rawVideoUrl\) : ''/);
+  assert.match(repository, /header\("Authorization", "Bearer \$it"\)/);
+  assert.match(repository, /getSharedPreferences\("epyvra_cache"[\s\S]*\.clear\(\)/);
+});

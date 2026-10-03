@@ -65,6 +65,7 @@ private suspend fun getFirebaseIdToken(): String? = suspendCancellableCoroutine 
             _unlockedEpisodeIds.value = emptySet()
             _watchHistory.value = emptyList()
             _likedSeriesIds.value = emptySet()
+            context.getSharedPreferences("epyvra_cache", Context.MODE_PRIVATE).edit().clear().apply()
         }
     }
 
@@ -496,11 +497,12 @@ private suspend fun getFirebaseIdToken(): String? = suspendCancellableCoroutine 
         }
     }
 
-    private fun fetchFromApi(endpoint: String): String {
-        val request = Request.Builder()
+    private suspend fun fetchFromApi(endpoint: String): String {
+        val requestBuilder = Request.Builder()
             .url(endpoint)
             .header("X-API-Key", AppConfig.API_KEY)
-            .build()
+        getFirebaseIdToken()?.let { requestBuilder.header("Authorization", "Bearer $it") }
+        val request = requestBuilder.build()
         client.newCall(request).execute().use { response ->
             if (!response.isSuccessful) throw Exception("Unexpected code $response")
             return response.body?.string() ?: ""
