@@ -1,7 +1,7 @@
 'use client';
 
 import { firebaseConfig as staticFirebaseConfig } from '@/firebase/config';
-import { initializeApp, getApps, getApp, FirebaseApp, deleteApp } from 'firebase/app';
+import { initializeApp, getApps, getApp, FirebaseApp, deleteApp, type FirebaseOptions } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore'
 
@@ -9,7 +9,7 @@ import { getFirestore } from 'firebase/firestore'
  * Initializes Firebase with a dynamic or static configuration.
  * Handles re-initialization if the configuration changes (e.g., keys updated in Admin).
  */
-export function initializeFirebase(config?: any) {
+export function initializeFirebase(config?: FirebaseOptions) {
   const activeConfig = (config && config.apiKey) ? config : staticFirebaseConfig;
 
   const existingApps = getApps();

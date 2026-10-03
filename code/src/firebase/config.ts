@@ -7,14 +7,16 @@ export const firebaseConfig = {
   "messagingSenderId": ""
 };
 
-export function isFirebaseConfigValid(config: any): boolean {
+import type { FirebaseOptions } from 'firebase/app';
+
+export function isFirebaseConfigValid(config: Partial<FirebaseOptions> | null | undefined): boolean {
   if (!config) return false;
   return (
     typeof config.apiKey === 'string' &&
-    config.apiKey &&
+    Boolean(config.apiKey) &&
     typeof config.authDomain === 'string' &&
-    config.authDomain &&
+    Boolean(config.authDomain) &&
     typeof config.projectId === 'string' &&
-    config.projectId
+    Boolean(config.projectId)
   );
 }
