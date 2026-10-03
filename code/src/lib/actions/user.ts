@@ -23,7 +23,7 @@ export async function updateUserStatusAction(userId: string, disabled: boolean) 
         await db.collection('users').updateOne({ _id: userId as any }, { $set: { disabled } });
         revalidatePath('/admin/users');
         return { success: true };
-    } catch (e: any) { return handleError('updateUserStatusAction', e, 'Failed to update user status.'); }
+    } catch (e) { return handleError('updateUserStatusAction', e, 'Failed to update user status.'); }
 }
 
 /**
@@ -67,7 +67,7 @@ export async function adminUpdateUserAction(userId: string, data: any) {
         await db.collection('users').updateOne({ _id: userId as any }, { $set: updateData });
         revalidatePath('/admin/users');
         return { success: true };
-    } catch (e: any) { return handleError('adminUpdateUserAction', e, 'Failed to update user.'); }
+    } catch (e) { return handleError('adminUpdateUserAction', e, 'Failed to update user.'); }
 }
 
 /**
@@ -94,7 +94,7 @@ export async function deleteUserAction(userId: string) {
         
         revalidatePath('/admin/users');
         return { success: true };
-    } catch (e: any) { return handleError('deleteUserAction', e, 'Failed to delete user.'); }
+    } catch (e) { return handleError('deleteUserAction', e, 'Failed to delete user.'); }
 }
 
 /**
@@ -111,7 +111,7 @@ export async function toggleFavoriteAction(userId: string, seriesId: string) {
             await db.collection('favorites').insertOne({ userId, seriesId, favoritedAt: new Date() });
             return { success: true, action: 'added' };
         }
-    } catch (e: any) { return handleError('toggleFavoriteAction', e, 'Failed to toggle favorite.'); }
+    } catch (e) { return handleError('toggleFavoriteAction', e, 'Failed to toggle favorite.'); }
 }
 
 /**
@@ -123,7 +123,7 @@ export async function updateHistoryAction(payload: { userId: string; seriesId: s
         const { userId, seriesId, ...data } = payload;
         await db.collection('history').updateOne({ userId, seriesId }, { $set: { ...data, watchedAt: new Date() } }, { upsert: true });
         return { success: true };
-    } catch (e: any) { return handleError('updateHistoryAction', e, 'Failed to update watch history.'); }
+    } catch (e) { return handleError('updateHistoryAction', e, 'Failed to update watch history.'); }
 }
 
 /**
@@ -134,7 +134,7 @@ export async function removeHistoryItemAction(userId: string, seriesId: string) 
     try {
         await db.collection('history').deleteOne({ userId, seriesId });
         return { success: true };
-    } catch (e: any) { return handleError('removeHistoryItemAction', e, 'Failed to remove watch history item.'); }
+    } catch (e) { return handleError('removeHistoryItemAction', e, 'Failed to remove watch history item.'); }
 }
 
 /**
@@ -145,7 +145,7 @@ export async function clearHistoryAction(userId: string) {
     try {
         await db.collection('history').deleteMany({ userId });
         return { success: true };
-    } catch (e: any) { return handleError('clearHistoryAction', e, 'Failed to clear watch history.'); }
+    } catch (e) { return handleError('clearHistoryAction', e, 'Failed to clear watch history.'); }
 }
 
 /**
@@ -200,7 +200,7 @@ export async function claimRewardAction(userId: string, taskId: string, platform
 
         revalidatePath('/', 'layout');
         return { success: true };
-    } catch (e: any) { return handleError('claimRewardAction', e, 'Failed to claim reward.'); }
+    } catch (e) { return handleError('claimRewardAction', e, 'Failed to claim reward.'); }
 }
 
 /**
@@ -258,7 +258,7 @@ export async function performDailyCheckInAction(userId: string) {
 
         revalidatePath('/', 'layout');
         return { success: true, reward, dayNum };
-    } catch (e: any) { return handleError('performDailyCheckInAction', e, 'Failed to perform daily check-in.'); }
+    } catch (e) { return handleError('performDailyCheckInAction', e, 'Failed to perform daily check-in.'); }
 }
 
 /**

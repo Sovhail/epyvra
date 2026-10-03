@@ -47,7 +47,7 @@ export async function savePageAction(data: any) {
         }
         revalidatePath('/admin/pages');
         return { success: true };
-    } catch (e: any) { return handleError('savePageAction', e, 'Failed to save page.'); }
+    } catch (e) { return handleError('savePageAction', e, 'Failed to save page.'); }
 }
 
 /**
@@ -63,7 +63,7 @@ export async function deletePageAction(id: string) {
         await db.collection('pages').deleteOne(getQueryById(id));
         revalidatePath('/admin/pages');
         return { success: true };
-    } catch (e: any) { return handleError('deletePageAction', e, 'Failed to delete page.'); }
+    } catch (e) { return handleError('deletePageAction', e, 'Failed to delete page.'); }
 }
 
 /**
@@ -91,7 +91,7 @@ export async function saveCategoryAction(data: any) {
         }
         revalidatePath('/admin/categories');
         return { success: true };
-    } catch (e: any) { return handleError('saveCategoryAction', e, 'Failed to save category.'); }
+    } catch (e) { return handleError('saveCategoryAction', e, 'Failed to save category.'); }
 }
 
 /**
@@ -107,7 +107,7 @@ export async function deleteCategoryAction(id: string) {
         await db.collection('categories').deleteOne(getQueryById(id));
         revalidatePath('/admin/categories');
         return { success: true };
-    } catch (e: any) { return handleError('deleteCategoryAction', e, 'Failed to delete category.'); }
+    } catch (e) { return handleError('deleteCategoryAction', e, 'Failed to delete category.'); }
 }
 
 /**
@@ -174,7 +174,7 @@ export async function saveGeneralSettingsAction(data: any) {
         await db.collection('settings').updateOne({ _id: 'general' as any }, { $set: sanitized }, { upsert: true });
         revalidatePath('/', 'layout');
         return { success: true };
-    } catch (e: any) { return handleError('saveGeneralSettingsAction', e, 'Failed to save general settings.'); }
+    } catch (e) { return handleError('saveGeneralSettingsAction', e, 'Failed to save general settings.'); }
 }
 
 /**
@@ -223,7 +223,7 @@ export async function savePaymentSettingsAction(data: any) {
         await db.collection('settings').updateOne({ _id: 'payment' as any }, { $set: sanitized }, { upsert: true });
         revalidatePath('/admin/settings/payment-gateway');
         return { success: true };
-    } catch (e: any) { return handleError('savePaymentSettingsAction', e, 'Failed to save payment settings.'); }
+    } catch (e) { return handleError('savePaymentSettingsAction', e, 'Failed to save payment settings.'); }
 }
 
 /**
@@ -285,7 +285,7 @@ export async function savePluginsSettingsAction(data: any) {
         revalidatePath('/admin/settings/plugins');
         revalidatePath('/', 'layout');
         return { success: true };
-    } catch (e: any) { return handleError('savePluginsSettingsAction', e, 'Failed to save plugins settings.'); }
+    } catch (e) { return handleError('savePluginsSettingsAction', e, 'Failed to save plugins settings.'); }
 }
 
 /**
@@ -426,7 +426,7 @@ export async function saveLanguageAction(data: any) {
         }
         revalidatePath('/admin/languages');
         return { success: true };
-    } catch (e: any) { return handleError('saveLanguageAction', e, 'Failed to save language.'); }
+    } catch (e) { return handleError('saveLanguageAction', e, 'Failed to save language.'); }
 }
 
 /**
@@ -446,7 +446,7 @@ export async function deleteLanguageAction(id: string) {
         await db.collection('languages').deleteOne(getQueryById(id));
         revalidatePath('/admin/languages');
         return { success: true };
-    } catch (e: any) { return handleError('deleteLanguageAction', e, 'Failed to delete language.'); }
+    } catch (e) { return handleError('deleteLanguageAction', e, 'Failed to delete language.'); }
 }
 
 /**
@@ -513,7 +513,7 @@ export async function saveSeriesAction(seriesData: any) {
         revalidatePath('/admin/series');
         revalidatePath('/', 'layout');
         return { success: true };
-    } catch (e: any) { return handleError('saveSeriesAction', e, 'Failed to save series.'); }
+    } catch (e) { return handleError('saveSeriesAction', e, 'Failed to save series.'); }
 }
 
 /**
@@ -552,7 +552,7 @@ export async function deleteSeriesAction(id: string) {
         
         revalidatePath('/admin/series');
         return { success: true };
-    } catch (e: any) { return handleError('deleteSeriesAction', e, 'Failed to delete series.'); }
+    } catch (e) { return handleError('deleteSeriesAction', e, 'Failed to delete series.'); }
 }
 
 /**
@@ -599,7 +599,7 @@ export async function saveEpisodeAction(episodeData: any) {
         else await db.collection('episodes').insertOne(data);
         revalidatePath(`/admin/series/${data.seriesId}/episodes`);
         return { success: true };
-    } catch (e: any) { return handleError('saveEpisodeAction', e, 'Failed to save episode.'); }
+    } catch (e) { return handleError('saveEpisodeAction', e, 'Failed to save episode.'); }
 }
 
 /**
@@ -670,7 +670,7 @@ export async function deleteEpisodeAction(id: string, seriesId: string) {
         await db.collection('episodes').deleteOne(getQueryById(id));
         revalidatePath(`/admin/series/${seriesId}/episodes`);
         return { success: true };
-    } catch (e: any) { return handleError('deleteEpisodeAction', e, 'Failed to delete episode.'); }
+    } catch (e) { return handleError('deleteEpisodeAction', e, 'Failed to delete episode.'); }
 }
 
 /**
@@ -695,7 +695,7 @@ export async function unlockEpisodeAction(payload: any) {
         }
         await db.collection('unlocked-episodes').updateOne({ userId, episodeId }, { $set: { ...payload, unlockedAt: new Date() } }, { upsert: true });
         return { success: true };
-    } catch (e: any) { return handleError('unlockEpisodeAction', e, 'Failed to unlock episode.'); }
+    } catch (e) { return handleError('unlockEpisodeAction', e, 'Failed to unlock episode.'); }
 }
 
 /**
@@ -740,7 +740,7 @@ export async function getSecureVideoUrl(filePath: string): Promise<string> {
  */
 export async function submitReportAction(payload: { reporterUid: string, reporterEmail: string | null, reportedContentRef: string, reportedContentTitle: string, seriesId: string, reason: string }) {
     try { const db = await getDb(); await db.collection('reports').insertOne({ ...payload, createdAt: new Date(), status: 'open' }); revalidatePath('/admin/reports'); return { success: true }; }
-    catch (e: any) { return handleError('submitReportAction', e, 'Failed to submit report.'); }
+    catch (e) { return handleError('submitReportAction', e, 'Failed to submit report.'); }
 }
 
 /**
@@ -926,7 +926,7 @@ export async function importDataToMongoAction(jsonContent: string) {
         for (const collectionName in data) { if (collectionName.startsWith('system.')) continue; const documents = data[collectionName];
             if (Array.isArray(documents)) { await db.collection(collectionName).deleteMany({}); if (documents.length > 0) { const preparedDocs = documents.map((doc: any) => { const newDoc = { ...doc }; if (newDoc._id && typeof newDoc._id === 'string' && ObjectId.isValid(newDoc._id)) { if (newDoc._id.length === 24) newDoc._id = new ObjectId(newDoc._id); } for (const key in newDoc) { if (typeof newDoc[key] === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/.test(newDoc[key])) newDoc[key] = new Date(newDoc[key]); } return newDoc; }); await db.collection(collectionName).insertMany(preparedDocs); } } }
         revalidatePath('/', 'layout'); return { success: true, message: 'Database restored successfully from backup.' };
-    } catch (e: any) { return handleError('importDataToMongoAction', e, 'Database import failed.'); }
+    } catch (e) { return handleError('importDataToMongoAction', e, 'Database import failed.'); }
 }
 
 /**
@@ -1027,7 +1027,7 @@ export async function sendNotificationAction(payload: { target: 'all' | 'specifi
         const data = await response.json(); if (!response.ok) throw new Error(data.errors?.[0] || 'OneSignal API Error');
         const db = await getDb(); await db.collection('notifications').insertOne({ ...payload, sentAt: new Date(), status: 'sent', oneSignalId: data.id });
         return { success: true, message: `Broadcast successful.` };
-    } catch (e: any) { return handleError('sendNotificationAction', e, 'Failed to send notification.'); }
+    } catch (e) { return handleError('sendNotificationAction', e, 'Failed to send notification.'); }
 }
 
 /**
@@ -1093,7 +1093,7 @@ export async function testStorageConnectionAction(provider: string, config: any)
         else if (config.endpoint) { clientConfig.endpoint = (await assertPublicHttpUrl(config.endpoint.startsWith('http') ? config.endpoint : `https://${config.endpoint}`)).toString(); clientConfig.forcePathStyle = true; }
         const s3 = new S3Client(clientConfig); await s3.send(new PutObjectCommand({ Bucket: config.bucket, Key: 'test.txt', Body: 'test', ContentType: 'text/plain' }));
         return { success: true, message: `Connected to ${provider.toUpperCase()}` };
-    } catch (e: any) { return handleError('testStorageConnectionAction', e, 'Storage connection test failed.'); }
+    } catch (e) { return handleError('testStorageConnectionAction', e, 'Storage connection test failed.'); }
 }
 
 /**
