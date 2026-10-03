@@ -89,7 +89,7 @@ ask_inputs() {
 check_app_files() {
   if [ ! -d "$APP_DIR" ]; then
     err "App directory not found: $APP_DIR"
-    err "Upload/extract the SnapReels project there first."
+    err "Upload/extract the EPYVRA project there first."
     exit 1
   fi
 
