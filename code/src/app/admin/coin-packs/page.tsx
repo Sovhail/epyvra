@@ -621,7 +621,7 @@ function CoinPacksList() {
                                             <AlertDialogContent>
                                                 <AlertDialogHeader>
                                                     <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                    <AlertDialogDescription>This will permanently delete the pack "{pack.name}".</AlertDialogDescription>
+                            <AlertDialogDescription>This will permanently delete the pack &quot;{pack.name}&quot;.</AlertDialogDescription>
                                                 </AlertDialogHeader>
                                                 <AlertDialogFooter>
                                                     <AlertDialogCancel>Cancel</AlertDialogCancel>

@@ -302,7 +302,7 @@ export default function AuthSettingsPage() {
                                         <p>� Go to <a href="https://developers.facebook.com/" target="_blank" className="text-blue-400 hover:underline">Meta for Developers</a>.</p>
                                         <p>� Create an App and add <strong>Facebook Login</strong> product.</p>
                                         <p>� In Facebook Settings, get your <strong>App ID</strong> and <strong>App Secret</strong>.</p>
-                                        <p>� Copy the <strong>OAuth redirect URI</strong> from Firebase and add it to Facebook "Valid OAuth Redirect URIs".</p>
+                                        <p>� Copy the <strong>OAuth redirect URI</strong> from Firebase and add it to Facebook &quot;Valid OAuth Redirect URIs&quot;.</p>
                                         <p>� Back in Firebase, paste the Facebook credentials under the Facebook provider settings.</p>
                                     </div>
                                 </section>
@@ -314,7 +314,7 @@ export default function AuthSettingsPage() {
                                     <p className="font-bold text-white flex items-center gap-2">3. Apple Setup (Developer)</p>
                                     <div className="space-y-2 text-muted-foreground">
                                         <p>� You need an <strong>Apple Developer Program</strong> membership.</p>
-                                        <p>� Create an <strong>App ID</strong> with "Sign in with Apple" capability.</p>
+                                        <p>� Create an <strong>App ID</strong> with &quot;Sign in with Apple&quot; capability.</p>
                                         <p>� Create a <strong>Services ID</strong> and add your web domain.</p>
                                         <p>� Generate an <strong>Apple Sign-in Key</strong> (.p8 file).</p>
                                         <p>� In Firebase Apple Provider settings, you will need your <strong>Team ID</strong>, <strong>Services ID</strong>, and <strong>Key ID</strong>, and upload the private key.</p>
@@ -340,7 +340,7 @@ export default function AuthSettingsPage() {
                                     <p className="font-bold flex items-center gap-2 text-amber-500"><Globe className="h-4 w-4"/> 5. Critical Step: Domains</p>
                                     <div className="space-y-2 text-amber-500/80 italic">
                                         <p>Go to <strong>Firebase &gt; Authentication &gt; Settings &gt; Authorized domains</strong>.</p>
-                                        <p>Click "Add domain" and enter your website URL: <code>{'yourdomain.com'}</code>.</p>
+                                        <p>Click &quot;Add domain&quot; and enter your website URL: <code>{'yourdomain.com'}</code>.</p>
                                         <p className="font-black text-[10px]">REQUIRED FOR GOOGLE/FACEBOOK/APPLE LOGINS TO WORK!</p>
                                     </div>
                                 </section>

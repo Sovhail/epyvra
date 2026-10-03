@@ -314,7 +314,7 @@ export default function PluginsSettingsPage() {
                         <FormItem>
                           <FormLabel className="flex items-center gap-2"><Timer className="h-4 w-4" /> Prompt Delay (Seconds)</FormLabel>
                           <FormControl><Input {...field} type="number" className="bg-black/20" /></FormControl>
-                          <FormDescription className="text-[10px]">Seconds to wait before asking user to "Allow" notifications.</FormDescription>
+                                                <FormDescription className="text-[10px]">Seconds to wait before asking user to &quot;Allow&quot; notifications.</FormDescription>
                           <FormMessage />
                         </FormItem>
                     )}/>

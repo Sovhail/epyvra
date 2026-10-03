@@ -52,7 +52,7 @@ function DeleteSeriesAlert({ seriesId, seriesTitle, onConfirm }: { seriesId: str
                 <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                 <AlertDialogDescription>
                     This action cannot be undone. This will permanently delete the series
-                    <span className="font-bold"> "{seriesTitle}"</span> and all its episodes.
+          <span className="font-bold"> &quot;{seriesTitle}&quot;</span> and all its episodes.
                 </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

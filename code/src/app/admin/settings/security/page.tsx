@@ -213,7 +213,7 @@ export default function SecuritySettingsPage() {
                             <FormItem>
                                 <FormLabel>Support Email</FormLabel>
                                 <FormControl><Input placeholder="support@yourdomain.com" {...field} /></FormControl>
-                                <FormDescription>The "From" address for system emails.</FormDescription>
+                                            <FormDescription>The &quot;From&quot; address for system emails.</FormDescription>
                             </FormItem>
                         )}/>
                         

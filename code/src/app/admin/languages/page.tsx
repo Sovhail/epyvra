@@ -292,7 +292,7 @@ function DeleteLanguageAlert({ language, onDeleted, children }: { language: Lang
                     <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                     <AlertDialogDescription>
                         This will permanently delete the 
-                        language <span className="font-bold">"{language.name}"</span>.
+                                    language <span className="font-bold">&quot;{language.name}&quot;</span>.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -431,7 +431,7 @@ export default function LanguagesPage() {
           </Table>
            {!loading && (!languages || languages.length === 0) && (
              <div className="text-center p-8 text-muted-foreground">
-               No languages found. Click "Add Language" to create one.
+                                No languages found. Click &quot;Add Language&quot; to create one.
              </div>
             )}
         </CardContent>

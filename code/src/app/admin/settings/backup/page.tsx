@@ -154,7 +154,7 @@ export default function BackupSettingsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Backup & Restore</h1>
-          <p className="text-muted-foreground">Manage your application's data backups.</p>
+                <p className="text-muted-foreground">Manage your application&apos;s data backups.</p>
         </div>
       </div>
       <Card>

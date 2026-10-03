@@ -99,7 +99,7 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
                     {query && filteredSeries.length === 0 && (
                         <div className="text-center py-20 text-muted-foreground flex flex-col items-center gap-2">
                             <Search className="h-10 w-10 opacity-20" />
-                            <p>No results found for "<span className="text-foreground font-medium">{query}</span>"</p>
+                            <p>No results found for &quot;<span className="text-foreground font-medium">{query}</span>&quot;</p>
                         </div>
                     )}
                     

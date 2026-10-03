@@ -491,7 +491,7 @@ export default function SeriesEpisodesPage() {
         <div>
            {loading ? <Skeleton className="h-9 w-64" /> : (
             <>
-                <h1 className="text-3xl font-bold">Episodes for "{series?.title}"</h1>
+                <h1 className="text-3xl font-bold">Episodes for &quot;{series?.title}&quot;</h1>
                 <p className="text-muted-foreground">Manage the episodes for this series.</p>
             </>
            )}
@@ -557,7 +557,7 @@ export default function SeriesEpisodesPage() {
             )}
             {!loading && !error && (!episodes || episodes.length === 0) && (
              <div className="text-center p-8 text-muted-foreground">
-               No episodes found. Click "Add New Episode" to create one.
+                                            No episodes found. Click &quot;Add New Episode&quot; to create one.
              </div>
             )}
         </CardContent>

@@ -607,7 +607,7 @@ export default function SeriesEpisodesPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-start">
         <div>
-           {loading ? <Skeleton className="h-9 w-64" /> : <h1 className="text-3xl font-bold">Episodes for "{series?.title}"</h1>}
+                {loading ? <Skeleton className="h-9 w-64" /> : <h1 className="text-3xl font-bold">Episodes for &quot;{series?.title}&quot;</h1>}
         </div>
         <div className="flex items-center gap-2">
             <BulkUploadDialog seriesId={seriesId} nextEpisodeNumber={nextEpisodeNumber} onSaved={fetchData} disabled={loading} />

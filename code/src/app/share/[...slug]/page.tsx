@@ -60,7 +60,7 @@ export default async function ShareLandingPage({ params }: PageProps) {
                 </div>
                 <h1 className="text-2xl font-black uppercase tracking-tight mb-2">Drama Not Found</h1>
                 <p className="text-sm text-neutral-400 max-w-sm mb-8">
-                    The drama or episode you're looking for may have expired or moved. Explore our latest featured titles!
+                    The drama or episode you&apos;re looking for may have expired or moved. Explore our latest featured titles!
                 </p>
                 <Link
                     href="/"

@@ -342,7 +342,7 @@ export default function StorageSettingsPage() {
                                     <FormLabel>Pull Zone URL (CDN)</FormLabel>
                                     <FormControl><Input {...field} placeholder="https://myzone.b-cdn.net" /></FormControl>
                                     <FormDescription>
-                                        Do NOT use "https://storage.bunnycdn.com". You must connect a Pull Zone in Bunny.net and use the CDN domain (e.g., https://xxx.b-cdn.net).
+                                                        Do NOT use &quot;https://storage.bunnycdn.com&quot;. You must connect a Pull Zone in Bunny.net and use the CDN domain (e.g., https://xxx.b-cdn.net).
                                     </FormDescription>
                                 </FormItem>
                             )} />

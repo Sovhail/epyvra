@@ -142,7 +142,7 @@ export default function EditTranslationPage() {
                                 <div key={item.key} className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center border-b border-white/5 pb-4 last:border-0">
                                     <div className="space-y-1">
                                         <Label className="font-mono text-[9px] text-primary">{item.key}</Label>
-                                        <p className="text-xs text-muted-foreground italic">English: "{item.default}"</p>
+                                                <p className="text-xs text-muted-foreground italic">English: &quot;{item.default}&quot;</p>
                                     </div>
                                     <Input value={translations[item.key] || ''} onChange={(e) => handleInputChange(item.key, e.target.value)} placeholder={item.default} className="bg-black/20" />
                                 </div>
@@ -159,7 +159,7 @@ export default function EditTranslationPage() {
                                 <div key={item.key} className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center border-b border-white/5 pb-4 last:border-0">
                                     <div className="space-y-1">
                                         <Label className="font-mono text-[9px] text-amber-500">{item.key}</Label>
-                                        <p className="text-xs text-muted-foreground italic">English: "{item.default}"</p>
+                                                <p className="text-xs text-muted-foreground italic">English: &quot;{item.default}&quot;</p>
                                     </div>
                                     <Input value={translations[item.key] || ''} onChange={(e) => handleInputChange(item.key, e.target.value)} placeholder={item.default} className="bg-black/20 border-amber-500/20" />
                                 </div>

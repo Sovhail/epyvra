@@ -84,7 +84,7 @@ export default function PerformanceSettingsPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Performance & PWA</h1>
-            <p className="text-muted-foreground text-sm">Optimize your application's speed and user experience.</p>
+                    <p className="text-muted-foreground text-sm">Optimize your application&apos;s speed and user experience.</p>
           </div>
           <Button type="submit" disabled={isSaving} className={cn(saveSuccess && 'bg-green-500 hover:bg-green-600')}>
             {isSaving ? <Loader2 className="animate-spin" /> : saveSuccess ? <CheckCircle /> : <Save />}

@@ -173,7 +173,7 @@ export default function PagesPage() {
                                     <AlertDialogContent>
                                         <AlertDialogHeader>
                                             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                            <AlertDialogDescription>This will permanently delete the page "{page.title}".</AlertDialogDescription>
+                                            <AlertDialogDescription>This will permanently delete the page &quot;{page.title}&quot;.</AlertDialogDescription>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
                                             <AlertDialogCancel>Cancel</AlertDialogCancel>
