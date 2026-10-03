@@ -1,12 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/mongodb';
+import { authorizeInstall } from '@/lib/install-auth';
+
+const errorMessage = (error: unknown) => error instanceof Error ? error.message : 'Unknown error';
+
+interface ActivationResponse {
+    success?: boolean;
+    error?: string;
+    licenseKey?: string;
+    buyerUsername?: string;
+    itemName?: string;
+}
 
 export async function POST(request: NextRequest) {
     try {
-        const body = await request.json();
-        const { purchaseCode, domain } = body;
+        const body = await request.json() as Record<string, unknown>;
+        const { purchaseCode, domain, setupToken } = body;
 
-        if (!purchaseCode || !domain) {
+        const authorization = await authorizeInstall(typeof setupToken === 'string' ? setupToken : '');
+        if (!authorization.ok) {
+            return NextResponse.json({ success: false, error: authorization.error }, { status: 403 });
+        }
+
+        if (typeof purchaseCode !== 'string' || typeof domain !== 'string' || !purchaseCode.trim() || !domain.trim()) {
             return NextResponse.json(
                 { success: false, error: 'Missing purchaseCode or domain in request.' },
                 { status: 400 }
@@ -30,15 +46,15 @@ export async function POST(request: NextRequest) {
                     domain: domain.trim(),
                 }),
             });
-        } catch (fetchError: any) {
+        } catch (fetchError: unknown) {
             console.error('Fetch error calling license API:', fetchError);
             return NextResponse.json(
-                { success: false, error: `Could not connect to activation server: ${fetchError.message}` },
+                { success: false, error: `Could not connect to activation server: ${errorMessage(fetchError)}` },
                 { status: 502 }
             );
         }
 
-        const data = await response.json();
+        const data = await response.json() as ActivationResponse;
 
         if (!response.ok || !data.success) {
             return NextResponse.json(
@@ -50,8 +66,8 @@ export async function POST(request: NextRequest) {
         // Save license information locally to local MongoDB
         try {
             const db = await getDb();
-            await db.collection('settings').updateOne(
-                { _id: 'general' as any },
+            await db.collection<Record<string, unknown> & { _id: string }>('settings').updateOne(
+                { _id: 'general' },
                 { 
                     $set: { 
                         isLicenseActive: true, 
@@ -63,12 +79,12 @@ export async function POST(request: NextRequest) {
                 },
                 { upsert: true }
             );
-        } catch (dbError: any) {
+        } catch (dbError: unknown) {
             console.error('Database error saving license:', dbError);
             return NextResponse.json(
                 { 
                     success: false, 
-                    error: `License verified successfully, but failed to save to local database: ${dbError.message}. Please check your MONGODB_URI in the .env file.` 
+                    error: `License verified successfully, but failed to save to local database: ${errorMessage(dbError)}. Please check your MONGODB_URI in the .env file.` 
                 },
                 { status: 500 }
             );
@@ -82,7 +98,7 @@ export async function POST(request: NextRequest) {
             message: 'License activated successfully!'
         });
 
-    } catch (e: any) {
+    } catch (e: unknown) {
         console.error('Error in local activate route:', e);
         return NextResponse.json(
             { success: false, error: 'Internal Server Error' },

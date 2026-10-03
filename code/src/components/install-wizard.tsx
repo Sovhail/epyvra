@@ -15,6 +15,7 @@ export function InstallWizard() {
     const router = useRouter();
     const [step, setStep] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
+    const [setupToken, setSetupToken] = useState('');
 
     // Step 1: License Activation
     const [purchaseCode, setPurchaseCode] = useState('');
@@ -61,7 +62,7 @@ export function InstallWizard() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ purchaseCode, domain }),
+                body: JSON.stringify({ purchaseCode, domain, setupToken }),
             });
             const data = await res.json();
             if (res.ok && data.success) {
@@ -82,7 +83,7 @@ export function InstallWizard() {
 
     const handleTestDb = async () => {
         setDbStatus('testing');
-        const result = await testMongoDbConnectionAction();
+        const result = await testMongoDbConnectionAction(setupToken);
         if (result.success) {
             setDbStatus('success');
             setDbStatusMessage('Connection to MongoDB established successfully!');
@@ -106,7 +107,7 @@ export function InstallWizard() {
             });
         }, 200);
 
-        const result = await installInitializeDbAction();
+        const result = await installInitializeDbAction(setupToken);
         
         setTimeout(() => {
             clearInterval(interval);
@@ -128,7 +129,7 @@ export function InstallWizard() {
         }
         setIsLoading(true);
         try {
-            const result = await installSaveSiteConfigAction({ siteName, siteUrl });
+            const result = await installSaveSiteConfigAction({ siteName, siteUrl, setupToken });
             if (result.success) {
                 setStep(5);
             } else {
@@ -151,7 +152,8 @@ export function InstallWizard() {
             const result = await installSetupAdminAction({ 
                 username: adminUsername,
                 email: adminEmail, 
-                password: adminPassword 
+                password: adminPassword,
+                setupToken,
             });
             if (result.success) {
                 setIsSetupDone(true);
@@ -176,6 +178,19 @@ export function InstallWizard() {
                     </div>
                     <h1 className="text-4xl font-black text-white tracking-tighter">EPYVRA Setup</h1>
                     <p className="text-slate-400">Platform Initialization Wizard</p>
+                </div>
+
+                <div className="space-y-2">
+                    <Label htmlFor="setup-token">Installation setup token</Label>
+                    <Input
+                        id="setup-token"
+                        type="password"
+                        autoComplete="off"
+                        value={setupToken}
+                        onChange={(event) => setSetupToken(event.target.value)}
+                        placeholder="Value of INSTALL_SETUP_TOKEN"
+                    />
+                    <p className="text-xs text-slate-500">Required for every installation mutation and never stored by EPYVRA.</p>
                 </div>
 
                 {/* Progress Indicators */}
@@ -423,4 +438,3 @@ export function InstallWizard() {
         </div>
     );
 }
-

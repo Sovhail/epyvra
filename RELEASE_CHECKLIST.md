@@ -11,6 +11,8 @@
 - [ ] LevelPlay app key, rewarded/interstitial placements, test mode, mediation network credentials, and consent configuration.
 - [ ] Bunny.net or alternate storage credentials and delivery/security policy.
 - [ ] SMTP/support identity, payment gateway credentials, CAPTCHA keys, and optional AI keys for enabled services.
+- [ ] `ADMIN_SESSION_SECRET`: an independently generated secret of at least 32 random characters, supplied only to the backend runtime.
+- [ ] `INSTALL_SETUP_TOKEN`: a one-time random value of at least 32 characters; remove it from the runtime environment after installation.
 - [ ] Vendor confirmation for retained DevSnaplix licensing endpoints and the `tiksnap.pro` reference.
 
 ## Security gates

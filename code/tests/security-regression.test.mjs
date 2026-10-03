@@ -65,3 +65,30 @@ test('browser settings use explicit projections and raw settings remain server-o
   assert.doesNotMatch(publicPayments, /Secret|secret|Password|password/);
   assert.match(dataActions, /delete publicSettings\.apiKey/);
 });
+
+test('admin sessions are signed, expiring, and checked against server state', async () => {
+  const session = await source('src', 'lib', 'admin-session.ts');
+  const middleware = await source('src', 'middleware.ts');
+  const auth = await source('src', 'lib', 'actions', 'auth.ts');
+  assert.match(session, /HMAC/);
+  assert.match(session, /ADMIN_SESSION_SECRET/);
+  assert.match(session, /expiresAt/);
+  assert.match(middleware, /verifyAdminSessionToken\(authCookie\.value\)/);
+  assert.match(auth, /admin\.username === session\.subject/);
+  assert.match(auth, /admin\.sessionVersion/);
+});
+
+test('installation mutations require a one-time setup token and cannot overwrite an admin', async () => {
+  const installAuth = await source('src', 'lib', 'install-auth.ts');
+  const auth = await source('src', 'lib', 'actions', 'auth.ts');
+  const content = await source('src', 'lib', 'actions', 'content.ts');
+  const activation = await source('src', 'app', 'api', 'install', 'activate', 'route.ts');
+  assert.match(installAuth, /INSTALL_SETUP_TOKEN/);
+  assert.match(installAuth, /findOne\(\{ _id: 'admin' \}\)/);
+  assert.match(auth, /authorizeInstall\(data\.setupToken\)/);
+  assert.match(auth, /insertOne\(\{ _id: 'admin'/);
+  const setupAdmin = auth.match(/export async function installSetupAdminAction[\s\S]*?\n\}/)?.[0] ?? '';
+  assert.doesNotMatch(setupAdmin, /upsert:\s*true/);
+  assert.match(content, /installInitializeDbAction[\s\S]*?authorizeInstall\(setupToken\)/);
+  assert.match(activation, /authorizeInstall\([^)]*setupToken/);
+});

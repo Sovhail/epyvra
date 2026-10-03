@@ -8,8 +8,8 @@ Status: remediation in progress. Production release is prohibited while Critical
 | SCR-002 | Critical | Extractable mobile API key is treated as user authorization | Implemented for UID-scoped/mobile monetary APIs with Firebase Admin token verification and UID binding; negative tests pending |
 | SCR-003 | Critical | Reward/ad claims lack trustworthy proof and atomic anti-replay | Partially remediated: transactional idempotency and timed one-use challenges added; unverified ad rewards fail closed; LevelPlay verification pending |
 | SCR-004 | Critical | Firestore rules permit client entitlement/balance writes | Remediated: monetary, entitlement, purchase, profile and settings writes fail closed |
-| SCR-005 | Critical | Sensitive settings can be returned to browser clients without consistent redaction | Partially remediated: explicit public projections and server-only raw access added; admin session hardening pending |
-| SCR-006 | Critical | Admin/install authorization is incomplete | Open |
+| SCR-005 | Critical | Sensitive settings can be returned to browser clients without consistent redaction | Remediated in code: explicit public projections, server-only raw access, and cryptographically verified admin sessions; deployment secret/runtime negative tests pending |
+| SCR-006 | Critical | Admin/install authorization is incomplete | Remediated in code: signed expiring admin sessions with server-side revocation and one-time install token gates; runtime negative tests pending |
 | SCR-007 | Critical | Video signing/proxy permits SSRF/open-proxy behavior | Open |
 | SCR-008 | Critical | Purchase crediting lacks authenticated binding, uniqueness, and atomicity | Open |
 | SCR-009 | High | HLS/DASH premium delivery can be accessed by URL possession | Open |

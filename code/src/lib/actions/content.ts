@@ -19,6 +19,7 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getDemoModeMutationError } from '../demo-mode';
 import { getVideoSecret } from '../video-secret';
 import { handleError, getQueryById } from './utils';
+import { authorizeInstall } from '../install-auth';
 
 // Helper callAi import
 import { callAi } from './ai';
@@ -290,6 +291,7 @@ export async function savePluginsSettingsAction(data: any) {
  * Calls AI translation service to populate language translation keys.
  */
 export async function translateLanguageAction(languageCode: string, languageName: string) {
+    if (!(await import('./auth').then(m => m.verifyAdminSession()))) return { success: false, error: 'Unauthorized access.' };
     const demoError = getDemoModeMutationError();
     if (demoError) return demoError;
 
@@ -743,7 +745,11 @@ export async function submitReportAction(payload: { reporterUid: string, reporte
 /**
  * Revalidates Next.js layout caches.
  */
-export async function revalidateAllAction() { revalidatePath('/', 'layout'); return { success: true }; }
+export async function revalidateAllAction() {
+    if (!(await import('./auth').then(m => m.verifyAdminSession()))) return { success: false, error: 'Unauthorized access.' };
+    revalidatePath('/', 'layout');
+    return { success: true };
+}
 
 /**
  * Saves monetization options settings.
@@ -886,7 +892,19 @@ export async function saveRewardSettingsAction(data: any) {
 /**
  * Tests connection to MongoDB database.
  */
-export async function testMongoDbConnectionAction() { try { const db = await getDb(); await db.command({ ping: 1 }); return { success: true, message: 'Connected successfully to MongoDB!' }; } catch (e: any) { return handleError('testMongoDbConnectionAction', e, 'Database connection test failed.'); } }
+export async function testMongoDbConnectionAction(setupToken?: string) {
+    try {
+        const authorized = setupToken
+            ? (await authorizeInstall(setupToken)).ok
+            : await import('./auth').then(m => m.verifyAdminSession());
+        if (!authorized) return { success: false, error: 'Unauthorized access.' };
+        const db = await getDb();
+        await db.command({ ping: 1 });
+        return { success: true, message: 'Connected successfully to MongoDB!' };
+    } catch (e: any) {
+        return handleError('testMongoDbConnectionAction', e, 'Database connection test failed.');
+    }
+}
 
 /**
  * Exports MongoDB collections to JSON backups.
@@ -913,8 +931,10 @@ export async function importDataToMongoAction(jsonContent: string) {
 /**
  * Performs database table installations.
  */
-export async function installInitializeDbAction() {
+export async function installInitializeDbAction(setupToken: string) {
     try {
+        const authorization = await authorizeInstall(setupToken);
+        if (!authorization.ok) return { success: false, error: authorization.error };
         const db = await getDb();
         const categories = [
             { name: 'Romance', slug: 'romance', showOnHomepage: true },
@@ -957,16 +977,11 @@ export async function installInitializeDbAction() {
 /**
  * Saves initial website branding details during the installation wizard.
  */
-export async function installSaveSiteConfigAction(data: { siteName: string; siteUrl: string }) {
+export async function installSaveSiteConfigAction(data: { siteName: string; siteUrl: string; setupToken: string }) {
     try {
+        const authorization = await authorizeInstall(data.setupToken);
+        if (!authorization.ok) return { success: false, error: authorization.error };
         const db = await getDb();
-        const existingAdmin = await db.collection('settings').findOne({ _id: 'admin' as any });
-        if (existingAdmin) {
-            const isAuth = await import('./auth').then(m => m.verifyAdminSession());
-            if (!isAuth) {
-                return { success: false, error: 'Unauthorized access.' };
-            }
-        }
 
         const siteName = (data.siteName || 'EPYVRA').trim();
         let siteUrl = (data.siteUrl || '').trim();

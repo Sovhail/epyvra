@@ -1,6 +1,7 @@
 'use server';
 import { NextResponse, type NextRequest } from 'next/server';
 import { i18n } from '@/i18n-config';
+import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from '@/lib/admin-session';
 
 const { locales, defaultLocale: staticDefaultLocale } = i18n;
 
@@ -75,8 +76,8 @@ export async function middleware(request: NextRequest) {
 
     // Admin panel protection check
     if (pathname === '/admin' || pathname.startsWith('/admin/')) {
-        const authCookie = request.cookies.get('auth');
-        const isLoggedIn = !!authCookie?.value && /^[a-f0-9]{32}:[a-f0-9]+$/i.test(authCookie.value);
+        const authCookie = request.cookies.get(ADMIN_SESSION_COOKIE);
+        const isLoggedIn = !!authCookie?.value && !!(await verifyAdminSessionToken(authCookie.value));
         const isAuthRoute = pathname === '/admin/login' || pathname === '/admin/forgot-password' || pathname === '/admin/reset-password';
 
         if (!isLoggedIn && !isAuthRoute) {
@@ -105,7 +106,7 @@ export async function middleware(request: NextRequest) {
     // Rewrite path to prepend default locale if not present
     if (!pathnameHasLocale) {
         // If user has a preferred language different from site default, redirect to it
-        if (userLocale && userLocale !== siteDefaultLocale && locales.includes(userLocale as any)) {
+        if (userLocale && userLocale !== siteDefaultLocale && locales.some(locale => locale === userLocale)) {
             return NextResponse.redirect(new URL(`/${userLocale}${pathname}`, request.url));
         }
 

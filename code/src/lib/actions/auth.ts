@@ -4,11 +4,12 @@ import { z } from 'zod';
 import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { randomBytes } from 'crypto';
-import { hashPassword, verifyPassword, encryptPath, decryptPath } from '../crypto';
+import { hashPassword, verifyPassword } from '../crypto';
 import { getDb } from '../mongodb';
 import { handleError, getQueryById, handleProfileError } from './utils';
 import { getDemoModeMutationError } from '../demo-mode';
-import { getVideoSecret } from '../video-secret';
+import { ADMIN_SESSION_COOKIE, createAdminSessionToken, verifyAdminSessionToken } from '../admin-session';
+import { authorizeInstall } from '../install-auth';
 
 /**
  * Handles Administrator authentication login.
@@ -57,16 +58,15 @@ export async function login(prevState: any, formData: FormData) {
             await db.collection('rate_limits').deleteOne({ _id: rateLimitId as any });
         }
 
-        const secret = await getVideoSecret();
-        const payload = JSON.stringify({ auth: true, user: username, createdAt: Date.now() });
-        const token = encryptPath(payload, secret);
+        const sessionVersion = Number(adminData.sessionVersion ?? 1);
+        const token = await createAdminSessionToken(username, sessionVersion);
         const cookieStore = await cookies();
-        cookieStore.set('auth', token, { 
+        cookieStore.set(ADMIN_SESSION_COOKIE, token, {
             httpOnly: true, 
             path: '/', 
             sameSite: 'lax', 
             secure: process.env.NODE_ENV === 'production',
-            maxAge: 60 * 60 * 24 * 7 // 7 days
+            maxAge: 60 * 60 * 12,
         });
         redirect('/admin');
       }
@@ -94,6 +94,7 @@ export async function login(prevState: any, formData: FormData) {
  */
 export async function logout() {
   const cookieStore = await cookies();
+  cookieStore.delete(ADMIN_SESSION_COOKIE);
   cookieStore.delete('auth');
   redirect('/admin/login');
 }
@@ -103,6 +104,7 @@ export async function logout() {
  * Salts and hashes new password if updated.
  */
 export async function updateAdminProfile(prevState: any, formData: FormData) {
+    if (!(await verifyAdminSession())) return { error: 'Unauthorized access.' };
     const demoError = getDemoModeMutationError();
     if (demoError) return demoError;
     const db = await getDb();
@@ -134,7 +136,18 @@ export async function updateAdminProfile(prevState: any, formData: FormData) {
             updateData.passwordAlgorithm = 'pbkdf2-sha512';
         }
 
+        const sessionVersion = Number(admin.sessionVersion ?? 1) + 1;
+        updateData.sessionVersion = sessionVersion;
         await db.collection('settings').updateOne({ _id: 'admin' as any }, { $set: updateData });
+        const token = await createAdminSessionToken(username, sessionVersion);
+        const cookieStore = await cookies();
+        cookieStore.set(ADMIN_SESSION_COOKIE, token, {
+            httpOnly: true,
+            path: '/',
+            sameSite: 'lax',
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 60 * 60 * 12,
+        });
         return { success: true, message: 'Profile updated successfully' };
     } catch (e: any) {
         return handleProfileError('updateAdminProfile', e, 'Failed to update admin profile.');
@@ -144,8 +157,12 @@ export async function updateAdminProfile(prevState: any, formData: FormData) {
 /**
  * Installs and sets up the primary admin credentials.
  */
-export async function installSetupAdminAction(data: { username: string, email: string, password: string }) {
+export async function installSetupAdminAction(data: { username: string, email: string, password: string, setupToken: string }) {
     try {
+        const authorization = await authorizeInstall(data.setupToken);
+        if (!authorization.ok) return { success: false, error: authorization.error };
+        if (data.password.length < 12) return { success: false, error: 'Admin password must be at least 12 characters.' };
+        if (!z.string().email().safeParse(data.email.trim()).success) return { success: false, error: 'A valid admin email is required.' };
         const db = await getDb();
         const salt = randomBytes(16).toString('hex');
         const hash = hashPassword(data.password, salt);
@@ -155,9 +172,10 @@ export async function installSetupAdminAction(data: { username: string, email: s
             email: data.email.trim(),
             passwordHash: hash,
             passwordSalt: salt,
-            passwordAlgorithm: 'pbkdf2-sha512'
+            passwordAlgorithm: 'pbkdf2-sha512',
+            sessionVersion: 1,
         };
-        await db.collection('settings').updateOne({ _id: 'admin' as any }, { $set: adminProfile }, { upsert: true });
+        await db.collection<Record<string, unknown> & { _id: string }>('settings').insertOne({ _id: 'admin', ...adminProfile });
         return { success: true };
     } catch (e: any) {
         return handleError('installSetupAdminAction', e, 'Admin profile setup failed.');
@@ -168,6 +186,7 @@ export async function installSetupAdminAction(data: { username: string, email: s
  * Validates the product license key.
  */
 export async function testLicenseAction(licenseKey: string) {
+    if (!(await verifyAdminSession())) return { success: false, message: 'Unauthorized access.' };
     const demoError = getDemoModeMutationError();
     if (demoError) return demoError;
     if (licenseKey.length > 10) { const db = await getDb(); await db.collection('settings').updateOne({ _id: 'general' as any }, { $set: { isLicenseActive: true, licenseKey } }, { upsert: true }); return { success: true, message: 'License activated successfully!' }; }
@@ -180,19 +199,15 @@ export async function testLicenseAction(licenseKey: string) {
 export async function verifyAdminSession(): Promise<boolean> {
     try {
         const cookieStore = await cookies();
-        const authCookie = cookieStore.get('auth');
+        const authCookie = cookieStore.get(ADMIN_SESSION_COOKIE);
         if (!authCookie || !authCookie.value) return false;
-
-        const secret = await getVideoSecret();
-        const decrypted = decryptPath(authCookie.value, secret);
-        const data = JSON.parse(decrypted);
-
-        if (data && data.auth === true) {
-            const age = Date.now() - (data.createdAt || 0);
-            const maxAge = 1000 * 60 * 60 * 24 * 7; // 7 days
-            if (age < maxAge && age >= 0) return true;
-        }
-        return false;
+        const session = await verifyAdminSessionToken(authCookie.value);
+        if (!session) return false;
+        const db = await getDb();
+        const admin = await db.collection<Record<string, unknown> & { _id: string }>('settings').findOne({ _id: 'admin' });
+        return !!admin
+            && admin.username === session.subject
+            && Number(admin.sessionVersion ?? 1) === session.sessionVersion;
     } catch {
         return false;
     }
@@ -297,6 +312,7 @@ export async function adminResetPassword(prevState: any, formData: FormData) {
                     passwordSalt: salt,
                     passwordAlgorithm: 'pbkdf2-sha512'
                 },
+                $inc: { sessionVersion: 1 },
                 $unset: {
                     resetToken: "",
                     resetTokenExpiry: ""
@@ -310,4 +326,3 @@ export async function adminResetPassword(prevState: any, formData: FormData) {
         return { error: 'Failed to reset password. Please try again later.' };
     }
 }
-
