@@ -24,7 +24,7 @@ Every remediation must include negative authorization tests, replay/race tests w
 
 ## Verification evidence
 
-- `npm run test:security`: 7/7 security regression checks pass (identity binding, server-owned signup balance, transaction/idempotency structure, one-use reward challenge, legacy mutation gate, Firestore entitlement protection, secret projections).
+- `npm run test:security`: 16/16 security regression checks pass, covering identity/UID binding, transactional monetary operations, Firestore entitlements, secret projections, admin/install authorization, SSRF/storage targets, Play Billing, Android release/WebView policy, installer least privilege, and LevelPlay S2S replay protection.
 - `npm run typecheck`: passes after the authentication and coin-operation changes.
 - Changed security modules and routes pass targeted ESLint.
 - Runtime concurrency tests remain required against a MongoDB replica set before SCR-003 can be closed.
