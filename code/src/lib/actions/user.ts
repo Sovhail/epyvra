@@ -9,6 +9,29 @@ import { randomBytes } from 'crypto';
 import { hashPassword } from '../crypto';
 
 const LEGACY_MONETARY_ACTIONS_DISABLED: boolean = true;
+type UnknownRecord = Record<string, unknown>;
+type StringIdDocument = { _id: string; [key: string]: unknown };
+type UserDocument = {
+    _id: string;
+    coins: number;
+    displayName?: string | null;
+    email?: string | null;
+    phoneNumber?: string | null;
+    photoURL?: string | null;
+    isVip?: boolean;
+    vipExpiry?: string | Date | null;
+    disabled?: boolean;
+    lastCheckInDate?: string;
+    consecutiveCheckInDays?: number;
+    referredBy?: string;
+    referralCode?: string;
+    publicId?: string;
+    referralCount?: number;
+    referralEarnings?: number;
+    passwordHash?: string;
+    passwordSalt?: string;
+};
+type SeriesLikesDocument = { likes: number };
 
 /**
  * Toggles a user's banned or disabled status in the platform.
@@ -20,7 +43,7 @@ export async function updateUserStatusAction(userId: string, disabled: boolean) 
     if (demoError) return demoError;
     const db = await getDb();
     try {
-        await db.collection('users').updateOne({ _id: userId as any }, { $set: { disabled } });
+        await db.collection<UserDocument>('users').updateOne({ _id: userId }, { $set: { disabled } });
         revalidatePath('/admin/users');
         return { success: true };
     } catch (e) { return handleError('updateUserStatusAction', e, 'Failed to update user status.'); }
@@ -29,7 +52,7 @@ export async function updateUserStatusAction(userId: string, disabled: boolean) 
 /**
  * Updates user profile information from the admin interface.
  */
-export async function adminUpdateUserAction(userId: string, data: any) {
+export async function adminUpdateUserAction(userId: string, data: UnknownRecord) {
     if (!(await import('./auth').then(m => m.verifyAdminSession()))) return { success: false, error: 'Unauthorized access.' };
 
     const demoError = getDemoModeMutationError();
@@ -39,13 +62,14 @@ export async function adminUpdateUserAction(userId: string, data: any) {
         const { password } = data;
 
         // Fetch current user to verify identity and check for profile image changes
-        const currentUser = await db.collection('users').findOne({ _id: userId as any });
+        const users = db.collection<UserDocument>('users');
+        const currentUser = await users.findOne({ _id: userId });
         if (currentUser && currentUser.photoURL && data.photoURL && currentUser.photoURL !== data.photoURL) {
             await deleteFile(currentUser.photoURL);
         }
 
         // Explicitly allowlist and typecast fields to prevent arbitrary MongoDB payload injections
-        const updateData: any = {};
+        const updateData: Partial<UserDocument> = {};
         if (data.displayName !== undefined) updateData.displayName = typeof data.displayName === 'string' ? data.displayName : null;
         if (data.email !== undefined) updateData.email = typeof data.email === 'string' ? data.email : null;
         if (data.phoneNumber !== undefined) updateData.phoneNumber = typeof data.phoneNumber === 'string' ? data.phoneNumber : null;
@@ -53,18 +77,18 @@ export async function adminUpdateUserAction(userId: string, data: any) {
         if (data.coins !== undefined) updateData.coins = Number(data.coins) || 0;
         if (data.isVip !== undefined) updateData.isVip = Boolean(data.isVip);
         if (data.vipExpiry !== undefined) {
-            updateData.vipExpiry = data.vipExpiry ? (typeof data.vipExpiry === 'string' ? data.vipExpiry : new Date(data.vipExpiry)) : null;
+            updateData.vipExpiry = typeof data.vipExpiry === 'string' || data.vipExpiry instanceof Date ? data.vipExpiry : null;
         }
         if (data.disabled !== undefined) updateData.disabled = Boolean(data.disabled);
 
-        if (password) {
+        if (typeof password === 'string' && password) {
             const salt = randomBytes(16).toString('hex');
             const hash = hashPassword(password, salt);
             updateData.passwordHash = hash;
             updateData.passwordSalt = salt;
         }
 
-        await db.collection('users').updateOne({ _id: userId as any }, { $set: updateData });
+        await users.updateOne({ _id: userId }, { $set: updateData });
         revalidatePath('/admin/users');
         return { success: true };
     } catch (e) { return handleError('adminUpdateUserAction', e, 'Failed to update user.'); }
@@ -80,12 +104,13 @@ export async function deleteUserAction(userId: string) {
     if (demoError) return demoError;
     const db = await getDb();
     try {
-        const user = await db.collection('users').findOne({ _id: userId as any });
+        const users = db.collection<UserDocument>('users');
+        const user = await users.findOne({ _id: userId });
         if (user?.photoURL) {
             await deleteFile(user.photoURL);
         }
 
-        await db.collection('users').deleteOne({ _id: userId as any });
+        await users.deleteOne({ _id: userId });
         await db.collection('favorites').deleteMany({ userId });
         await db.collection('history').deleteMany({ userId });
         await db.collection('unlocked-episodes').deleteMany({ userId });
@@ -184,7 +209,7 @@ export async function claimRewardAction(userId: string, taskId: string, platform
         }
 
         // Step 5: Securely increment the user's coin balance by the specified reward amount
-        await db.collection('users').updateOne({ _id: userId as any }, { $inc: { coins: task.coins } });
+        await db.collection<UserDocument>('users').updateOne({ _id: userId }, { $inc: { coins: task.coins } });
 
         // Step 6: Log the claim entry to enforce frequency checks on subsequent calls
         await db.collection('reward-claims').insertOne({ userId, taskId, platform, claimedAt: new Date() });
@@ -212,7 +237,8 @@ export async function performDailyCheckInAction(userId: string) {
     const db = await getDb();
     try {
         // Step 1: Resolve the user profile from the database
-        const user = await db.collection('users').findOne({ _id: userId as any });
+        const users = db.collection<UserDocument>('users');
+        const user = await users.findOne({ _id: userId });
         if (!user) return { success: false, error: 'User not found' };
 
         // Step 2: Enforce a strict frequency check (exactly one login check-in per day using YYYY-MM-DD format)
@@ -220,8 +246,10 @@ export async function performDailyCheckInAction(userId: string) {
         if (user.lastCheckInDate === today) return { success: false, error: 'Already checked in today' };
 
         // Step 3: Fetch reward configurations from global settings or fall back to default values
-        const settings = await db.collection('settings').findOne({ _id: 'rewards' as any });
-        const dailyRewards = settings?.dailyRewards || [10, 20, 30, 40, 50, 60, 70];
+        const settings = await db.collection<StringIdDocument>('settings').findOne({ _id: 'rewards' });
+        const dailyRewards = Array.isArray(settings?.dailyRewards)
+            ? settings.dailyRewards.map(Number)
+            : [10, 20, 30, 40, 50, 60, 70];
 
         // Step 4: Calculate the check-in streak progression
         const lastCheckIn = user.lastCheckInDate;
@@ -239,8 +267,8 @@ export async function performDailyCheckInAction(userId: string) {
         const reward = dailyRewards[dayNum - 1];
 
         // Step 6: Credit the user's coins balance and save the new check-in date/streak count in database
-        await db.collection('users').updateOne(
-            { _id: userId as any }, 
+        await users.updateOne(
+            { _id: userId },
             { 
                 $inc: { coins: reward }, 
                 $set: { lastCheckInDate: today, consecutiveCheckInDays: dayNum } 
@@ -273,22 +301,22 @@ export async function toggleLikeSeriesAction(seriesId: string, userId: string): 
         if (existing) {
             // Unlike: remove record and decrement
             await likesColl.deleteOne({ seriesId, userId });
-            const result = await db.collection('series').findOneAndUpdate(
+            const result = await db.collection<SeriesLikesDocument>('series').findOneAndUpdate(
                 getQueryById(seriesId),
                 { $inc: { likes: -1 } },
                 { returnDocument: 'after' }
             );
-            const likes = Math.max(0, (result as any)?.likes ?? 0);
+            const likes = Math.max(0, result?.likes ?? 0);
             return { success: true, liked: false, likes };
         } else {
             // Like: insert record and increment
             await likesColl.insertOne({ seriesId, userId, createdAt: new Date() });
-            const result = await db.collection('series').findOneAndUpdate(
+            const result = await db.collection<SeriesLikesDocument>('series').findOneAndUpdate(
                 getQueryById(seriesId),
                 { $inc: { likes: 1 } },
                 { returnDocument: 'after' }
             );
-            const likes = (result as any)?.likes ?? 0;
+            const likes = result?.likes ?? 0;
             return { success: true, liked: true, likes };
         }
     } catch (e) {
@@ -304,9 +332,9 @@ export async function getSeriesLikeStatusAction(seriesId: string, userId: string
     try {
         const [likeRecord, series] = await Promise.all([
             db.collection('series_likes').findOne({ seriesId, userId }),
-            db.collection('series').findOne(getQueryById(seriesId), { projection: { likes: 1 } })
+            db.collection<SeriesLikesDocument>('series').findOne(getQueryById(seriesId), { projection: { likes: 1 } })
         ]);
-        return { liked: !!likeRecord, likes: (series as any)?.likes ?? 0 };
+        return { liked: !!likeRecord, likes: series?.likes ?? 0 };
     } catch {
         return { liked: false, likes: 0 };
     }
@@ -326,7 +354,8 @@ export async function claimReferralCodeAction(userId: string, referralCodeInput:
 
         const cleanCode = referralCodeInput.trim().toUpperCase();
 
-        const currentUser = await db.collection('users').findOne({ _id: userId as any });
+        const users = db.collection<UserDocument>('users');
+        const currentUser = await users.findOne({ _id: userId });
         if (!currentUser) {
             return { success: false, error: 'User profile not found.' };
         }
@@ -340,7 +369,7 @@ export async function claimReferralCodeAction(userId: string, referralCodeInput:
         }
 
         // Find referrer user by referralCode or publicId
-        const referrer = await db.collection('users').findOne({ 
+        const referrer = await users.findOne({
             $or: [
                 { referralCode: cleanCode },
                 { referralCode: cleanCode.replace(/^EPY-/, '') },
@@ -357,7 +386,7 @@ export async function claimReferralCodeAction(userId: string, referralCodeInput:
         }
 
         // Fetch settings for configured coin amounts
-        const settings = await db.collection('settings').findOne({ _id: 'general' as any });
+        const settings = await db.collection<StringIdDocument>('settings').findOne({ _id: 'general' });
         if (settings?.referralEnabled === false) {
             return { success: false, error: 'Referral program is currently disabled.' };
         }
@@ -366,8 +395,8 @@ export async function claimReferralCodeAction(userId: string, referralCodeInput:
         const inviteeBonus = Number(settings?.referredBonusCoins ?? 50);
 
         // Update current user (invitee)
-        await db.collection('users').updateOne(
-            { _id: userId as any },
+        await users.updateOne(
+            { _id: userId },
             { 
                 $inc: { coins: inviteeBonus },
                 $set: { referredBy: referrer.referralCode || cleanCode }
@@ -375,7 +404,7 @@ export async function claimReferralCodeAction(userId: string, referralCodeInput:
         );
 
         // Update referrer (inviter)
-        await db.collection('users').updateOne(
+        await users.updateOne(
             { _id: referrer._id },
             { 
                 $inc: { 
