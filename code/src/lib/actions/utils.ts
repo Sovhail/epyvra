@@ -1,23 +1,21 @@
-import { ObjectId, type Filter } from 'mongodb';
+import { ObjectId, type Document, type Filter } from 'mongodb';
 
-type LegacyIdDocument = { _id: ObjectId | string };
 type ActionError = { success: false; error: string };
 type ProfileError = { error: string };
 
 const getErrorMessage = (error: unknown): string =>
     error instanceof Error ? error.message : 'An unknown error occurred.';
 
-export const getQueryById = (id: string): Filter<LegacyIdDocument> => {
-    try {
-        return {
-            $or: [
-                { _id: ObjectId.isValid(id) ? new ObjectId(id) : null },
-                { _id: id }
-            ].filter(q => q._id !== null)
-        };
-    } catch (e) {
-        return { _id: id };
-    }
+export const getQueryById = (id: string): Filter<Document> => {
+    const legacyStringId: Filter<Document> = { $expr: { $eq: ['$_id', id] } };
+    if (!ObjectId.isValid(id)) return legacyStringId;
+
+    return {
+        $or: [
+            { _id: new ObjectId(id) },
+            legacyStringId,
+        ],
+    };
 };
 
 export const mapDoc = <T extends { _id: { toString(): string } }>(doc: T | null | undefined) => {
