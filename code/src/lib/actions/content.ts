@@ -21,18 +21,64 @@ import { getVideoSecret } from '../video-secret';
 import { handleError, getQueryById } from './utils';
 import { authorizeInstall } from '../install-auth';
 import { assertPublicHttpUrl, normalizeBunnyRegion } from '../safe-fetch';
+import type {
+    Ad,
+    CoinPack,
+    Episode,
+    GeneralSettings,
+    Language,
+    MobileSettings,
+    MonetizationSettings,
+    PaymentGatewaySettings,
+    PluginsSettings,
+    RewardTask,
+    RewardsSettings,
+    Series,
+    StorageSettings,
+} from '../types';
+import { getErrorMessage } from '../error-utils';
 
 // Helper callAi import
 import { callAi } from './ai';
 import fs from 'fs';
 import path from 'path';
 
+type UnknownRecord = Record<string, unknown>;
+type StringIdDocument = { _id: string; [key: string]: unknown };
+type Identified<T> = Partial<T> & { id?: string };
+type SeriesInput = Identified<Series> & { hashId?: string };
+type EpisodeInput = Identified<Episode> & { videoUrl?: string };
+type UserCoinDocument = { _id: string; coins: number };
+type MediaReference = { url?: string };
+type UnlockEpisodePayload = {
+    userId: string;
+    episodeId: string;
+    method: 'coins' | 'ad';
+    cost: number;
+    seriesTitle: string;
+    episodeNumber: number;
+};
+type StorageConnectionConfig = {
+    storageZoneName?: string;
+    apiKey?: string;
+    region?: string;
+    accessKeyId?: string;
+    applicationKeyId?: string;
+    secretAccessKey?: string;
+    applicationKey?: string;
+    endpoint?: string;
+    bucket?: string;
+};
+
+const isRecord = (value: unknown): value is UnknownRecord =>
+    typeof value === 'object' && value !== null && !Array.isArray(value);
+
 const slugify = (text: string) => text.toString().toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w-]+/g, '').replace(/--+/g, '-');
 
 /**
  * Saves or updates custom static pages.
  */
-export async function savePageAction(data: any) {
+export async function savePageAction(data: UnknownRecord) {
     if (!(await import('./auth').then(m => m.verifyAdminSession()))) return { success: false, error: 'Unauthorized access.' };
 
     const demoError = getDemoModeMutationError();
@@ -40,7 +86,7 @@ export async function savePageAction(data: any) {
     const db = await getDb();
     try {
         const { id, ...rest } = data;
-        if (id) {
+        if (typeof id === 'string' && id) {
             await db.collection('pages').updateOne(getQueryById(id), { $set: rest });
         } else {
             await db.collection('pages').insertOne(rest);
@@ -69,7 +115,7 @@ export async function deletePageAction(id: string) {
 /**
  * Saves category labels.
  */
-export async function saveCategoryAction(data: any) {
+export async function saveCategoryAction(data: UnknownRecord) {
     if (!(await import('./auth').then(m => m.verifyAdminSession()))) return { success: false, error: 'Unauthorized access.' };
 
     const demoError = getDemoModeMutationError();
@@ -79,12 +125,12 @@ export async function saveCategoryAction(data: any) {
         const { id } = data;
         
         // Explicitly allowlist category fields
-        const sanitized: any = {};
+        const sanitized: UnknownRecord = {};
         if (data.name !== undefined) sanitized.name = typeof data.name === 'string' ? data.name : '';
         if (data.slug !== undefined) sanitized.slug = typeof data.slug === 'string' ? data.slug : '';
         if (data.showOnHomepage !== undefined) sanitized.showOnHomepage = Boolean(data.showOnHomepage);
 
-        if (id) {
+        if (typeof id === 'string' && id) {
             await db.collection('categories').updateOne(getQueryById(id), { $set: sanitized });
         } else {
             await db.collection('categories').insertOne(sanitized);
@@ -113,30 +159,30 @@ export async function deleteCategoryAction(id: string) {
 /**
  * Saves general site settings configurations.
  */
-export async function saveGeneralSettingsAction(data: any) {
+export async function saveGeneralSettingsAction(data: UnknownRecord) {
     if (!(await import('./auth').then(m => m.verifyAdminSession()))) return { success: false, error: 'Unauthorized access.' };
 
     const demoError = getDemoModeMutationError();
     if (demoError) return demoError;
     const db = await getDb();
     try {
-        const current = await db.collection('settings').findOne({ _id: 'general' as any });
+        const current = await db.collection<StringIdDocument>('settings').findOne({ _id: 'general' });
         
         // Clean up old logo if changed
-        if (current?.logoUrl && data.logoUrl && current.logoUrl !== data.logoUrl) {
+        if (typeof current?.logoUrl === 'string' && data.logoUrl && current.logoUrl !== data.logoUrl) {
             await deleteFile(current.logoUrl);
         }
         // Clean up old favicon if changed
-        if (current?.faviconUrl && data.faviconUrl && current.faviconUrl !== data.faviconUrl) {
+        if (typeof current?.faviconUrl === 'string' && data.faviconUrl && current.faviconUrl !== data.faviconUrl) {
             await deleteFile(current.faviconUrl);
         }
         // Clean up old watermark if changed
-        if (current?.watermarkUrl && data.watermarkUrl && current.watermarkUrl !== data.watermarkUrl) {
+        if (typeof current?.watermarkUrl === 'string' && data.watermarkUrl && current.watermarkUrl !== data.watermarkUrl) {
             await deleteFile(current.watermarkUrl);
         }
 
         // Explicitly allowlist and sanitize general settings keys. Exclude licensing keys.
-        const sanitized: any = {};
+        const sanitized: UnknownRecord = {};
         const allowedKeys = [
             'siteName', 'siteUrl', 'logoUrl', 'faviconUrl', 'copyrightText',
             'appVersion', 'seriesUrlFormat', 'defaultLanguageCode',
@@ -161,17 +207,18 @@ export async function saveGeneralSettingsAction(data: any) {
                 }
             }
         }
-        if (data.socials && typeof data.socials === 'object') {
-            sanitized.socials = {};
+        if (isRecord(data.socials)) {
+            const socials: UnknownRecord = {};
             const socialsKeys = ['facebook', 'instagram', 'tiktok', 'youtube', 'twitter'];
             for (const sKey of socialsKeys) {
                 if (data.socials[sKey] !== undefined) {
-                    sanitized.socials[sKey] = typeof data.socials[sKey] === 'string' ? data.socials[sKey] : '';
+                    socials[sKey] = typeof data.socials[sKey] === 'string' ? data.socials[sKey] : '';
                 }
             }
+            sanitized.socials = socials;
         }
 
-        await db.collection('settings').updateOne({ _id: 'general' as any }, { $set: sanitized }, { upsert: true });
+        await db.collection<StringIdDocument>('settings').updateOne({ _id: 'general' }, { $set: sanitized }, { upsert: true });
         revalidatePath('/', 'layout');
         return { success: true };
     } catch (e) { return handleError('saveGeneralSettingsAction', e, 'Failed to save general settings.'); }
@@ -180,26 +227,26 @@ export async function saveGeneralSettingsAction(data: any) {
 /**
  * Saves payment integration configurations.
  */
-export async function savePaymentSettingsAction(data: any) {
+export async function savePaymentSettingsAction(data: UnknownRecord) {
     if (!(await import('./auth').then(m => m.verifyAdminSession()))) return { success: false, error: 'Unauthorized access.' };
 
     const demoError = getDemoModeMutationError();
     if (demoError) return demoError;
     const db = await getDb();
     try {
-        const current = await db.collection('settings').findOne({ _id: 'payment' as any });
+        const current = await db.collection<StringIdDocument>('settings').findOne({ _id: 'payment' });
         
         // Cleanup old gateway logos if they changed
         const gateways = ['stripe', 'paypal', 'razorpay', 'flutterwave', 'phonepe', 'cashfree', 'payu'];
         for (const gw of gateways) {
             const key = `${gw}LogoUrl`;
-            if (current?.[key] && data[key] && current[key] !== data[key]) {
+            if (typeof current?.[key] === 'string' && data[key] && current[key] !== data[key]) {
                 await deleteFile(current[key]);
             }
         }
 
         // Explicitly allowlist and sanitize payment gateway settings keys
-        const sanitized: any = {};
+        const sanitized: UnknownRecord = {};
         const allowedKeys = [
             'stripeEnabled', 'stripePublishableKey', 'stripeSecretKey', 'stripeLogoUrl',
             'paypalEnabled', 'paypalClientId', 'paypalSecret', 'paypalLogoUrl', 'paypalMode',
@@ -220,7 +267,7 @@ export async function savePaymentSettingsAction(data: any) {
             }
         }
 
-        await db.collection('settings').updateOne({ _id: 'payment' as any }, { $set: sanitized }, { upsert: true });
+        await db.collection<StringIdDocument>('settings').updateOne({ _id: 'payment' }, { $set: sanitized }, { upsert: true });
         revalidatePath('/admin/settings/payment-gateway');
         return { success: true };
     } catch (e) { return handleError('savePaymentSettingsAction', e, 'Failed to save payment settings.'); }
@@ -229,17 +276,17 @@ export async function savePaymentSettingsAction(data: any) {
 /**
  * Saves enabled plugins settings.
  */
-export async function savePluginsSettingsAction(data: any) {
+export async function savePluginsSettingsAction(data: UnknownRecord) {
     if (!(await import('./auth').then(m => m.verifyAdminSession()))) return { success: false, error: 'Unauthorized access.' };
 
     const demoError = getDemoModeMutationError();
     if (demoError) return demoError;
     const db = await getDb();
     try {
-        const current = await db.collection('settings').findOne({ _id: 'plugins' as any });
+        const current = await db.collection<StringIdDocument>('settings').findOne({ _id: 'plugins' });
 
         // Explicitly allowlist and sanitize plugin settings keys
-        const sanitized: any = {};
+        const sanitized: UnknownRecord = {};
         const allowedKeys = [
             'gaId', 'captchaProvider', 'recaptchaVersion', 'recaptchaSiteKey', 'recaptchaSecretKey',
             'cloudflareSiteKey', 'cloudflareSecretKey', 'hcaptchaSiteKey', 'hcaptchaSecretKey',
@@ -259,7 +306,7 @@ export async function savePluginsSettingsAction(data: any) {
             }
         }
 
-        await db.collection('settings').updateOne({ _id: 'plugins' as any }, { $set: sanitized }, { upsert: true });
+        await db.collection<StringIdDocument>('settings').updateOne({ _id: 'plugins' }, { $set: sanitized }, { upsert: true });
 
         // Delete old IndexNow Key file if it exists and changed
         const oldKey = current?.indexNowKey;
@@ -273,7 +320,7 @@ export async function savePluginsSettingsAction(data: any) {
         }
 
         // Write IndexNow Key to public directory
-        if (sanitized.indexNowEnabled && sanitized.indexNowKey) {
+        if (sanitized.indexNowEnabled && typeof sanitized.indexNowKey === 'string' && sanitized.indexNowKey) {
             try {
                 const publicPath = path.join(process.cwd(), 'public', `${sanitized.indexNowKey}.txt`);
                 fs.writeFileSync(publicPath, sanitized.indexNowKey, 'utf8');
@@ -318,7 +365,7 @@ export async function translateLanguageAction(languageCode: string, languageName
         const settings = await getPluginsSettings() as ServerPluginsSettings | null;
         const provider = settings?.aiProvider || 'groq';
 
-        let translatedJson: Record<string, any> = {};
+        let translatedJson: Record<string, string> = {};
 
         if (provider === 'groq') {
             // Groq free tier has a 1,000 output tokens/minute limit.
@@ -392,12 +439,12 @@ INPUT JSON: ${JSON.stringify(defaultTranslations)}`;
         }
 
         const db = await getDb();
-        await db.collection('translations').updateOne({ _id: languageCode as any }, { $set: translatedJson }, { upsert: true });
+        await db.collection<StringIdDocument>('translations').updateOne({ _id: languageCode }, { $set: translatedJson }, { upsert: true });
         
         revalidatePath('/', 'layout');
         return { success: true };
-    } catch(e: any) { 
-        const msg = (e?.error?.message || e?.message || '').toLowerCase();
+    } catch(e) {
+        const msg = getErrorMessage(e, '').toLowerCase();
         if (msg.includes('rate limit') || msg.includes('429') || msg.includes('rate_limit') || msg.includes('tokens per minute')) {
             return { success: false, error: 'AI Rate limit reached. Please wait a moment or switch to Gemini in Settings > Plugins.' };
         }
@@ -411,7 +458,7 @@ INPUT JSON: ${JSON.stringify(defaultTranslations)}`;
 /**
  * Adds language profiles.
  */
-export async function saveLanguageAction(data: any) {
+export async function saveLanguageAction(data: Identified<Language>) {
     if (!(await import('./auth').then(m => m.verifyAdminSession()))) return { success: false, error: 'Unauthorized access.' };
 
     const demoError = getDemoModeMutationError();
@@ -441,7 +488,7 @@ export async function deleteLanguageAction(id: string) {
     try {
         const lang = await db.collection('languages').findOne(getQueryById(id));
         if (lang && lang.languageCode) {
-            await db.collection('translations').deleteOne({ _id: lang.languageCode as any });
+            await db.collection<StringIdDocument>('translations').deleteOne({ _id: String(lang.languageCode) });
         }
         await db.collection('languages').deleteOne(getQueryById(id));
         revalidatePath('/admin/languages');
@@ -452,7 +499,7 @@ export async function deleteLanguageAction(id: string) {
 /**
  * Saves or updates drama series records and handles cover image cleanup.
  */
-export async function saveSeriesAction(seriesData: any) {
+export async function saveSeriesAction(seriesData: SeriesInput) {
     if (!(await import('./auth').then(m => m.verifyAdminSession()))) return { success: false, error: 'Unauthorized access.' };
 
     const demoError = getDemoModeMutationError();
@@ -495,7 +542,7 @@ export async function saveSeriesAction(seriesData: any) {
         
         // IndexNow SEO Ping
         try {
-            const plugins = await getPluginsSettings() as any;
+            const plugins = await getPluginsSettings() as ServerPluginsSettings | null;
             if (plugins && plugins.indexNowEnabled && plugins.indexNowKey) {
                 const genSettings = await getGeneralSettings();
                 if (genSettings?.siteUrl) {
@@ -558,7 +605,7 @@ export async function deleteSeriesAction(id: string) {
 /**
  * Saves or updates episode details and manages video upload files cleanup.
  */
-export async function saveEpisodeAction(episodeData: any) {
+export async function saveEpisodeAction(episodeData: EpisodeInput) {
     if (!(await import('./auth').then(m => m.verifyAdminSession()))) return { success: false, error: 'Unauthorized access.' };
 
     const demoError = getDemoModeMutationError();
@@ -575,8 +622,8 @@ export async function saveEpisodeAction(episodeData: any) {
                 }
                 // Cleanup old files from videoSources if they are no longer used
                 if (current.videoSources && data.videoSources) {
-                    const oldUrls = current.videoSources.map((s: any) => s.url).filter(Boolean);
-                    const newUrls = new Set(data.videoSources.map((s: any) => s.url).filter(Boolean));
+                    const oldUrls = current.videoSources.map((source: MediaReference) => source.url).filter((url: unknown): url is string => typeof url === 'string');
+                    const newUrls = new Set(data.videoSources.map(source => source.url).filter((url): url is string => typeof url === 'string'));
                     for (const oldUrl of oldUrls) {
                         if (!newUrls.has(oldUrl)) {
                             await deleteFile(oldUrl);
@@ -585,8 +632,8 @@ export async function saveEpisodeAction(episodeData: any) {
                 }
                 // Cleanup old files from subtitles if they are no longer used
                 if (current.subtitles && data.subtitles) {
-                    const oldSubUrls = current.subtitles.map((s: any) => s.url).filter(Boolean);
-                    const newSubUrls = new Set(data.subtitles.map((s: any) => s.url).filter(Boolean));
+                    const oldSubUrls = current.subtitles.map((subtitle: MediaReference) => subtitle.url).filter((url: unknown): url is string => typeof url === 'string');
+                    const newSubUrls = new Set(data.subtitles.map(subtitle => subtitle.url).filter((url): url is string => typeof url === 'string'));
                     for (const oldSubUrl of oldSubUrls) {
                         if (!newSubUrls.has(oldSubUrl)) {
                             await deleteFile(oldSubUrl);
@@ -605,7 +652,7 @@ export async function saveEpisodeAction(episodeData: any) {
 /**
  * Saves multiple episodes in a single database batch insert, automatically updating the series totalEpisodes count.
  */
-export async function saveBulkEpisodesAction(seriesId: string, episodesData: { episodeInSeason: number; videoSources: { quality: string; url: string; }[] }[]) {
+export async function saveBulkEpisodesAction(seriesId: string, episodesData: { episodeInSeason: number; videoSources: { quality: string; url: string; }[]; subtitles?: Episode['subtitles'] }[]) {
     if (!(await import('./auth').then(m => m.verifyAdminSession()))) return { success: false, error: 'Unauthorized access.' };
 
     const demoError = getDemoModeMutationError();
@@ -616,7 +663,7 @@ export async function saveBulkEpisodesAction(seriesId: string, episodesData: { e
             return { success: false, error: 'No episodes data provided.' };
         }
 
-        const docsToInsert = episodesData.map((ep: any) => ({
+        const docsToInsert = episodesData.map(ep => ({
             seriesId,
             episodeInSeason: Number(ep.episodeInSeason),
             videoSources: ep.videoSources || [],
@@ -676,7 +723,7 @@ export async function deleteEpisodeAction(id: string, seriesId: string) {
 /**
  * Unlocks a locked episode by exchanging coins or watching AdMob ads.
  */
-export async function unlockEpisodeAction(payload: any) {
+export async function unlockEpisodeAction(payload: UnlockEpisodePayload) {
     const legacyMonetaryActionsDisabled: boolean = true;
     if (legacyMonetaryActionsDisabled) return { success: false, error: 'Use the authenticated episode-unlock API.' };
     /* istanbul ignore next -- retained temporarily for upgrade compatibility; unreachable by design */
@@ -686,12 +733,12 @@ export async function unlockEpisodeAction(payload: any) {
         const alreadyUnlocked = await db.collection('unlocked-episodes').findOne({ userId, episodeId });
         if (alreadyUnlocked) return { success: true };
         if (method === 'coins') {
-            const updateResult = await db.collection('users').updateOne({ _id: userId as any, coins: { $gte: cost } }, { $inc: { coins: -cost } });
+            const updateResult = await db.collection<UserCoinDocument>('users').updateOne({ _id: userId, coins: { $gte: cost } }, { $inc: { coins: -cost } });
             if (updateResult.modifiedCount === 0) return { success: false, error: 'Insufficient coins' };
             db.collection('coin-transactions').insertOne({ userId, type: 'spend', amount: -cost, description: `Unlocked: ${seriesTitle} - Ep ${episodeNumber}`, createdAt: new Date() });
         } else {
             const today = new Date().toISOString().split('T')[0];
-            db.collection('ad-watches').updateOne({ userId, date: today }, { $inc: { count: 1 }, $set: { userId, date: today } }, { upsert: true });
+            db.collection<{ userId: string; date: string; count: number }>('ad-watches').updateOne({ userId, date: today }, { $inc: { count: 1 }, $set: { userId, date: today } }, { upsert: true });
         }
         await db.collection('unlocked-episodes').updateOne({ userId, episodeId }, { $set: { ...payload, unlockedAt: new Date() } }, { upsert: true });
         return { success: true };
@@ -755,13 +802,13 @@ export async function revalidateAllAction() {
 /**
  * Saves monetization options settings.
  */
-export async function saveMonetizationSettingsAction(data: any) {
+export async function saveMonetizationSettingsAction(data: MonetizationSettings) {
     if (!(await import('./auth').then(m => m.verifyAdminSession()))) return { success: false, error: 'Unauthorized access.' };
 
     const demoError = getDemoModeMutationError();
     if (demoError) return demoError;
     const db = await getDb();
-    await db.collection('settings').updateOne({ _id: 'monetization' as any }, { $set: data }, { upsert: true });
+    await db.collection<StringIdDocument>('settings').updateOne({ _id: 'monetization' }, { $set: data }, { upsert: true });
     return { success: true };
 }
 
@@ -781,7 +828,7 @@ export async function deleteCoinPackAction(id: string) {
 /**
  * Saves coin packs.
  */
-export async function saveCoinPackAction(pack: any) {
+export async function saveCoinPackAction(pack: Identified<CoinPack>) {
     if (!(await import('./auth').then(m => m.verifyAdminSession()))) return { success: false, error: 'Unauthorized access.' };
 
     const demoError = getDemoModeMutationError();
@@ -795,14 +842,14 @@ export async function saveCoinPackAction(pack: any) {
 /**
  * Saves mobile AdMob ad settings.
  */
-export async function saveAdSettingsAction(data: any) {
+export async function saveAdSettingsAction(data: Identified<Ad>) {
     if (!(await import('./auth').then(m => m.verifyAdminSession()))) return { success: false, error: 'Unauthorized access.' };
 
     const demoError = getDemoModeMutationError();
     if (demoError) return demoError;
     const db = await getDb();
     const { id, ...rest } = data;
-    await db.collection('ads').updateOne({ _id: id as any }, { $set: rest }, { upsert: true });
+    await db.collection<StringIdDocument>('ads').updateOne({ _id: id }, { $set: rest }, { upsert: true });
     return { success: true };
 }
 
@@ -860,7 +907,7 @@ export async function deleteReportAction(id: string) {
 /**
  * Saves reward task items.
  */
-export async function saveRewardTaskAction(data: any) {
+export async function saveRewardTaskAction(data: Identified<RewardTask>) {
     if (!(await import('./auth').then(m => m.verifyAdminSession()))) return { success: false, error: 'Unauthorized access.' };
 
     const demoError = getDemoModeMutationError();
@@ -882,12 +929,12 @@ export async function deleteRewardTaskAction(id: string) {
 /**
  * Saves reward settings options.
  */
-export async function saveRewardSettingsAction(data: any) {
+export async function saveRewardSettingsAction(data: RewardsSettings) {
     if (!(await import('./auth').then(m => m.verifyAdminSession()))) return { success: false, error: 'Unauthorized access.' };
 
     const demoError = getDemoModeMutationError();
     if (demoError) return demoError;
-    const db = await getDb(); await db.collection('settings').updateOne({ _id: 'rewards' as any }, { $set: data }, { upsert: true }); revalidatePath('/', 'layout'); return { success: true };
+    const db = await getDb(); await db.collection<StringIdDocument>('settings').updateOne({ _id: 'rewards' }, { $set: data }, { upsert: true }); revalidatePath('/', 'layout'); return { success: true };
 }
 
 /**
@@ -912,7 +959,7 @@ export async function testMongoDbConnectionAction(setupToken?: string) {
  */
 export async function exportMongoDataAction() {
     if (!(await import('./auth').then(m => m.verifyAdminSession()))) return { success: false, error: 'Unauthorized access.' };
- try { const db = await getDb(); const collections = await db.listCollections().toArray(); const backup: any = {}; for (const col of collections) { if (col.name.startsWith('system.')) continue; backup[col.name] = await db.collection(col.name).find({}).toArray(); } return { success: true, data: JSON.stringify(backup, null, 2) }; } catch (e) { return handleError('exportMongoDataAction', e, 'Database export failed.'); } }
+ try { const db = await getDb(); const collections = await db.listCollections().toArray(); const backup: Record<string, unknown[]> = {}; for (const col of collections) { if (col.name.startsWith('system.')) continue; backup[col.name] = await db.collection(col.name).find({}).toArray(); } return { success: true, data: JSON.stringify(backup, null, 2) }; } catch (e) { return handleError('exportMongoDataAction', e, 'Database export failed.'); } }
 
 /**
  * Imports collections from JSON database backups.
@@ -924,7 +971,7 @@ export async function importDataToMongoAction(jsonContent: string) {
     if (demoError) return demoError;
     try { const data = JSON.parse(jsonContent); const db = await getDb(); if (typeof data !== 'object' || data === null) throw new Error('Invalid backup file format.');
         for (const collectionName in data) { if (collectionName.startsWith('system.')) continue; const documents = data[collectionName];
-            if (Array.isArray(documents)) { await db.collection(collectionName).deleteMany({}); if (documents.length > 0) { const preparedDocs = documents.map((doc: any) => { const newDoc = { ...doc }; if (newDoc._id && typeof newDoc._id === 'string' && ObjectId.isValid(newDoc._id)) { if (newDoc._id.length === 24) newDoc._id = new ObjectId(newDoc._id); } for (const key in newDoc) { if (typeof newDoc[key] === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/.test(newDoc[key])) newDoc[key] = new Date(newDoc[key]); } return newDoc; }); await db.collection(collectionName).insertMany(preparedDocs); } } }
+            if (Array.isArray(documents)) { await db.collection(collectionName).deleteMany({}); if (documents.length > 0) { const preparedDocs = documents.map(doc => { if (!isRecord(doc)) throw new Error(`Invalid document in ${collectionName}`); const newDoc: UnknownRecord = { ...doc }; if (typeof newDoc._id === 'string' && ObjectId.isValid(newDoc._id) && newDoc._id.length === 24) newDoc._id = new ObjectId(newDoc._id); for (const key in newDoc) { const value = newDoc[key]; if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/.test(value)) newDoc[key] = new Date(value); } return newDoc; }); await db.collection(collectionName).insertMany(preparedDocs); } } }
         revalidatePath('/', 'layout'); return { success: true, message: 'Database restored successfully from backup.' };
     } catch (e) { return handleError('importDataToMongoAction', e, 'Database import failed.'); }
 }
@@ -949,23 +996,23 @@ export async function installInitializeDbAction(setupToken: string) {
         await db.collection('categories').insertMany(categories);
         await db.collection('languages').deleteMany({});
         await db.collection('languages').insertOne({ name: 'English', languageCode: 'en', countryCode: 'US' });
-        await db.collection('settings').updateOne(
-            { _id: 'general' as any },
+        await db.collection<StringIdDocument>('settings').updateOne(
+            { _id: 'general' },
             { $set: { siteName: 'EPYVRA', defaultLanguageCode: 'en', showCopyright: true, showVersion: true, seriesUrlFormat: 'hash' } },
             { upsert: true }
         );
-        await db.collection('settings').updateOne(
-            { _id: 'monetization' as any },
+        await db.collection<StringIdDocument>('settings').updateOne(
+            { _id: 'monetization' },
             { $set: { episodeCost: 50, isCoinsActive: true, currency: 'USD', currencySymbol: '$' } },
             { upsert: true }
         );
-        await db.collection('settings').updateOne(
-            { _id: 'rewards' as any },
+        await db.collection<StringIdDocument>('settings').updateOne(
+            { _id: 'rewards' },
             { $set: { isEnabled: true, dailyRewards: [10, 20, 30, 40, 50, 60, 70] } },
             { upsert: true }
         );
-        await db.collection('ads').updateOne(
-            { _id: 'video_player_ad' as any },
+        await db.collection<StringIdDocument>('ads').updateOne(
+            { _id: 'video_player_ad' },
             { $set: { title: 'Video Player Unlock Ad', type: 'video', scriptContent: '', isActive: true, skipTimerSeconds: 15, dailyWatchLimit: 5 } },
             { upsert: true }
         );
@@ -990,8 +1037,8 @@ export async function installSaveSiteConfigAction(data: { siteName: string; site
             siteUrl = siteUrl.slice(0, -1);
         }
 
-        await db.collection('settings').updateOne(
-            { _id: 'general' as any },
+        await db.collection<StringIdDocument>('settings').updateOne(
+            { _id: 'general' },
             { 
                 $set: { 
                     siteName, 
@@ -1021,7 +1068,7 @@ export async function sendNotificationAction(payload: { target: 'all' | 'specifi
     const demoError = getDemoModeMutationError();
     if (demoError) return demoError;
     try { const plugins = await getPluginsSettings() as ServerPluginsSettings | null; if (!plugins?.oneSignalAppId || !plugins?.oneSignalApiKey) throw new Error('OneSignal not configured.');
-        const body: any = { app_id: plugins.oneSignalAppId, headings: { en: payload.title }, contents: { en: payload.message } };
+        const body: UnknownRecord = { app_id: plugins.oneSignalAppId, headings: { en: payload.title }, contents: { en: payload.message } };
         if (payload.target === 'all') body.included_segments = ['Total Subscriptions']; else body.include_external_user_ids = [payload.userId];
         const response = await fetch('https://onesignal.com/api/v1/notifications', { method: 'POST', headers: { 'Authorization': `Basic ${plugins.oneSignalApiKey}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
         const data = await response.json(); if (!response.ok) throw new Error(data.errors?.[0] || 'OneSignal API Error');
@@ -1044,28 +1091,33 @@ export async function testOneSignalAction(appId: string, apiKey: string) {
 /**
  * Saves storage configurations.
  */
-export async function saveStorageSettingsAction(data: any) {
+export async function saveStorageSettingsAction(data: UnknownRecord) {
     if (!(await import('./auth').then(m => m.verifyAdminSession()))) return { success: false, error: 'Unauthorized access.' };
 
     const demoError = getDemoModeMutationError();
     if (demoError) return demoError;
-    const db = await getDb(); await db.collection('settings').updateOne({ _id: 'storage' as any }, { $set: data }, { upsert: true }); revalidatePath('/admin/settings/storage'); return { success: true };
+    const db = await getDb(); await db.collection<StringIdDocument>('settings').updateOne({ _id: 'storage' }, { $set: data }, { upsert: true }); revalidatePath('/admin/settings/storage'); return { success: true };
 }
 
 /**
  * Tests storage bucket authentication.
  */
-export async function testStorageConnectionAction(provider: string, config: any) {
+export async function testStorageConnectionAction(provider: string, configValue: unknown) {
     if (!(await import('./auth').then(m => m.verifyAdminSession()))) return { success: false, error: 'Unauthorized access.' };
 
     const demoError = getDemoModeMutationError();
     if (demoError) return demoError;
-    try { 
+    try {
+        if (!isRecord(configValue)) return { success: false, error: 'Invalid storage configuration.' };
+        const config: StorageConnectionConfig = Object.fromEntries(
+            Object.entries(configValue).filter((entry): entry is [string, string] => typeof entry[1] === 'string')
+        );
         if (provider === 'local') return { success: true, message: 'Local active.' };
         
         if (provider === 'bunny') {
             const storageZoneName = config.storageZoneName;
             const apiKey = config.apiKey;
+            if (!storageZoneName || !apiKey) return { success: false, error: 'Bunny storage zone and API key are required.' };
             const region = normalizeBunnyRegion(config.region);
             let host = 'storage.bunnycdn.com';
             if (region) {
@@ -1088,7 +1140,7 @@ export async function testStorageConnectionAction(provider: string, config: any)
             }
         }
 
-        const clientConfig: any = { credentials: { accessKeyId: config.accessKeyId || config.applicationKeyId, secretAccessKey: config.secretAccessKey || config.applicationKey }, region: config.region || 'us-east-1' };
+        const clientConfig: ConstructorParameters<typeof S3Client>[0] = { credentials: { accessKeyId: config.accessKeyId || config.applicationKeyId || '', secretAccessKey: config.secretAccessKey || config.applicationKey || '' }, region: config.region || 'us-east-1' };
         if (provider === 'gcs') { clientConfig.endpoint = 'https://storage.googleapis.com'; clientConfig.forcePathStyle = true; clientConfig.region = 'auto'; }
         else if (config.endpoint) { clientConfig.endpoint = (await assertPublicHttpUrl(config.endpoint.startsWith('http') ? config.endpoint : `https://${config.endpoint}`)).toString(); clientConfig.forcePathStyle = true; }
         const s3 = new S3Client(clientConfig); await s3.send(new PutObjectCommand({ Bucket: config.bucket, Key: 'test.txt', Body: 'test', ContentType: 'text/plain' }));
@@ -1104,13 +1156,13 @@ export async function saveLanguageTranslationsAction(langCode: string, translati
 
     const demoError = getDemoModeMutationError();
     if (demoError) return demoError;
-    const db = await getDb(); try { await db.collection('translations').updateOne({ _id: langCode as any }, { $set: translations }, { upsert: true }); revalidatePath('/', 'layout'); return { success: true }; } catch (e) { return handleError('saveLanguageTranslationsAction', e, 'Failed to save translations.'); }
+    const db = await getDb(); try { await db.collection<StringIdDocument>('translations').updateOne({ _id: langCode }, { $set: translations }, { upsert: true }); revalidatePath('/', 'layout'); return { success: true }; } catch (e) { return handleError('saveLanguageTranslationsAction', e, 'Failed to save translations.'); }
 }
 
 /**
  * Saves mobile configurations settings.
  */
-export async function saveMobileSettingsAction(settings: any) {
+export async function saveMobileSettingsAction(settings: MobileSettings | string) {
     if (!(await import('./auth').then(m => m.verifyAdminSession()))) return { success: false, error: 'Unauthorized access.' };
 
     const demoError = getDemoModeMutationError();
@@ -1118,8 +1170,8 @@ export async function saveMobileSettingsAction(settings: any) {
     const db = await getDb();
     try {
         const data = typeof settings === 'string' ? { apiKey: settings } : settings;
-        await db.collection('settings').updateOne(
-            { _id: 'mobile' as any },
+        await db.collection<StringIdDocument>('settings').updateOne(
+            { _id: 'mobile' },
             { $set: { ...data, versionCode: Number(data.versionCode || 1), updatedAt: new Date() } },
             { upsert: true }
         );
@@ -1127,8 +1179,8 @@ export async function saveMobileSettingsAction(settings: any) {
         // Also update video_player_ad dailyWatchLimit if admobRewardedLimit is provided
         if (data.admobRewardedLimit !== undefined) {
             const limitVal = Number(data.admobRewardedLimit ?? 5);
-            await db.collection('ads').updateOne(
-                { _id: 'video_player_ad' as any },
+            await db.collection<StringIdDocument>('ads').updateOne(
+                { _id: 'video_player_ad' },
                 { $set: { dailyWatchLimit: limitVal } },
                 { upsert: true }
             );
