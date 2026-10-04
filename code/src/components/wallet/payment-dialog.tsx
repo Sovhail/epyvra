@@ -47,9 +47,9 @@ export function PaymentDialog({
     if (paymentSettings.paypalEnabled) gateways.push('paypal');
     if (paymentSettings.razorpayEnabled) gateways.push('razorpay');
     if (paymentSettings.flutterwaveEnabled) gateways.push('flutterwave');
-    if ((paymentSettings as any).phonepeEnabled) gateways.push('phonepe');
-    if ((paymentSettings as any).cashfreeEnabled) gateways.push('cashfree');
-    if ((paymentSettings as any).payuEnabled) gateways.push('payu');
+    if (paymentSettings.phonepeEnabled) gateways.push('phonepe');
+    if (paymentSettings.cashfreeEnabled) gateways.push('cashfree');
+    if (paymentSettings.payuEnabled) gateways.push('payu');
     return gateways;
   }, [paymentSettings]);
 
@@ -68,13 +68,13 @@ export function PaymentDialog({
           return !!(paymentSettings?.flutterwaveSecretKey || paymentSettings?.flutterwavePublicKey);
       }
       if (gateway === 'phonepe') {
-          return !!(paymentSettings as any)?.phonepeMerchantId;
+          return !!paymentSettings?.phonepeMerchantId;
       }
       if (gateway === 'cashfree') {
-          return !!(paymentSettings as any)?.cashfreeAppId;
+          return !!paymentSettings?.cashfreeAppId;
       }
       if (gateway === 'payu') {
-          return !!(paymentSettings as any)?.payuMerchantKey;
+          return !!paymentSettings?.payuMerchantKey;
       }
       return !!paymentSettings?.razorpayKeyId;
   };
@@ -124,9 +124,9 @@ export function PaymentDialog({
       if (gateway === 'paypal') return paymentSettings?.paypalLogoUrl || '/img/logo-paypal.png';
       if (gateway === 'razorpay') return paymentSettings?.razorpayLogoUrl || '/img/logo-razorpay.png';
       if (gateway === 'flutterwave') return paymentSettings?.flutterwaveLogoUrl || '/img/logo-flutterwave.png';
-      if (gateway === 'phonepe') return (paymentSettings as any)?.phonepeLogoUrl || '/img/logo-stripe.png';
-      if (gateway === 'cashfree') return (paymentSettings as any)?.cashfreeLogoUrl || '/img/logo-stripe.png';
-      if (gateway === 'payu') return (paymentSettings as any)?.payuLogoUrl || '/img/logo-stripe.png';
+      if (gateway === 'phonepe') return paymentSettings?.phonepeLogoUrl || '/img/logo-stripe.png';
+      if (gateway === 'cashfree') return paymentSettings?.cashfreeLogoUrl || '/img/logo-stripe.png';
+      if (gateway === 'payu') return paymentSettings?.payuLogoUrl || '/img/logo-stripe.png';
       return '/img/logo-stripe.png';
   }
 

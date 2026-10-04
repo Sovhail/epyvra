@@ -5,16 +5,22 @@ import { Button } from '@/components/ui/button';
 import { Smartphone, Download, X } from 'lucide-react';
 import { useTranslation } from '@/lib/translation-provider';
 
+interface BeforeInstallPromptEvent extends Event {
+    prompt(): Promise<void>;
+    userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
+}
+
 export function PwaInstallPrompt({ delay }: { delay: number }) {
     const [isVisible, setIsVisible] = useState(false);
-    const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+    const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
     const { t } = useTranslation();
 
     useEffect(() => {
         // Listen for the install prompt from the browser
-        const handleBeforeInstallPrompt = (e: any) => {
+        const handleBeforeInstallPrompt = (e: Event) => {
+            const promptEvent = e as BeforeInstallPromptEvent;
             e.preventDefault();
-            setDeferredPrompt(e);
+            setDeferredPrompt(promptEvent);
             
             // Check if dismissed this session
             const dismissed = sessionStorage.getItem('pwa_prompt_dismissed');
