@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import { join } from 'path';
 import { stat } from 'fs/promises';
+import { hasErrorCode } from '@/lib/error-utils';
 
 export async function GET(
   request: NextRequest,
@@ -89,8 +90,8 @@ export async function GET(
         'Cache-Control': 'public, max-age=31536000, immutable',
       }
     });
-  } catch (error: any) {
-    if (error.code === 'ENOENT') {
+  } catch (error) {
+    if (hasErrorCode(error, 'ENOENT')) {
       return new NextResponse('File not found', { status: 404 });
     }
     if (process.env.NODE_ENV !== 'production') {

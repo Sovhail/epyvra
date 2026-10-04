@@ -1,4 +1,5 @@
 'use client';
+import { getErrorMessage } from '@/lib/error-utils';
 
 import { useState, useEffect } from 'react';
 import {
@@ -155,7 +156,7 @@ export function AuthDialog({ isMobile = false }: { isMobile?: boolean }) {
           case 'auth/email-already-in-use':
               return 'This email is already registered.';
           default:
-              return error.message;
+              return getErrorMessage(error);
       }
   };
 
@@ -165,7 +166,7 @@ export function AuthDialog({ isMobile = false }: { isMobile?: boolean }) {
       await signInWithEmailAndPassword(auth, values.email, values.password);
       toast({ title: t('auth_toast_signin_success_title'), description: t('auth_toast_signin_success_desc') });
       setOpen(false);
-    } catch (error: any) {
+    } catch (error) {
       toast({ variant: 'destructive', title: t('auth_toast_signin_fail_title'), description: getAuthErrorMessage(error) });
     } finally {
       setLoadingProvider(null);
@@ -179,7 +180,7 @@ export function AuthDialog({ isMobile = false }: { isMobile?: boolean }) {
       await createUserProfileDocument(cred.user);
       toast({ title: t('auth_toast_signup_success_title'), description: t('auth_toast_signup_success_desc') });
       setOpen(false);
-    } catch (error: any) {
+    } catch (error) {
       toast({ variant: 'destructive', title: t('auth_toast_signup_fail_title'), description: getAuthErrorMessage(error) });
     } finally {
       setLoadingProvider(null);
@@ -193,7 +194,7 @@ export function AuthDialog({ isMobile = false }: { isMobile?: boolean }) {
           const result = await signInWithPopup(auth, provider);
           await createUserProfileDocument(result.user);
           setOpen(false);
-      } catch (error: any) {
+      } catch (error) {
           toast({ variant: 'destructive', title: 'Google Sign In Failed', description: getAuthErrorMessage(error) });
       } finally {
           setLoadingProvider(null);
@@ -207,7 +208,7 @@ export function AuthDialog({ isMobile = false }: { isMobile?: boolean }) {
         const result = await signInWithPopup(auth, provider);
         await createUserProfileDocument(result.user);
         setOpen(false);
-    } catch (error: any) {
+    } catch (error) {
         toast({ variant: 'destructive', title: 'Facebook Sign In Failed', description: getAuthErrorMessage(error) });
     } finally {
         setLoadingProvider(null);
@@ -221,7 +222,7 @@ export function AuthDialog({ isMobile = false }: { isMobile?: boolean }) {
         const result = await signInWithPopup(auth, provider);
         await createUserProfileDocument(result.user);
         setOpen(false);
-    } catch (error: any) {
+    } catch (error) {
         toast({ variant: 'destructive', title: 'Apple Sign In Failed', description: getAuthErrorMessage(error) });
     } finally {
         setLoadingProvider(null);
@@ -240,8 +241,8 @@ export function AuthDialog({ isMobile = false }: { isMobile?: boolean }) {
       setConfirmationResult(confirmation);
       setView('otp');
       toast({ title: 'OTP Sent', description: 'Check your phone for the verification code.' });
-    } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Failed to send OTP', description: error.message });
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Failed to send OTP', description: getErrorMessage(error) });
     } finally {
       setLoadingProvider(null);
     }
@@ -255,7 +256,7 @@ export function AuthDialog({ isMobile = false }: { isMobile?: boolean }) {
       await createUserProfileDocument(result.user);
       toast({ title: 'Phone Sign In Success', description: 'You are now logged in.' });
       setOpen(false);
-    } catch (error: any) {
+    } catch (error) {
       toast({ variant: 'destructive', title: 'Invalid OTP', description: 'The code you entered is incorrect.' });
     } finally {
       setLoadingProvider(null);
@@ -274,8 +275,8 @@ export function AuthDialog({ isMobile = false }: { isMobile?: boolean }) {
       if (!res.ok) throw new Error(data.error || 'Failed to send reset email');
       setResetSent(true);
       toast({ title: 'Email Sent', description: data.message });
-    } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Error', description: error.message });
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Error', description: getErrorMessage(error) });
     } finally {
       setLoadingProvider(null);
     }

@@ -1,5 +1,5 @@
-
 'use client';
+import { getErrorMessage } from '@/lib/error-utils';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -138,8 +138,8 @@ export default function PluginsSettingsPage() {
           } else {
               toast({ variant: 'destructive', title: 'Test Failed', description: result.error });
           }
-      } catch (e: any) {
-          toast({ variant: 'destructive', title: 'Error', description: e.message || 'Request failed.' });
+      } catch (e) {
+          toast({ variant: 'destructive', title: 'Error', description: getErrorMessage(e) || 'Request failed.' });
       } finally {
           setIsTestingAi(false);
       }

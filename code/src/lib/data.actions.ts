@@ -1,5 +1,5 @@
-
 'use server';
+import { getErrorMessage } from '@/lib/error-utils';
 import { ObjectId } from 'mongodb';
 import { getDb } from './mongodb';
 import type { Series, Episode, CoinPack, MonetizationSettings, Purchase, Ad, GeneralSettings, Language, UITranslations, CustomPage, ContactMessage, Report, Category, PluginsSettings, RewardTask, RewardsSettings, UserRewardClaim, CoinTransaction, PaymentGatewaySettings, AdminProfile, Favorite, WatchHistory, StorageSettings } from './types';
@@ -543,8 +543,8 @@ export async function verifyLicensePeriodically(domain: string): Promise<boolean
                 );
                 return false;
             }
-        } catch (fetchError: any) {
-            console.error('[License Check] Network error calling verification API:', fetchError.message);
+        } catch (fetchError) {
+            console.error('[License Check] Network error calling verification API:', getErrorMessage(fetchError));
             // On network failure, update last check time to retry in 4 hours, and let client pass
             const retryTime = new Date(Date.now() - (24 - 4) * 60 * 60 * 1000); // 4 hours retry window
             await db.collection('settings').updateOne(
@@ -557,11 +557,11 @@ export async function verifyLicensePeriodically(domain: string): Promise<boolean
             );
             return true;
         }
-    } catch (e: any) {
+    } catch (e) {
         if (process.env.NODE_ENV !== 'production') {
             console.error('[License Check] Error in verifyLicensePeriodically:', e);
         } else {
-            console.error('[License Check] Error in verifyLicensePeriodically:', e?.message || 'Database error');
+            console.error('[License Check] Error in verifyLicensePeriodically:', getErrorMessage(e, 'Database error'));
         }
         return true; // Fallback in case of database error
     }

@@ -1,3 +1,4 @@
+import { getErrorMessage, hasErrorCode } from '@/lib/error-utils';
 import { NextRequest, NextResponse } from 'next/server';
 import { getFirebaseAdmin } from '@/lib/firebase-admin';
 import { sendMail } from '@/lib/mailer';
@@ -52,12 +53,12 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ success: true, message: 'If the email exists, a reset link has been sent.' });
 
-    } catch (e: any) {
+    } catch (e) {
         console.error('Forgot password API error:', e);
         // Do not leak if user exists or not, standard security practice, unless it's a specific auth error we want to expose.
-        if (e.code === 'auth/user-not-found') {
+        if (hasErrorCode(e, 'auth/user-not-found')) {
             return NextResponse.json({ success: true, message: 'If the email exists, a reset link has been sent.' });
         }
-        return NextResponse.json({ success: false, error: e.message || 'Failed to send password reset email.' }, { status: 500 });
+        return NextResponse.json({ success: false, error: getErrorMessage(e) || 'Failed to send password reset email.' }, { status: 500 });
     }
 }

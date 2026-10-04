@@ -1,5 +1,5 @@
-
 'use client';
+import { getErrorMessage } from '@/lib/error-utils';
 import { useMemo, useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import type { Episode, Series, StorageSettings } from '@/lib/types';
@@ -280,9 +280,9 @@ function EpisodeDialog({ seriesId, episodeToEdit, children, nextEpisodeNumber, o
             setIsOpen(false);
             onSaved();
 
-        } catch (error: any) {
+        } catch (error) {
             console.error("Save failed:", error);
-            toast({ variant: 'destructive', title: 'Save Failed', description: error.message || "An unexpected error occurred." });
+            toast({ variant: 'destructive', title: 'Save Failed', description: getErrorMessage(error) || "An unexpected error occurred." });
         } finally {
             setIsSaving(false);
         }
@@ -464,8 +464,8 @@ export default function SeriesEpisodesPage() {
         ]);
         setSeries(seriesData);
         setEpisodes(episodesData.sort((a, b) => a.episodeInSeason - b.episodeInSeason));
-    } catch (e: any) {
-        setError(e.message);
+    } catch (e) {
+        setError(getErrorMessage(e));
         toast({ variant: 'destructive', title: 'Error', description: 'Failed to fetch series data.' });
     } finally {
         setLoading(false);

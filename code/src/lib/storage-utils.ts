@@ -1,5 +1,5 @@
-
 'use server';
+import { getErrorMessage, hasErrorCode } from '@/lib/error-utils';
 import fs from 'fs/promises';
 import { resolve, sep } from 'path';
 import { getServerStorageSettings as getStorageSettings } from './server-settings';
@@ -27,8 +27,8 @@ export async function deleteFile(fileUrl: string | null | undefined) {
             try {
                 await fs.unlink(filePath);
                 console.log(`Successfully deleted local file: ${filePath}`);
-            } catch (err: any) {
-                if (err.code !== 'ENOENT') {
+            } catch (err) {
+                if (!hasErrorCode(err, 'ENOENT')) {
                     console.error(`Error deleting local file ${filePath}:`, err);
                 }
             }
@@ -78,8 +78,8 @@ export async function deleteFile(fileUrl: string | null | undefined) {
                         const errMsg = await response.text();
                         console.error(`Failed to delete file from bunny.net: ${response.statusText} (${errMsg})`);
                     }
-                } catch (deleteErr: any) {
-                    console.error(`Failed to send delete request to bunny.net:`, deleteErr.message);
+                } catch (deleteErr) {
+                    console.error(`Failed to send delete request to bunny.net:`, getErrorMessage(deleteErr));
                 }
             }
             return;

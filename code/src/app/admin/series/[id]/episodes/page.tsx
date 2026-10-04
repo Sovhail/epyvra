@@ -1,4 +1,5 @@
 'use client';
+import { getErrorMessage } from '@/lib/error-utils';
 import { useMemo, useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import type { Episode, Series, StorageSettings } from '@/lib/types';
@@ -361,8 +362,8 @@ function EpisodeDialog({ seriesId, episodeToEdit, children, nextEpisodeNumber, o
             toast({ title: "Success" });
             setIsOpen(false);
             onSaved();
-        } catch (error: any) {
-            toast({ variant: 'destructive', title: 'Save Failed', description: error.message });
+        } catch (error) {
+            toast({ variant: 'destructive', title: 'Save Failed', description: getErrorMessage(error) });
         } finally {
             setIsSaving(false);
         }

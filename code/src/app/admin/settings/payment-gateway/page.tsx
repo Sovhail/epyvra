@@ -1,4 +1,5 @@
 'use client';
+import { getErrorMessage } from '@/lib/error-utils';
 import { useState, useEffect, useRef } from 'react';
 import type { PaymentGatewaySettings } from '@/lib/types';
 import { getPaymentSettings } from '@/lib/data.actions';
@@ -169,8 +170,8 @@ export default function PaymentGatewayPage() {
             } else {
                 throw new Error(data.error || 'Upload failed');
             }
-        } catch (err: any) {
-            toast({ variant: 'destructive', title: 'Upload Error', description: err.message });
+        } catch (err) {
+            toast({ variant: 'destructive', title: 'Upload Error', description: getErrorMessage(err) });
         } finally {
             setIsUploading(null);
             if (e.target) e.target.value = '';

@@ -1,4 +1,5 @@
 'use client';
+import { getErrorMessage } from '@/lib/error-utils';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -205,8 +206,8 @@ export default function GeneralSettingsPage() {
         } else {
             throw new Error(data.error || 'Upload failed');
         }
-    } catch (err: any) {
-        toast({ variant: 'destructive', title: 'Upload Error', description: err.message });
+    } catch (err) {
+        toast({ variant: 'destructive', title: 'Upload Error', description: getErrorMessage(err) });
     } finally {
         setIsUploading(null);
         if (e.target) e.target.value = '';
@@ -240,8 +241,8 @@ export default function GeneralSettingsPage() {
         } else {
             throw new Error(result.error);
         }
-    } catch (error: any) {
-        toast({ variant: 'destructive', title: 'Error', description: error.message || 'Failed to save settings.' });
+    } catch (error) {
+        toast({ variant: 'destructive', title: 'Error', description: getErrorMessage(error) || 'Failed to save settings.' });
     } finally {
         setIsSaving(false);
     }

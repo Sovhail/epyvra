@@ -1,3 +1,4 @@
+import { getErrorMessage, hasErrorCode } from '@/lib/error-utils';
 import { NextRequest, NextResponse } from 'next/server';
 import { writeFile, stat, mkdir, chmod, readdir, unlink } from 'fs/promises';
 import { join } from 'path';
@@ -22,8 +23,8 @@ export const config = {
 async function ensureDir(dirPath: string) {
   try {
     await stat(dirPath);
-  } catch (error: any) {
-    if (error.code === 'ENOENT') {
+  } catch (error) {
+    if (hasErrorCode(error, 'ENOENT')) {
       await mkdir(dirPath, { recursive: true });
       try { await chmod(dirPath, 0o755); } catch (e) {}
     } else {
@@ -89,7 +90,7 @@ async function uploadToS3(buffer: Buffer, originalName: string, subDir: string, 
             ContentType: mimeType,
             ACL: 'public-read',
         }));
-    } catch (err: any) {
+    } catch (err) {
         // Gated console.warn removed as per reviewer guidelines to prevent leaking system information
         await s3.send(new PutObjectCommand({
             Bucket: config.bucket,
@@ -399,10 +400,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, url: finalUrl });
 
-  } catch (error: any) {
+  } catch (error) {
     if (process.env.NODE_ENV !== 'production') {
         console.error('Upload route error:', error);
     }
-    return NextResponse.json({ success: false, error: error.message || 'Upload failed' }, { status: 500 });
+    return NextResponse.json({ success: false, error: getErrorMessage(error) || 'Upload failed' }, { status: 500 });
   }
 }

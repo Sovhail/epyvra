@@ -291,7 +291,7 @@ export async function toggleLikeSeriesAction(seriesId: string, userId: string): 
             const likes = (result as any)?.likes ?? 0;
             return { success: true, liked: true, likes };
         }
-    } catch (e: any) {
+    } catch (e) {
         return { success: false, liked: false, likes: 0 };
     }
 }
@@ -411,7 +411,7 @@ export async function claimReferralCodeAction(userId: string, referralCodeInput:
             bonusCoins: inviteeBonus,
             message: `Congratulations! You received +${inviteeBonus} bonus coins!`
         };
-    } catch (e: any) {
+    } catch (e) {
         return handleError('claimReferralCodeAction', e, 'Failed to claim referral code.');
     }
 }

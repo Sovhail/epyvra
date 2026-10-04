@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({ success: true, message: 'Message sent successfully' });
 
-    } catch (error: any) {
+    } catch (error) {
         if (process.env.NODE_ENV !== 'production') {
             console.error('Mailbox Send API Error:', error);
         }

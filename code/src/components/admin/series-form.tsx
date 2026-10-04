@@ -1,4 +1,5 @@
 'use client';
+import { getErrorMessage } from '@/lib/error-utils';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -189,8 +190,8 @@ export function SeriesForm({ series }: SeriesFormProps) {
         } else {
             throw new Error(data.error || 'Upload failed');
         }
-    } catch (err: any) {
-        toast({ variant: 'destructive', title: 'Upload Error', description: err.message });
+    } catch (err) {
+        toast({ variant: 'destructive', title: 'Upload Error', description: getErrorMessage(err) });
     } finally {
         setIsUploading(false);
     }
@@ -242,8 +243,8 @@ export function SeriesForm({ series }: SeriesFormProps) {
         } else {
             throw new Error(data.error || 'Upload failed');
         }
-    } catch (err: any) {
-        toast({ variant: 'destructive', title: 'Upload Error', description: err.message });
+    } catch (err) {
+        toast({ variant: 'destructive', title: 'Upload Error', description: getErrorMessage(err) });
     } finally {
         setIsUploadingFeatured(false);
     }
@@ -302,7 +303,7 @@ export function SeriesForm({ series }: SeriesFormProps) {
         } else {
             toast({ variant: 'destructive', title: 'Save Failed', description: result.error });
         }
-    } catch (error: any) {
+    } catch (error) {
         toast({ variant: 'destructive', title: 'Error' });
     } finally {
         setIsSaving(false);

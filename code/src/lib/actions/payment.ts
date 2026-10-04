@@ -1,4 +1,5 @@
 'use server';
+import { getErrorMessage } from '@/lib/error-utils';
 
 import { getDb } from '../mongodb';
 import { revalidatePath } from 'next/cache';
@@ -228,7 +229,7 @@ export async function createCheckoutSessionAction(userId: string, packId: string
             return { success: true, url: successUrl };
         }
         return { success: false, error: 'Unsupported gateway' };
-    } catch (e: any) { 
+    } catch (e) { 
         return handleError('createCheckoutSessionAction', e, 'Payment provider error.'); 
     }
 }
@@ -486,7 +487,7 @@ export async function verifyAndExecutePurchaseAction(userId: string, packId: str
         
         revalidatePath('/', 'layout'); 
         return { success: true };
-    } catch (e: any) { 
-        return handleError('verifyAndExecutePurchaseAction', e, e.message || 'Purchase verification failed.'); 
+    } catch (e) { 
+        return handleError('verifyAndExecutePurchaseAction', e, getErrorMessage(e) || 'Purchase verification failed.'); 
     }
 }

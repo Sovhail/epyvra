@@ -1,4 +1,5 @@
 'use client';
+import { getErrorMessage } from '@/lib/error-utils';
 import { useState, useMemo } from 'react';
 import type { User } from 'firebase/auth';
 import type { CoinPack, PaymentGatewaySettings, MonetizationSettings } from '@/lib/types';
@@ -100,12 +101,12 @@ export function PaymentDialog({
         } else {
             throw new Error(result.error || 'Could not create checkout session.');
         }
-    } catch (error: any) {
+    } catch (error) {
         setIsRedirecting(false);
         toast({
             variant: 'destructive',
             title: 'Redirect Failed',
-            description: error.message,
+            description: getErrorMessage(error),
         });
     }
   };

@@ -110,7 +110,7 @@ export default function SecuritySettingsPage() {
         } else {
             toast({ variant: 'destructive', title: 'Error', description: data.error || 'Failed to send test email.' });
         }
-    } catch (e: any) {
+    } catch (e) {
         toast({ variant: 'destructive', title: 'Error', description: 'Network error while sending test email.' });
     } finally {
         setIsTestingMail(false);

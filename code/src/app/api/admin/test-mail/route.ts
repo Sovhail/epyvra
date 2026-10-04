@@ -1,3 +1,4 @@
+import { getErrorMessage } from '@/lib/error-utils';
 import { NextRequest, NextResponse } from 'next/server';
 import { sendMail } from '@/lib/mailer';
 import { verifyAdminSession } from '@/lib/actions/auth';
@@ -32,8 +33,8 @@ export async function POST(req: NextRequest) {
         });
 
         return NextResponse.json({ success: true });
-    } catch (e: any) {
+    } catch (e) {
         console.error('Test mail error:', e);
-        return NextResponse.json({ success: false, error: e.message || 'Failed to send test email.' }, { status: 500 });
+        return NextResponse.json({ success: false, error: getErrorMessage(e) || 'Failed to send test email.' }, { status: 500 });
     }
 }

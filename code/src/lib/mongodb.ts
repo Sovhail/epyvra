@@ -1,3 +1,4 @@
+import { getErrorMessage } from '@/lib/error-utils';
 
 import { MongoClient, ServerApiVersion } from 'mongodb';
 
@@ -60,9 +61,9 @@ export async function getDb() {
       const connectedClient = await clientPromise;
       return connectedClient.db();
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error("MongoDB Connection Error:", error);
-    throw new Error(`Could not connect to database: ${error.message}`);
+    throw new Error(`Could not connect to database: ${getErrorMessage(error)}`);
   }
 }
 

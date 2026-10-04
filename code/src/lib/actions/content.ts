@@ -636,7 +636,7 @@ export async function saveBulkEpisodesAction(seriesId: string, episodesData: { e
 
         revalidatePath(`/admin/series/${seriesId}/episodes`);
         return { success: true, count: docsToInsert.length };
-    } catch (e: any) {
+    } catch (e) {
         return handleError('saveBulkEpisodesAction', e, 'Failed to save bulk episodes.');
     }
 }
@@ -902,7 +902,7 @@ export async function testMongoDbConnectionAction(setupToken?: string) {
         const db = await getDb();
         await db.command({ ping: 1 });
         return { success: true, message: 'Connected successfully to MongoDB!' };
-    } catch (e: any) {
+    } catch (e) {
         return handleError('testMongoDbConnectionAction', e, 'Database connection test failed.');
     }
 }
@@ -912,7 +912,7 @@ export async function testMongoDbConnectionAction(setupToken?: string) {
  */
 export async function exportMongoDataAction() {
     if (!(await import('./auth').then(m => m.verifyAdminSession()))) return { success: false, error: 'Unauthorized access.' };
- try { const db = await getDb(); const collections = await db.listCollections().toArray(); const backup: any = {}; for (const col of collections) { if (col.name.startsWith('system.')) continue; backup[col.name] = await db.collection(col.name).find({}).toArray(); } return { success: true, data: JSON.stringify(backup, null, 2) }; } catch (e: any) { return handleError('exportMongoDataAction', e, 'Database export failed.'); } }
+ try { const db = await getDb(); const collections = await db.listCollections().toArray(); const backup: any = {}; for (const col of collections) { if (col.name.startsWith('system.')) continue; backup[col.name] = await db.collection(col.name).find({}).toArray(); } return { success: true, data: JSON.stringify(backup, null, 2) }; } catch (e) { return handleError('exportMongoDataAction', e, 'Database export failed.'); } }
 
 /**
  * Imports collections from JSON database backups.
@@ -970,7 +970,7 @@ export async function installInitializeDbAction(setupToken: string) {
             { upsert: true }
         );
         return { success: true };
-    } catch (e: any) {
+    } catch (e) {
         return handleError('installInitializeDbAction', e, 'Database initialization failed.');
     }
 }
@@ -1002,7 +1002,7 @@ export async function installSaveSiteConfigAction(data: { siteName: string; site
             { upsert: true }
         );
         return { success: true };
-    } catch (e: any) {
+    } catch (e) {
         return handleError('installSaveSiteConfigAction', e, 'Failed to save website details.');
     }
 }
@@ -1104,7 +1104,7 @@ export async function saveLanguageTranslationsAction(langCode: string, translati
 
     const demoError = getDemoModeMutationError();
     if (demoError) return demoError;
-    const db = await getDb(); try { await db.collection('translations').updateOne({ _id: langCode as any }, { $set: translations }, { upsert: true }); revalidatePath('/', 'layout'); return { success: true }; } catch (e: any) { return handleError('saveLanguageTranslationsAction', e, 'Failed to save translations.'); }
+    const db = await getDb(); try { await db.collection('translations').updateOne({ _id: langCode as any }, { $set: translations }, { upsert: true }); revalidatePath('/', 'layout'); return { success: true }; } catch (e) { return handleError('saveLanguageTranslationsAction', e, 'Failed to save translations.'); }
 }
 
 /**
@@ -1136,7 +1136,7 @@ export async function saveMobileSettingsAction(settings: any) {
         
         revalidatePath('/admin/settings/mobile');
         return { success: true };
-    } catch (e: any) {
+    } catch (e) {
         return handleError('saveMobileSettingsAction', e, 'Failed to save mobile settings.');
     }
 }
@@ -1150,7 +1150,7 @@ export async function generateMobileApiKeyAction() {
     try {
         const key = 'snap_apk_' + randomBytes(24).toString('hex');
         return { success: true, apiKey: key };
-    } catch (e: any) {
+    } catch (e) {
         return handleError('generateMobileApiKeyAction', e, 'Failed to generate API key.');
     }
 }

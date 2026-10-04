@@ -1,4 +1,5 @@
 'use client';
+import { getErrorMessage } from '@/lib/error-utils';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { getAllUsersForAdmin, getUserTransactions } from '@/lib/data.actions';
 import { updateUserStatusAction, deleteUserAction, adminUpdateUserAction } from '@/lib/actions';
@@ -149,7 +150,7 @@ export default function UsersPage() {
                       } else {
                           throw new Error(data.error || 'Upload failed');
                       }
-                  } catch (err: any) { toast({ variant: 'destructive', title: 'Upload failed', description: err.message }); }
+                  } catch (err) { toast({ variant: 'destructive', title: 'Upload failed', description: getErrorMessage(err) }); }
                   finally { setIsUploading(false); }
               }, 'image/webp', 0.8);
           };
