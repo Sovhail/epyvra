@@ -28,7 +28,7 @@ type ProfileFormValues = z.infer<typeof profileSchema>;
 
 export function AdminProfileForm({ initialProfile }: { initialProfile: AdminProfile }) {
   const { toast } = useToast();
-  const [state, formAction] = useActionState(updateAdminProfile, { success: false, error: null });
+  const [state, formAction] = useActionState(updateAdminProfile, { error: '' });
   const [justSaved, setJustSaved] = useState(false);
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -44,13 +44,13 @@ export function AdminProfileForm({ initialProfile }: { initialProfile: AdminProf
   const { isSubmitting } = form.formState;
 
   useEffect(() => {
-    if (state.success) {
+    if ('success' in state && state.success) {
       toast({ title: 'Success', description: state.message });
       form.reset({ ...form.getValues(), currentPassword: '', newPassword: '' });
       setJustSaved(true);
       const timer = setTimeout(() => setJustSaved(false), 3000);
       return () => clearTimeout(timer);
-    } else if (state.error) {
+    } else if ('error' in state && state.error) {
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -73,7 +73,7 @@ export function AdminProfileForm({ initialProfile }: { initialProfile: AdminProf
           </Button>
         </div>
 
-        {state?.error && (
+        {'error' in state && state.error && (
             <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Update Failed</AlertTitle>

@@ -18,11 +18,13 @@ export const getQueryById = (id: string): Filter<Document> => {
     };
 };
 
-export const mapDoc = <T extends { _id: { toString(): string } }>(doc: T | null | undefined) => {
+export function mapDoc<T extends { _id: { toString(): string } }>(doc: T): { id: string } & Omit<T, '_id'>;
+export function mapDoc<T extends { _id: { toString(): string } }>(doc: T | null | undefined): ({ id: string } & Omit<T, '_id'>) | null;
+export function mapDoc<T extends { _id: { toString(): string } }>(doc: T | null | undefined) {
     if (!doc) return null;
     const { _id, ...rest } = doc;
     return { id: _id.toString(), ...rest };
-};
+}
 
 export function handleError(actionName: string, error: unknown, defaultMsg: string = 'An unexpected error occurred. Please try again.'): ActionError {
     // Production error logging sanitization - hides stack traces, database details, etc.

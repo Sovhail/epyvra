@@ -15,7 +15,7 @@ interface OneSignalSdk {
 
 declare global {
     interface Window {
-        OneSignal?: OneSignalSdk;
+        OneSignal?: OneSignalSdk | Array<() => void>;
     }
 }
 
@@ -27,10 +27,10 @@ export function OneSignalInitializer() {
                 const delay = (settings.oneSignalPromptDelay || 5) * 1000;
 
                 // Standard OneSignal Web SDK Initialization
-                const oneSignal = window.OneSignal ?? [];
-                window.OneSignal = oneSignal;
-                oneSignal.push(function() {
-                    window.OneSignal?.init?.({
+                const initialize = () => {
+                    const oneSignal = window.OneSignal;
+                    if (!oneSignal || Array.isArray(oneSignal)) return;
+                    oneSignal.init?.({
                         appId: appId,
                         allowLocalhostAsSecureOrigin: true,
                         notifyButton: {
@@ -41,9 +41,20 @@ export function OneSignalInitializer() {
                     // To show prompt after delay on every refresh during testing, 
                     // users usually need to clear their browser cache/site data.
                     setTimeout(() => {
-                        oneSignal.showSlidedownPrompt?.();
+                        const current = window.OneSignal;
+                        if (current && !Array.isArray(current)) current.showSlidedownPrompt?.();
                     }, delay);
-                });
+                };
+
+                const oneSignal = window.OneSignal;
+                if (!oneSignal) {
+                    const queue: Array<() => void> = [initialize];
+                    window.OneSignal = queue;
+                } else if (Array.isArray(oneSignal)) {
+                    oneSignal.push(initialize);
+                } else {
+                    oneSignal.push(initialize);
+                }
             }
         });
     }, []);

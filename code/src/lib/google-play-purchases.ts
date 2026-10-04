@@ -89,7 +89,14 @@ async function finalizePurchase(
 
 export async function processGooglePlayPurchase(
   userId: string,
-  pack: Record<string, unknown>,
+  pack: {
+    id?: unknown;
+    name?: unknown;
+    amount?: unknown;
+    durationDays?: unknown;
+    type?: unknown;
+    googleProductId?: unknown;
+  },
   purchaseToken: string,
   settings: ServerPaymentGatewaySettings,
 ): Promise<PurchaseResult> {

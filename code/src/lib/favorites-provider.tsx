@@ -51,7 +51,11 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
             toast({ title: result.action === 'added' ? 'Added to Favorites' : 'Removed from Favorites' });
             fetchData();
         } else {
-            toast({ variant: 'destructive', title: 'Error', description: result.error });
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'error' in result ? result.error : 'Could not update favorites.',
+            });
         }
     };
 
