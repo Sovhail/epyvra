@@ -1,10 +1,13 @@
 'use server';
 import { getErrorMessage } from '@/lib/error-utils';
-import { ObjectId } from 'mongodb';
+import type { Document, WithId } from 'mongodb';
 import { getDb } from './mongodb';
 import type { Series, Episode, CoinPack, MonetizationSettings, Purchase, Ad, GeneralSettings, Language, UITranslations, CustomPage, ContactMessage, Report, Category, PluginsSettings, RewardTask, RewardsSettings, UserRewardClaim, CoinTransaction, PaymentGatewaySettings, AdminProfile, Favorite, WatchHistory, StorageSettings } from './types';
 import { isDemoMode } from './demo-mode';
 import { safeFetch } from './safe-fetch';
+import { getQueryById, mapDoc } from './actions/utils';
+
+type StringIdDocument = { _id: string; [key: string]: unknown };
 
 async function canReadPrivateSettings(): Promise<boolean> {
     return import('./actions/auth').then(({ verifyAdminSession }) => verifyAdminSession());
@@ -67,30 +70,11 @@ function publicMobileSettings(settings: import('./types').MobileSettings): impor
     return publicSettings;
 }
 
-const mapDoc = (doc: any) => {
-    if (!doc) return null;
-    const { _id, ...rest } = doc;
-    return { id: _id.toString(), ...rest };
-}
-
-const getQueryById = (id: string) => {
-    try {
-        return {
-            $or: [
-                { _id: ObjectId.isValid(id) ? new ObjectId(id) : null },
-                { _id: id as any }
-            ].filter(q => q._id !== null)
-        };
-    } catch (e) {
-        return { _id: id as any };
-    }
-};
-
-function logError(msg: string, error: any) {
+function logError(msg: string, error: unknown) {
     if (process.env.NODE_ENV !== 'production') {
         console.error(msg, error);
     } else {
-        console.error(`${msg}: ${error?.message || 'Error occurred.'}`);
+        console.error(`${msg}: ${getErrorMessage(error, 'Error occurred.')}`);
     }
 }
 
@@ -98,7 +82,7 @@ function logError(msg: string, error: any) {
 export async function isAppInstalled(): Promise<boolean> {
     try {
         const db = await getDb();
-        const admin = await db.collection('settings').findOne({ _id: 'admin' as any });
+        const admin = await db.collection<StringIdDocument>('settings').findOne({ _id: 'admin' });
         return !!admin;
     } catch (e) {
         return false;
@@ -113,7 +97,7 @@ export async function getAdminProfile(): Promise<AdminProfile | null> {
     try {
         if (!(await canReadPrivateSettings())) return null;
         const db = await getDb();
-        const admin = await db.collection('settings').findOne({ _id: 'admin' as any });
+        const admin = await db.collection<StringIdDocument>('settings').findOne({ _id: 'admin' });
         return admin ? mapDoc(admin) as unknown as AdminProfile : null;
     } catch (e) {
         return null;
@@ -154,18 +138,17 @@ export async function getSimilarSeries(series: Series): Promise<Series[]> {
     try {
         const db = await getDb();
         const seriesCollection = db.collection('series');
-        const queryId = ObjectId.isValid(series.id) ? new ObjectId(series.id) : series.id as any;
-        
-        let similar: any[] = [];
+        const excludeCurrent = { $nor: [getQueryById(series.id)] };
+        let similar: WithId<Document>[] = [];
         if (series.genres && series.genres.length > 0) {
             similar = await seriesCollection.find({
                 genres: { $in: series.genres },
-                _id: { $ne: queryId }
+                ...excludeCurrent,
             }).limit(6).toArray();
         }
 
         if (similar.length === 0) {
-            similar = await seriesCollection.find({ _id: { $ne: queryId } }).limit(6).toArray();
+            similar = await seriesCollection.find(excludeCurrent).limit(6).toArray();
         }
 
         return similar.map(s => mapDoc(s)) as Series[];
@@ -188,7 +171,7 @@ export async function getCoinPacks(): Promise<CoinPack[]> {
 export async function getMonetizationSettings(): Promise<MonetizationSettings | null> {
     try {
         const db = await getDb();
-        const settings = await db.collection('settings').findOne({ _id: 'monetization' as any });
+        const settings = await db.collection<StringIdDocument>('settings').findOne({ _id: 'monetization' });
         return settings ? (mapDoc(settings) as unknown as MonetizationSettings) : null;
     } catch (e) {
         return null;
@@ -198,7 +181,7 @@ export async function getMonetizationSettings(): Promise<MonetizationSettings | 
 export async function getPaymentSettings(): Promise<PaymentGatewaySettings | null> {
     try {
         const db = await getDb();
-        const settings = await db.collection('settings').findOne({ _id: 'payment' as any });
+        const settings = await db.collection<StringIdDocument>('settings').findOne({ _id: 'payment' });
         if (!settings) return null;
         const mapped = mapDoc(settings) as unknown as PaymentGatewaySettings;
         return (await canReadPrivateSettings()) ? mapped : publicPaymentSettings(mapped);
@@ -210,7 +193,7 @@ export async function getPaymentSettings(): Promise<PaymentGatewaySettings | nul
 export async function getRewardSettings(): Promise<RewardsSettings | null> {
     try {
         const db = await getDb();
-        const settings = await db.collection('settings').findOne({ _id: 'rewards' as any });
+        const settings = await db.collection<StringIdDocument>('settings').findOne({ _id: 'rewards' });
         return settings ? (mapDoc(settings) as unknown as RewardsSettings) : null;
     } catch (e) {
         return null;
@@ -234,7 +217,7 @@ export async function getStorageSettings(): Promise<StorageSettings | null> {
     try {
         if (!(await canReadPrivateSettings())) return null;
         const db = await getDb();
-        const settings = await db.collection('settings').findOne({ _id: 'storage' as any });
+        const settings = await db.collection<StringIdDocument>('settings').findOne({ _id: 'storage' });
         return settings ? (mapDoc(settings) as unknown as StorageSettings) : null;
     } catch (e) {
         return null;
@@ -289,7 +272,7 @@ export async function getUserHistory(userId: string): Promise<WatchHistory[]> {
 export async function getPluginsSettings(): Promise<PluginsSettings | null> {
     try {
         const db = await getDb();
-        const settings = await db.collection('settings').findOne({ _id: 'plugins' as any });
+        const settings = await db.collection<StringIdDocument>('settings').findOne({ _id: 'plugins' });
         if (!settings) return null;
         const mapped = mapDoc(settings) as unknown as PluginsSettings;
         return (await canReadPrivateSettings()) ? mapped : publicPluginsSettings(mapped);
@@ -322,8 +305,7 @@ export async function getAllSeriesForAdmin(): Promise<Series[]> {
 export async function getSeriesById(id: string): Promise<Series | null> {
     try {
         const db = await getDb();
-        const query = ObjectId.isValid(id) ? { _id: new ObjectId(id) } : { _id: id as any };
-        const series = await db.collection('series').findOne(query);
+        const series = await db.collection('series').findOne(getQueryById(id));
         return mapDoc(series) as Series | null;
     } catch (e) {
         return null;
@@ -333,7 +315,7 @@ export async function getSeriesById(id: string): Promise<Series | null> {
 export async function getAdSettings(placementId: string = 'main_script_ad'): Promise<Ad | null> {
     try {
         const db = await getDb();
-        const ad = await db.collection('ads').findOne({ _id: placementId as any });
+        const ad = await db.collection<StringIdDocument>('ads').findOne({ _id: placementId });
         return ad ? (mapDoc(ad) as unknown as Ad) : null;
     } catch (e) {
         return null;
@@ -343,7 +325,7 @@ export async function getAdSettings(placementId: string = 'main_script_ad'): Pro
 export async function getGeneralSettings(): Promise<GeneralSettings | null> {
     try {
         const db = await getDb();
-        const settings = await db.collection('settings').findOne({ _id: 'general' as any });
+        const settings = await db.collection<StringIdDocument>('settings').findOne({ _id: 'general' });
         if (!settings) return null;
         const mapped = mapDoc(settings) as unknown as GeneralSettings;
         return (await canReadPrivateSettings()) ? mapped : publicGeneralSettings(mapped);
@@ -365,7 +347,7 @@ export async function getAllLanguages(): Promise<Language[]> {
 export async function getTranslations(langCode: string): Promise<UITranslations | null> {
     try {
         const db = await getDb();
-        const translations = await db.collection('translations').findOne({ _id: langCode as any });
+        const translations = await db.collection<StringIdDocument>('translations').findOne({ _id: langCode });
         return translations ? (mapDoc(translations) as unknown as UITranslations) : null;
     } catch (e) {
         return null;
@@ -444,7 +426,7 @@ export async function getCategoryBySlug(slug: string): Promise<Category | null> 
     }
 }
 
-export async function getAllUsersForAdmin(): Promise<any[]> {
+export async function getAllUsersForAdmin(): Promise<Array<Record<string, unknown>>> {
     try {
         if (!(await canReadPrivateSettings())) return [];
         const db = await getDb();
@@ -458,7 +440,7 @@ export async function getAllUsersForAdmin(): Promise<any[]> {
 export async function getMobileSettings(): Promise<import('./types').MobileSettings | null> {
     try {
         const db = await getDb();
-        const settings = await db.collection('settings').findOne({ _id: 'mobile' as any });
+        const settings = await db.collection<StringIdDocument>('settings').findOne({ _id: 'mobile' });
         if (!settings) return null;
         const mapped = mapDoc(settings) as unknown as import('./types').MobileSettings;
         return (await canReadPrivateSettings()) ? mapped : publicMobileSettings(mapped);
@@ -470,7 +452,7 @@ export async function getMobileSettings(): Promise<import('./types').MobileSetti
 export async function verifyLicensePeriodically(domain: string): Promise<boolean> {
     try {
         const db = await getDb();
-        const settings = await db.collection('settings').findOne({ _id: 'general' as any });
+        const settings = await db.collection<StringIdDocument>('settings').findOne({ _id: 'general' });
         
         // If settings doesn't exist, we let the installer run
         if (!settings) {
@@ -493,7 +475,8 @@ export async function verifyLicensePeriodically(domain: string): Promise<boolean
         const oneDay = 24 * 60 * 60 * 1000;
 
         // If checked within the last 24 hours, return cached status
-        if (lastCheck && (Date.now() - new Date(lastCheck).getTime() < oneDay)) {
+        if ((typeof lastCheck === 'string' || lastCheck instanceof Date)
+            && (Date.now() - new Date(lastCheck).getTime() < oneDay)) {
             return settings.isLicenseActive !== false;
         }
 
@@ -518,8 +501,8 @@ export async function verifyLicensePeriodically(domain: string): Promise<boolean
 
             if (response.ok && data.success) {
                 // Verification successful
-                await db.collection('settings').updateOne(
-                    { _id: 'general' as any },
+                await db.collection<StringIdDocument>('settings').updateOne(
+                    { _id: 'general' },
                     { 
                         $set: { 
                             isLicenseActive: true, 
@@ -532,8 +515,8 @@ export async function verifyLicensePeriodically(domain: string): Promise<boolean
             } else {
                 // Verification failed (code revoked, invalid, or wrong domain)
                 console.warn(`[License Check] Verification failed: ${data.error || 'Unknown error'}`);
-                await db.collection('settings').updateOne(
-                    { _id: 'general' as any },
+                await db.collection<StringIdDocument>('settings').updateOne(
+                    { _id: 'general' },
                     { 
                         $set: { 
                             isLicenseActive: false,
@@ -547,8 +530,8 @@ export async function verifyLicensePeriodically(domain: string): Promise<boolean
             console.error('[License Check] Network error calling verification API:', getErrorMessage(fetchError));
             // On network failure, update last check time to retry in 4 hours, and let client pass
             const retryTime = new Date(Date.now() - (24 - 4) * 60 * 60 * 1000); // 4 hours retry window
-            await db.collection('settings').updateOne(
-                { _id: 'general' as any },
+            await db.collection<StringIdDocument>('settings').updateOne(
+                { _id: 'general' },
                 { 
                     $set: { 
                         lastLicenseCheckAt: retryTime
