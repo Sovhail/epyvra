@@ -114,7 +114,7 @@ function EpisodeDialog({ seriesId, episodeToEdit, children, nextEpisodeNumber, o
 
     // --- Handlers for form state changes ---
 
-    const handleEpisodeChange = (epIndex: number, field: 'episodeInSeason', value: any) => {
+    const handleEpisodeChange = (epIndex: number, field: 'episodeInSeason', value: number) => {
         const newEpisodes = [...episodes];
         if (newEpisodes[epIndex]) {
             newEpisodes[epIndex][field] = value;
@@ -122,7 +122,7 @@ function EpisodeDialog({ seriesId, episodeToEdit, children, nextEpisodeNumber, o
         }
     };
 
-    const handleSourceChange = (epIndex: number, srcIndex: number, field: keyof VideoSourceState, value: any) => {
+    const handleSourceChange = <K extends keyof VideoSourceState>(epIndex: number, srcIndex: number, field: K, value: VideoSourceState[K]) => {
         const newEpisodes = [...episodes];
         const source = newEpisodes[epIndex]?.sources[srcIndex];
         if (source) {
@@ -151,7 +151,7 @@ function EpisodeDialog({ seriesId, episodeToEdit, children, nextEpisodeNumber, o
                 }
             }
 
-            (source[field] as any) = value;
+            source[field] = value;
             if (field === 'sourceType') {
                 source.url = '';
                 source.file = null;
@@ -201,7 +201,10 @@ function EpisodeDialog({ seriesId, episodeToEdit, children, nextEpisodeNumber, o
             });
         });
 
-        const episodesWithUrls = JSON.parse(JSON.stringify(episodes));
+        const episodesWithUrls: EpisodeState[] = episodes.map(episode => ({
+            ...episode,
+            sources: episode.sources.map(source => ({ ...source })),
+        }));
 
         try {
             for (const { epIndex, srcIndex, file } of filesToUpload) {
@@ -256,8 +259,8 @@ function EpisodeDialog({ seriesId, episodeToEdit, children, nextEpisodeNumber, o
 
             for (const episodeState of episodesWithUrls) {
                 const videoSources = episodeState.sources
-                    .filter((s: any) => s.url)
-                    .map((s: any) => ({ quality: s.quality, url: s.url }));
+                    .filter(source => source.url)
+                    .map(source => ({ quality: source.quality, url: source.url }));
 
                 if (videoSources.length === 0 && !isEditMode) {
                    continue; // Skip empty new episodes

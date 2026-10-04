@@ -158,7 +158,7 @@ function EpisodeDialog({ seriesId, episodeToEdit, children, nextEpisodeNumber, o
         }
     }, [isOpen, episodeToEdit, isEditMode, nextEpisodeNumber]);
 
-    const handleEpisodeChange = (epIndex: number, field: 'episodeInSeason', value: any) => {
+    const handleEpisodeChange = (epIndex: number, field: 'episodeInSeason', value: number) => {
         const newEpisodes = [...episodes];
         if (newEpisodes[epIndex]) {
             newEpisodes[epIndex][field] = value;
@@ -166,11 +166,11 @@ function EpisodeDialog({ seriesId, episodeToEdit, children, nextEpisodeNumber, o
         }
     };
 
-    const handleSourceChange = (epIndex: number, srcIndex: number, field: keyof VideoSourceState, value: any) => {
+    const handleSourceChange = <K extends keyof VideoSourceState>(epIndex: number, srcIndex: number, field: K, value: VideoSourceState[K]) => {
         const newEpisodes = [...episodes];
         const source = newEpisodes[epIndex]?.sources[srcIndex];
         if (source) {
-            (source[field] as any) = value;
+            source[field] = value;
             if (field === 'sourceType') {
                 source.url = '';
                 source.file = null;
@@ -181,11 +181,11 @@ function EpisodeDialog({ seriesId, episodeToEdit, children, nextEpisodeNumber, o
         }
     };
 
-    const handleSubtitleChange = (epIndex: number, subIndex: number, field: keyof SubtitleState, value: any) => {
+    const handleSubtitleChange = <K extends keyof SubtitleState>(epIndex: number, subIndex: number, field: K, value: SubtitleState[K]) => {
         const newEpisodes = [...episodes];
         const sub = newEpisodes[epIndex]?.subtitles?.[subIndex];
         if (sub) {
-            (sub[field] as any) = value;
+            sub[field] = value;
             if (field === 'sourceType') {
                 sub.url = '';
                 sub.file = null;
@@ -258,7 +258,11 @@ function EpisodeDialog({ seriesId, episodeToEdit, children, nextEpisodeNumber, o
             });
         });
 
-        const episodesWithUrls = JSON.parse(JSON.stringify(episodes));
+        const episodesWithUrls: EpisodeState[] = episodes.map(episode => ({
+            ...episode,
+            sources: episode.sources.map(source => ({ ...source })),
+            subtitles: episode.subtitles.map(subtitle => ({ ...subtitle })),
+        }));
 
         try {
             for (const { epIndex, srcIndex, file } of filesToUpload) {
@@ -334,14 +338,14 @@ function EpisodeDialog({ seriesId, episodeToEdit, children, nextEpisodeNumber, o
 
             for (const episodeState of episodesWithUrls) {
                 const videoSources = episodeState.sources
-                    .filter((s: any) => s.url)
-                    .map((s: any) => ({ quality: s.quality, url: s.url }));
+                    .filter(s => s.url)
+                    .map(s => ({ quality: s.quality, url: s.url }));
 
                 if (videoSources.length === 0 && !isEditMode) continue;
                 
                 const subtitles = (episodeState.subtitles || [])
-                    .filter((s: any) => s.url && s.url.trim() !== '')
-                    .map((s: any) => ({
+                    .filter(s => s.url && s.url.trim() !== '')
+                    .map(s => ({
                         language: s.language || 'English',
                         languageCode: s.languageCode || 'en',
                         url: s.url.trim()
@@ -412,7 +416,7 @@ function EpisodeDialog({ seriesId, episodeToEdit, children, nextEpisodeNumber, o
                                             </div>
                                              <div className="space-y-2">
                                                 <Label>Source Type</Label>
-                                                <Select value={source.sourceType} onValueChange={(val: any) => handleSourceChange(epIndex, srcIndex, 'sourceType', val)}>
+                                                <Select value={source.sourceType} onValueChange={val => handleSourceChange(epIndex, srcIndex, 'sourceType', val === 'embed' ? 'embed' : val === 'upload' ? 'upload' : 'link')}>
                                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                                     <SelectContent>
                                                         <SelectItem value="upload">Upload</SelectItem>
@@ -518,7 +522,7 @@ function EpisodeDialog({ seriesId, episodeToEdit, children, nextEpisodeNumber, o
                                                         <Label className="text-xs">Source Type</Label>
                                                         <Select
                                                             value={sub.sourceType}
-                                                            onValueChange={(val: any) => handleSubtitleChange(epIndex, subIndex, 'sourceType', val)}
+                                                            onValueChange={val => handleSubtitleChange(epIndex, subIndex, 'sourceType', val === 'upload' ? 'upload' : 'link')}
                                                         >
                                                             <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                                                             <SelectContent>
@@ -578,7 +582,7 @@ function EpisodeDialog({ seriesId, episodeToEdit, children, nextEpisodeNumber, o
 }
 
 export default function SeriesEpisodesPage() {
-  const params = useParams() as any;
+  const params = useParams<{ id: string }>();
   const seriesId = params.id;
   const { toast } = useToast();
 
