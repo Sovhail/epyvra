@@ -1,13 +1,8 @@
 
-import { MongoClient, ObjectId } from 'mongodb';
+import { ObjectId, type Document, type Filter } from 'mongodb';
 import { getDb } from './mongodb';
 import type { Series, Category, CustomPage, Episode } from './types';
-
-const mapDoc = (doc: any) => {
-    if (!doc) return null;
-    const { _id, ...rest } = doc;
-    return { id: _id.toString(), ...rest };
-}
+import { getQueryById, mapDoc } from './actions/utils';
 
 export async function getAllSeries(lang?: string): Promise<Series[]> {
     const db = await getDb();
@@ -41,7 +36,7 @@ export async function getSeriesByCategory(categoryName: string, lang?: string): 
     const db = await getDb();
     const seriesCollection = db.collection('series');
     
-    const query: any = { genres: categoryName };
+    const query: Filter<Document> = { genres: categoryName };
     if (lang) {
         query.targetLanguages = lang;
     }
@@ -127,9 +122,9 @@ export async function getSimilarSeries(series: Series, lang?: string): Promise<S
     const db = await getDb();
     const seriesCollection = db.collection('series');
     
-    const query: any = {
+    const query: Filter<Document> = {
         genres: { $in: series.genres },
-        _id: { $ne: new ObjectId(series.id) }
+        $nor: [getQueryById(series.id)],
     };
     
     if (lang) {

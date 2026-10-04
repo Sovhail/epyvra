@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerPluginsSettings as getPluginsSettings } from '@/lib/server-settings';
+import type { ServerPluginsSettings } from '@/lib/server-types';
 
 export async function GET(request: Request) {
     const { searchParams, pathname } = new URL(request.url);
@@ -14,7 +15,7 @@ export async function GET(request: Request) {
         return new NextResponse('Missing key', { status: 400 });
     }
 
-    const settings = await getPluginsSettings() as any;
+    const settings = await getPluginsSettings() as ServerPluginsSettings | null;
     
     if (settings && settings.indexNowEnabled && settings.indexNowKey === key) {
         return new NextResponse(key, {
