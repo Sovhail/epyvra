@@ -226,4 +226,16 @@
     <string name="task_incomplete_msg">您仅停留了 %1$d 秒！需要至少停留 %2$d 秒才能领取金币奖励。</string>
     <string name="task_continue_btn">继续完成任务</string>
     <string name="task_dismiss_btn">关闭</string>
+    <string name="claim_invite_btn">Claim Bonus Coins</string>
+    <string name="coins_earned_label">Coins Earned</string>
+    <string name="copy_code">Copy</string>
+    <string name="enter_invite_code_hint">Paste invite code (e.g. EPY-XXXXXX)</string>
+    <string name="enter_invite_code_title">Enter Invite Code</string>
+    <string name="friends_invited_label">Friends Invited</string>
+    <string name="have_invite_code_btn">Have an Invite Code?</string>
+    <string name="invite_bonus_claimed">Invite Bonus Claimed ✓</string>
+    <string name="invite_friends_desc">Share your code and get +%1$d coins for every friend who joins!</string>
+    <string name="invite_friends_title">Invite Friends &amp; Earn Coins</string>
+    <string name="referral_copied_toast">Invite code copied to clipboard!</string>
+    <string name="share_code">Share</string>
 </resources>

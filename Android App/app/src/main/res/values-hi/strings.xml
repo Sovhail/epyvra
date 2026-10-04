@@ -67,7 +67,7 @@
     <string name="gplay_id_not_set">Google Play उत्पाद आईडी सेट नहीं है। कृपया इसे व्यवस्थापक में कॉन्फ़िगर करें।</string>
     <string name="gplay_purchase_failed">Google Play खरीदारी विफल: %1$s</string>
     <string name="activity_context_error">संदर्भ त्रुटि।</string>
-    <string name="gplay_product_id_mismatch">Google Play उत्पाद बेमेल।</string>
+    <string name="gplay_product_id_mismatch">Google Play उत्पाद आईडी मेल नहीं खाती: उत्पाद आईडी ‘%1$s’ किसी कॉन्फ़िगर किए गए उत्पाद से मेल नहीं खाती।</string>
     <string name="billing_conn_failed">बिलिंग कनेक्शन विफल: %1$s</string>
     <string name="connecting_payment_gateway">सुरक्षित भुगतान गेटवे से कनेक्ट हो रहा है...</string>
     <string name="transaction_completed_success">लेन-देन सफलतापूर्वक पूरा हुआ!</string>
@@ -226,4 +226,16 @@
     <string name="task_incomplete_msg">आप केवल %1$d सेकंड पृष्ठ पर रहे! अपना इनाम पाने के लिए आपको कम से कम %2$d सेकंड तक रहना होगा।</string>
     <string name="task_continue_btn">कार्य जारी रखें</string>
     <string name="task_dismiss_btn">खारिज करें</string>
+    <string name="claim_invite_btn">Claim Bonus Coins</string>
+    <string name="coins_earned_label">Coins Earned</string>
+    <string name="copy_code">Copy</string>
+    <string name="enter_invite_code_hint">Paste invite code (e.g. EPY-XXXXXX)</string>
+    <string name="enter_invite_code_title">Enter Invite Code</string>
+    <string name="friends_invited_label">Friends Invited</string>
+    <string name="have_invite_code_btn">Have an Invite Code?</string>
+    <string name="invite_bonus_claimed">Invite Bonus Claimed ✓</string>
+    <string name="invite_friends_desc">Share your code and get +%1$d coins for every friend who joins!</string>
+    <string name="invite_friends_title">Invite Friends &amp; Earn Coins</string>
+    <string name="referral_copied_toast">Invite code copied to clipboard!</string>
+    <string name="share_code">Share</string>
 </resources>

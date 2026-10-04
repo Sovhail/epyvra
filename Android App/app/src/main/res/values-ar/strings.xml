@@ -232,5 +232,14 @@
     <string name="enter_invite_code_hint">الصق كود الدعوة (مثال: EPY-XXXXXX)</string>
     <string name="claim_invite_btn">استلام عملات المكافأة</string>
     <string name="invite_bonus_claimed">تم استلام مكافأة الدعوة ✓</string>
+    <string name="continue_phone">Continue With Phone</string>
+    <string name="email_sent">Password reset link sent to your email.</string>
+    <string name="flutterwave_checkout">Flutterwave Secure Checkout</string>
+    <string name="forgot_password">Forgot Password?</string>
+    <string name="otp_placeholder">6-digit OTP</string>
+    <string name="phone_placeholder">Phone Number (+1234567890)</string>
+    <string name="reset_password">Reset Password</string>
+    <string name="send_otp">Send OTP</string>
+    <string name="verify_otp">Verify OTP</string>
 </resources>
 
