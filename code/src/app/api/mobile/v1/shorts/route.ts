@@ -2,6 +2,12 @@ import { getErrorMessage } from '@/lib/error-utils';
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/mongodb';
 import { getSecureVideoUrl } from '@/lib/actions';
+import type { Document, Filter } from 'mongodb';
+
+type MobileSubtitle = { language: string; languageCode: string; url: string };
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+    typeof value === 'object' && value !== null;
 
 export const dynamic = 'force-dynamic';
 
@@ -13,7 +19,7 @@ export async function GET(request: NextRequest) {
         }
 
         const db = await getDb();
-        const settings = await db.collection('settings').findOne({ _id: 'mobile' as any });
+        const settings = await db.collection<Record<string, unknown> & { _id: string }>('settings').findOne({ _id: 'mobile' });
         if (!settings || !settings.apiKey || settings.apiKey !== apiKey) {
             return NextResponse.json({ error: 'Unauthorized - Invalid API Key' }, { status: 401 });
         }
@@ -25,13 +31,13 @@ export async function GET(request: NextRequest) {
         const origin = `${cleanProtocol}//${host}`;
 
         const lang = request.nextUrl.searchParams.get('lang') || request.nextUrl.searchParams.get('languageCode');
-        const filter: any = {};
+        const filter: Filter<Document> = {};
         if (lang) {
             filter.targetLanguages = lang;
         }
 
         const allSeries = await db.collection('series').find(filter).toArray();
-        const shorts: any[] = [];
+        const shorts: Array<Record<string, unknown>> = [];
 
         for (const s of allSeries) {
             const seriesId = s._id.toString();
@@ -80,8 +86,8 @@ export async function GET(request: NextRequest) {
                         isPremium: false,
                         coinCost: 0,
                         durationSec: ep.durationSec || ep.duration || 0,
-                        subtitles: (ep.subtitles || []).map((sub: any) => {
-                            const rawSubUrl = sub.url || '';
+                        subtitles: (Array.isArray(ep.subtitles) ? ep.subtitles : []).map((sub: unknown): MobileSubtitle => {
+                            const rawSubUrl = isRecord(sub) && typeof sub.url === 'string' ? sub.url : '';
                             let subUrl = rawSubUrl ? (rawSubUrl.startsWith('http') ? rawSubUrl : `${origin}${rawSubUrl}`) : '';
                             if (subUrl.includes('/uploads/videos/') || subUrl.includes('/uploads/subtitles/')) {
                                 const fileName = subUrl.split('/').pop()?.split('?')[0] || '';
@@ -90,11 +96,11 @@ export async function GET(request: NextRequest) {
                                 }
                             }
                             return {
-                                language: sub.language || 'English',
-                                languageCode: sub.languageCode || 'en',
+                                language: isRecord(sub) && typeof sub.language === 'string' ? sub.language : 'English',
+                                languageCode: isRecord(sub) && typeof sub.languageCode === 'string' ? sub.languageCode : 'en',
                                 url: subUrl,
                             };
-                        }).filter((s: any) => s.url)
+                        }).filter(subtitle => subtitle.url)
                     }
                 });
             }

@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
         }
 
         const db = await getDb();
-        const settings = await db.collection('settings').findOne({ _id: 'mobile' as any });
+        const settings = await db.collection<Record<string, unknown> & { _id: string }>('settings').findOne({ _id: 'mobile' });
         if (!settings || !settings.apiKey || settings.apiKey !== apiKey) {
             return NextResponse.json({ error: 'Unauthorized - Invalid API Key' }, { status: 401 });
         }

@@ -1,6 +1,7 @@
 import { getErrorMessage } from '@/lib/error-utils';
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/mongodb';
+import type { Document, Filter } from 'mongodb';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,7 +13,7 @@ export async function GET(request: NextRequest) {
         }
 
         const db = await getDb();
-        const settings = await db.collection('settings').findOne({ _id: 'mobile' as any });
+        const settings = await db.collection<Record<string, unknown> & { _id: string }>('settings').findOne({ _id: 'mobile' });
         if (!settings || !settings.apiKey || settings.apiKey !== apiKey) {
             return NextResponse.json({ error: 'Unauthorized - Invalid API Key' }, { status: 401 });
         }
@@ -24,7 +25,7 @@ export async function GET(request: NextRequest) {
         const origin = `${cleanProtocol}//${host}`;
 
         const lang = request.nextUrl.searchParams.get('lang') || request.nextUrl.searchParams.get('languageCode');
-        const filter: any = {};
+        const filter: Filter<Document> = {};
         if (lang) {
             filter.targetLanguages = lang;
         }

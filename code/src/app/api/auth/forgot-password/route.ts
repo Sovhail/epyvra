@@ -18,10 +18,11 @@ export async function POST(req: NextRequest) {
         const rateLimitId = `reset_${today}_${ip}`;
         
         const db = await getDb();
-        const generalSettings = await db.collection('settings').findOne({ _id: 'general' as any });
+        const generalSettings = await db.collection<Record<string, unknown> & { _id: string }>('settings').findOne({ _id: 'general' });
         const maxResets = Number(generalSettings?.maxPasswordResetsPerDay) || 3;
 
-        const rateLimit = await db.collection('rate_limits').findOne({ _id: rateLimitId as any });
+        const rateLimits = db.collection<{ _id: string; count: number; createdAt?: Date }>('rate_limits');
+        const rateLimit = await rateLimits.findOne({ _id: rateLimitId });
         if (rateLimit && rateLimit.count >= maxResets) {
             return NextResponse.json({ success: false, error: 'You have reached the maximum number of password reset requests for today.' }, { status: 429 });
         }
@@ -45,8 +46,8 @@ export async function POST(req: NextRequest) {
         });
         
         // Increment reset attempts
-        await db.collection('rate_limits').updateOne(
-            { _id: rateLimitId as any },
+        await rateLimits.updateOne(
+            { _id: rateLimitId },
             { $inc: { count: 1 }, $setOnInsert: { createdAt: new Date() } },
             { upsert: true }
         );

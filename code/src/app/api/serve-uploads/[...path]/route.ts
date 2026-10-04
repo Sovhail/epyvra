@@ -3,6 +3,7 @@ import fs from 'fs';
 import { join } from 'path';
 import { stat } from 'fs/promises';
 import { hasErrorCode } from '@/lib/error-utils';
+import { Readable } from 'stream';
 
 export async function GET(
   request: NextRequest,
@@ -62,7 +63,7 @@ export async function GET(
       const chunksize = (end - start) + 1;
       const stream = fs.createReadStream(fullPath, { start, end });
 
-      return new NextResponse(stream as any, {
+      return new NextResponse(Readable.toWeb(stream) as ReadableStream<Uint8Array>, {
         status: 206,
         headers: {
           'Content-Range': `bytes ${start}-${end}/${stats.size}`,
@@ -78,7 +79,7 @@ export async function GET(
     }
 
     const stream = fs.createReadStream(fullPath);
-    return new NextResponse(stream as any, {
+    return new NextResponse(Readable.toWeb(stream) as ReadableStream<Uint8Array>, {
       status: 200,
       headers: {
         'Content-Type': contentType,

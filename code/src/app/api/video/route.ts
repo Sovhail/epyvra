@@ -7,14 +7,16 @@ import { decryptPath } from '@/lib/crypto';
 import { getVideoSecret } from '@/lib/video-secret';
 import { safeFetch } from '@/lib/safe-fetch';
 
-function streamFile(path: string, options?: any): ReadableStream {
+function streamFile(path: string, options?: { start?: number; end?: number }): ReadableStream<Uint8Array> {
     const readStream = fs.createReadStream(path, { highWaterMark: 1024 * 1024, ...options });
     if (typeof Readable.toWeb === 'function') {
-        return Readable.toWeb(readStream) as unknown as ReadableStream;
+        return Readable.toWeb(readStream) as ReadableStream<Uint8Array>;
     }
     return new ReadableStream({
         start(controller) {
-            readStream.on('data', (chunk: any) => controller.enqueue(new Uint8Array(chunk)));
+            readStream.on('data', chunk => controller.enqueue(
+                typeof chunk === 'string' ? new TextEncoder().encode(chunk) : new Uint8Array(chunk)
+            ));
             readStream.on('end', () => controller.close());
             readStream.on('error', (error: NodeJS.ErrnoException) => controller.error(error));
         },

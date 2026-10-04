@@ -12,14 +12,14 @@ export async function GET(request: NextRequest) {
         }
 
         const db = await getDb();
-        const mobileSetting = await db.collection('settings').findOne({ _id: 'mobile' as any });
+        const mobileSetting = await db.collection<Record<string, unknown> & { _id: string }>('settings').findOne({ _id: 'mobile' });
         if (!mobileSetting || !mobileSetting.apiKey || mobileSetting.apiKey !== apiKey) {
             return NextResponse.json({ error: 'Unauthorized - Invalid API Key' }, { status: 401 });
         }
 
         // Fetch general site settings
-        const generalSettings = await db.collection('settings').findOne({ _id: 'general' as any });
-        const siteUrl = generalSettings?.siteUrl || '';
+        const generalSettings = await db.collection<Record<string, unknown> & { _id: string }>('settings').findOne({ _id: 'general' });
+        const siteUrl = typeof generalSettings?.siteUrl === 'string' ? generalSettings.siteUrl : '';
         const emailLoginEnabled = generalSettings?.emailLoginEnabled !== false;
         const googleLoginEnabled = generalSettings?.googleLoginEnabled !== false;
         const facebookLoginEnabled = generalSettings?.facebookLoginEnabled === true;
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
         const referralRewardCoins = Number(generalSettings?.referralRewardCoins || 50);
         const referredBonusCoins = Number(generalSettings?.referredBonusCoins || 30);
 
-        let watermarkUrl = generalSettings?.watermarkUrl || '';
+        let watermarkUrl = typeof generalSettings?.watermarkUrl === 'string' ? generalSettings.watermarkUrl : '';
         if (watermarkUrl && watermarkUrl.startsWith('/')) {
             const baseUrl = (siteUrl || '').endsWith('/') ? (siteUrl || '').slice(0, -1) : (siteUrl || '');
             watermarkUrl = `${baseUrl}${watermarkUrl}`;
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
         }));
 
         // Fetch payment settings
-        const paymentSettings = await db.collection('settings').findOne({ _id: 'payment' as any });
+        const paymentSettings = await db.collection<Record<string, unknown> & { _id: string }>('settings').findOne({ _id: 'payment' });
         const stripeEnabled = paymentSettings?.stripeEnabled === true;
         const paypalEnabled = paymentSettings?.paypalEnabled === true;
         const razorpayEnabled = paymentSettings?.razorpayEnabled === true;
@@ -63,17 +63,17 @@ export async function GET(request: NextRequest) {
         const payuEnabled = paymentSettings?.payuEnabled === true;
 
         // Fetch monetization settings
-        const monetizationSettings = await db.collection('settings').findOne({ _id: 'monetization' as any });
+        const monetizationSettings = await db.collection<Record<string, unknown> & { _id: string }>('settings').findOne({ _id: 'monetization' });
         const currency = monetizationSettings?.currency || 'USD';
         const currencySymbol = monetizationSettings?.currencySymbol || '$';
 
         // Fetch rewards settings and tasks
-        const rewardsSettings = await db.collection('settings').findOne({ _id: 'rewards' as any });
+        const rewardsSettings = await db.collection<Record<string, unknown> & { _id: string }>('settings').findOne({ _id: 'rewards' });
         const rewardsEnabled = rewardsSettings?.isEnabled === true;
         const dailyRewards = rewardsSettings?.dailyRewards || [10, 15, 20, 25, 30, 40, 50];
 
         // Fetch video player ad watch limit
-        const videoAd = await db.collection('ads').findOne({ _id: 'video_player_ad' as any });
+        const videoAd = await db.collection<Record<string, unknown> & { _id: string }>('ads').findOne({ _id: 'video_player_ad' });
         const admobRewardedLimit = mobileSetting?.admobRewardedLimit !== undefined
             ? Number(mobileSetting.admobRewardedLimit)
             : Number(videoAd?.dailyWatchLimit ?? 5);
@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
         const mappedRewardTasks: never[] = [];
 
         // Fetch plugins settings (OneSignal)
-        const pluginsSettings = await db.collection('settings').findOne({ _id: 'plugins' as any });
+        const pluginsSettings = await db.collection<Record<string, unknown> & { _id: string }>('settings').findOne({ _id: 'plugins' });
         const oneSignalAppId = pluginsSettings?.oneSignalAppId || '';
 
         return NextResponse.json({

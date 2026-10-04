@@ -18,8 +18,8 @@ function isUsableSecret(value: unknown): value is string {
  */
 export async function getVideoSecret(): Promise<string> {
     const db = await getDb();
-    const settings = db.collection('settings');
-    const query = { _id: VIDEO_SECURITY_SETTINGS_ID as any };
+    const settings = db.collection<{ _id: string; secret?: string; createdAt?: Date; updatedAt?: Date }>('settings');
+    const query = { _id: VIDEO_SECURITY_SETTINGS_ID };
     const existing = await settings.findOne(query, { projection: { secret: 1 } });
 
     if (isUsableSecret(existing?.secret)) {
