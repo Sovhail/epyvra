@@ -12,12 +12,37 @@ import Razorpay from 'razorpay';
 import { handleError, getQueryById, mapDoc } from './utils';
 import { ServerPaymentGatewaySettings } from '../server-types';
 import { processGooglePlayPurchase } from '../google-play-purchases';
+import { z } from 'zod';
+import type { CoinPack } from '../types';
+
+type StringIdDocument = { _id: string; [key: string]: unknown };
+type UserPurchaseDocument = {
+    _id: string;
+    coins: number;
+    email?: string;
+    displayName?: string;
+    isVip?: boolean;
+    vipExpiry?: string | Date;
+};
+type PayPalLink = { rel?: string; href?: string };
+
+const coinPackSchema = z.object({
+    id: z.string(),
+    name: z.string(),
+    description: z.string(),
+    amount: z.number(),
+    price: z.number(),
+    type: z.enum(['coins', 'membership']),
+    durationDays: z.number().optional(),
+    appleProductId: z.string().optional(),
+    googleProductId: z.string().optional(),
+});
 
 /**
  * Creates Stripe Checkout Session URL.
  */
 async function createStripeSession(
-    pack: any,
+    pack: CoinPack,
     paySettings: ServerPaymentGatewaySettings,
     currency: string,
     successUrlBase: string,
@@ -52,7 +77,7 @@ async function createStripeSession(
  * Creates PayPal Order and returns its approval URL.
  */
 async function createPayPalOrder(
-    pack: any,
+    pack: CoinPack,
     paySettings: ServerPaymentGatewaySettings,
     currency: string,
     successUrlBase: string,
@@ -96,7 +121,8 @@ async function createPayPalOrder(
     const order = await orderRes.json();
     if (!orderRes.ok) throw new Error(order.message || 'PayPal Order Failed');
     
-    const approvalUrl = order.links.find((l: any) => l.rel === 'approve')?.href;
+    const links: PayPalLink[] = Array.isArray(order.links) ? order.links : [];
+    const approvalUrl = links.find(link => link.rel === 'approve')?.href;
     if (!approvalUrl) throw new Error('PayPal Approval URL not found');
     return approvalUrl;
 }
@@ -105,7 +131,7 @@ async function createPayPalOrder(
  * Creates Razorpay payment link.
  */
 async function createRazorpayLink(
-    pack: any,
+    pack: CoinPack,
     paySettings: ServerPaymentGatewaySettings,
     currency: string,
     successUrlBase: string,
@@ -139,7 +165,7 @@ async function createRazorpayLink(
  * Creates Flutterwave payment link.
  */
 async function createFlutterwaveLink(
-    pack: any,
+    pack: CoinPack,
     paySettings: ServerPaymentGatewaySettings,
     currency: string,
     successUrlBase: string,
@@ -186,17 +212,19 @@ export async function createCheckoutSessionAction(userId: string, packId: string
     const packRaw = await db.collection('coin-packs').findOne(getQueryById(packId));
     const paySettings = await getPaymentSettings() as ServerPaymentGatewaySettings | null;
     const generalSettings = await getGeneralSettings();
-    const monSettings = await db.collection('settings').findOne({ _id: 'monetization' as any });
+    const monSettings = await db.collection<StringIdDocument>('settings').findOne({ _id: 'monetization' });
     if (!packRaw || !paySettings) return { success: false, error: 'Invalid pack or settings' };
     
-    const pack = mapDoc(packRaw);
+    const parsedPack = coinPackSchema.safeParse(mapDoc(packRaw));
+    if (!parsedPack.success) return { success: false, error: 'Invalid coin pack configuration' };
+    const pack = parsedPack.data;
     const baseUrl = (generalSettings?.siteUrl || 'http://localhost:9002').replace(/\/$/, '');
     const successUrlBase = `${baseUrl}/wallet?status=success&pack_id=${packId}`;
     const cancelUrl = `${baseUrl}/wallet?status=cancel`;
-    const currency = monSettings?.currency?.toLowerCase() || 'usd';
+    const currency = typeof monSettings?.currency === 'string' ? monSettings.currency.toLowerCase() : 'usd';
 
     try {
-        const user = await db.collection('users').findOne({ _id: userId as any });
+        const user = await db.collection<UserPurchaseDocument>('users').findOne({ _id: userId });
         if (gateway === 'stripe') {
             const url = await createStripeSession(pack, paySettings, currency, successUrlBase, cancelUrl, user?.email);
             return { success: true, url };
@@ -410,7 +438,9 @@ export async function verifyAndExecutePurchaseAction(userId: string, packId: str
     const paySettings = await getPaymentSettings() as ServerPaymentGatewaySettings | null;
     const packRaw = await db.collection('coin-packs').findOne(getQueryById(packId));
     if (!packRaw || !paySettings) return { success: false, error: 'Invalid pack or settings' };
-    const pack = mapDoc(packRaw);
+    const parsedPack = coinPackSchema.safeParse(mapDoc(packRaw));
+    if (!parsedPack.success) return { success: false, error: 'Invalid coin pack configuration' };
+    const pack = parsedPack.data;
     
     try {
         if (gateway === 'gplay') {
@@ -439,29 +469,23 @@ export async function verifyAndExecutePurchaseAction(userId: string, packId: str
 
         if (!isVerified) return { success: false, error: 'Payment verification failed.' };
         
-        const userProfile = await db.collection('users').findOne({ _id: userId as any });
+        const users = db.collection<UserPurchaseDocument>('users');
+        const userProfile = await users.findOne({ _id: userId });
         if (!userProfile) return { success: false, error: 'User profile not found' };
         
-        const updateData: any = {}; 
         let description = '';
         
         if (pack.type === 'membership') {
+            if (!pack.durationDays || pack.durationDays <= 0) return { success: false, error: 'Invalid membership duration.' };
             const expiryDate = new Date(); 
             const currentExpiry = userProfile.vipExpiry ? new Date(userProfile.vipExpiry) : new Date();
             const startDate = currentExpiry > new Date() ? currentExpiry : new Date();
             expiryDate.setTime(startDate.getTime() + (pack.durationDays * 24 * 60 * 60 * 1000));
-            updateData.isVip = true; 
-            updateData.vipExpiry = expiryDate; 
+            await users.updateOne({ _id: userId }, { $set: { isVip: true, vipExpiry: expiryDate } });
             description = `Purchased Membership: ${pack.name}`;
         } else { 
-            updateData.$inc = { coins: pack.amount }; 
+            await users.updateOne({ _id: userId }, { $inc: { coins: pack.amount } });
             description = `Purchased Coins: ${pack.name}`; 
-        }
-        
-        if (updateData.$inc) {
-            await db.collection('users').updateOne({ _id: userId as any }, updateData);
-        } else {
-            await db.collection('users').updateOne({ _id: userId as any }, { $set: updateData });
         }
         
         await db.collection('coin-transactions').insertOne({ 
