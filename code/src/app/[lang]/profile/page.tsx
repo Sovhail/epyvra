@@ -67,8 +67,8 @@ function ChangePasswordForm() {
             await updatePassword(user, values.newPassword);
             toast({ title: t('common_success'), description: 'Your password has been updated.' });
             form.reset();
-        } catch (error: any) {
-            toast({ variant: 'destructive', title: t('profile_update_password_button'), description: error.message });
+        } catch (error) {
+            toast({ variant: 'destructive', title: t('profile_update_password_button'), description: error instanceof Error ? error.message : t('common_error') });
         } finally {
             setIsSaving(false);
         }
@@ -220,8 +220,8 @@ export default function ProfilePage() {
                     } else {
                         throw new Error(data.error || 'Upload failed');
                     }
-                } catch (err: any) {
-                    toast({ variant: 'destructive', title: t('common_error'), description: err.message });
+                } catch (err) {
+                    toast({ variant: 'destructive', title: t('common_error'), description: err instanceof Error ? err.message : t('common_error') });
                 } finally {
                     setIsUploading(false);
                 }
@@ -267,8 +267,8 @@ export default function ProfilePage() {
 
         await refreshProfile();
         toast({ title: t('common_success'), description: t('profile_toast_success') });
-    } catch (error: any) {
-        toast({ variant: 'destructive', title: t('common_error'), description: error.message });
+    } catch (error) {
+        toast({ variant: 'destructive', title: t('common_error'), description: error instanceof Error ? error.message : t('common_error') });
     } finally {
         setIsSaving(false);
     }

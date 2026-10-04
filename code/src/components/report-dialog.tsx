@@ -58,15 +58,15 @@ export function ReportDialog({ open, onOpenChange, series, episode, user, userPr
       });
 
       if (!result.success) {
-        throw new Error(result.error);
+        throw new Error('error' in result ? result.error : 'Could not submit your report.');
       }
 
       toast({ title: 'Report Submitted', description: 'Thank you for your feedback. We will review it shortly.' });
       onOpenChange(false);
       form.reset();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error submitting report:', error);
-      toast({ variant: 'destructive', title: 'Submission Failed', description: error.message || 'Could not submit your report. Please try again.' });
+      toast({ variant: 'destructive', title: 'Submission Failed', description: error instanceof Error ? error.message : 'Could not submit your report. Please try again.' });
     } finally {
       setIsSubmitting(false);
     }

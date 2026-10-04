@@ -232,9 +232,9 @@ export function BulkUploadDialog({ seriesId, nextEpisodeNumber, onSaved, disable
             quality: item.quality,
             url,
           });
-        } catch (err: any) {
+        } catch (err) {
           console.error(`Upload failed for ${item.file.name}:`, err);
-          setQueue(prev => prev.map(q => q.id === item.id ? { ...q, status: 'error', error: err.message || 'Upload failed' } : q));
+          setQueue(prev => prev.map(q => q.id === item.id ? { ...q, status: 'error', error: err instanceof Error ? err.message : 'Upload failed' } : q));
         }
       }
     };
@@ -265,8 +265,8 @@ export function BulkUploadDialog({ seriesId, nextEpisodeNumber, onSaved, disable
             description: saveRes.error || 'Videos uploaded, but failed to register some episodes.' 
           });
         }
-      } catch (err: any) {
-        toast({ variant: 'destructive', title: 'Save Error', description: err.message || 'Error saving to database.' });
+      } catch (err) {
+        toast({ variant: 'destructive', title: 'Save Error', description: err instanceof Error ? err.message : 'Error saving to database.' });
       }
     }
   };

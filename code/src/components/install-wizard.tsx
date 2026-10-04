@@ -74,10 +74,11 @@ export function InstallWizard() {
                 setLicenseMessage(data.error || 'Failed to activate license.');
                 toast({ variant: 'destructive', title: 'Verification Failed', description: data.error });
             }
-        } catch (error: any) {
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'An error occurred during verification.';
             setLicenseStatus('error');
-            setLicenseMessage(error.message || 'An error occurred during verification.');
-            toast({ variant: 'destructive', title: 'Error', description: error.message });
+            setLicenseMessage(message);
+            toast({ variant: 'destructive', title: 'Error', description: message });
         }
     };
 
@@ -135,8 +136,8 @@ export function InstallWizard() {
             } else {
                 toast({ variant: 'destructive', title: 'Error', description: result.error || 'Failed to save configuration.' });
             }
-        } catch (err: any) {
-            toast({ variant: 'destructive', title: 'Error', description: err.message || 'An unexpected error occurred.' });
+        } catch (err) {
+            toast({ variant: 'destructive', title: 'Error', description: err instanceof Error ? err.message : 'An unexpected error occurred.' });
         } finally {
             setIsLoading(false);
         }
@@ -161,8 +162,8 @@ export function InstallWizard() {
             } else {
                 toast({ variant: 'destructive', title: 'Error', description: result.error || 'Setup failed.' });
             }
-        } catch (err: any) {
-            toast({ variant: 'destructive', title: 'Error', description: err.message || 'An unexpected error occurred.' });
+        } catch (err) {
+            toast({ variant: 'destructive', title: 'Error', description: err instanceof Error ? err.message : 'An unexpected error occurred.' });
         } finally {
             setIsLoading(false);
         }

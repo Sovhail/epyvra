@@ -60,7 +60,7 @@ export default function ContactPage() {
         } else if (captchaConfig.version === 'v3') {
             // For v3 we execute manually if using the basic react-google-recaptcha
             // Usually requires v3 specific lib, but we'll try execute if available
-            recaptchaToken = await (recaptchaRef.current as any)?.executeAsync();
+        recaptchaToken = await recaptchaRef.current?.executeAsync() ?? null;
         }
     }
 
@@ -82,8 +82,8 @@ export default function ContactPage() {
         toast({ title: t('contact_toast_success_title'), description: t('contact_toast_success_desc') });
         form.reset();
         recaptchaRef.current?.reset();
-    } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Error', description: error.message || 'Failed to send message. Please try again.' });
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Error', description: error instanceof Error ? error.message : 'Failed to send message. Please try again.' });
       console.error(error);
     } finally {
       setIsSubmitting(false);

@@ -55,10 +55,11 @@ export default function ActivatePage() {
                 setMessage(data.error || 'Failed to verify license key.');
                 toast({ variant: 'destructive', title: 'Activation Failed', description: data.error });
             }
-        } catch (error: any) {
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'An error occurred during verification.';
             setStatus('error');
-            setMessage(error.message || 'An error occurred during verification.');
-            toast({ variant: 'destructive', title: 'Connection Error', description: error.message });
+            setMessage(message);
+            toast({ variant: 'destructive', title: 'Connection Error', description: message });
         }
     };
 
@@ -92,7 +93,7 @@ export default function ActivatePage() {
                                     type="text"
                                     placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                                     value={purchaseCode}
-                                    onChange={(e: any) => setPurchaseCode(e.target.value)}
+                        onChange={e => setPurchaseCode(e.target.value)}
                                     className="bg-slate-900/50 border-slate-800 focus:border-pink-500 focus:ring-pink-500 text-white h-11 rounded-xl"
                                     disabled={status === 'success' || status === 'verifying'}
                                     required

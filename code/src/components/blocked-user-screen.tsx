@@ -21,8 +21,8 @@ export function BlockedUserScreen() {
         try {
             await signOut(auth);
             toast({ title: t('user_button_toast_signout_success_title') });
-        } catch (error: any) {
-            toast({ variant: 'destructive', title: t('user_button_toast_signout_fail_title'), description: error.message });
+        } catch (error) {
+            toast({ variant: 'destructive', title: t('user_button_toast_signout_fail_title'), description: error instanceof Error ? error.message : t('user_button_toast_signout_fail_desc') });
         }
     };
 

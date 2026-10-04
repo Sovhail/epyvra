@@ -60,11 +60,11 @@ export function UserButton() {
         title: t('user_button_toast_signout_success_title'),
         description: t('user_button_toast_signout_success_desc'),
       });
-    } catch (error: any) {
+    } catch (error) {
       toast({
         variant: 'destructive',
         title: t('user_button_toast_signout_fail_title'),
-        description: error.message,
+        description: error instanceof Error ? error.message : t('user_button_toast_signout_fail_desc'),
       });
     }
   };
