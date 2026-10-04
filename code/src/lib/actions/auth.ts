@@ -11,8 +11,24 @@ import { getDemoModeMutationError } from '../demo-mode';
 import { ADMIN_SESSION_COOKIE, createAdminSessionToken, verifyAdminSessionToken } from '../admin-session';
 import { authorizeInstall } from '../install-auth';
 
-type SettingsDocument = { _id: string } & Record<string, unknown>;
-type RateLimitDocument = { _id: string; count?: number; createdAt?: Date };
+type SettingsDocument = {
+    _id: string;
+    username?: string;
+    email?: string;
+    displayName?: string;
+    passwordHash?: string;
+    passwordSalt?: string;
+    passwordAlgorithm?: string;
+    sessionVersion: number;
+    resetToken?: string;
+    resetTokenExpiry?: Date;
+    maxFailedLoginsPerIp?: number;
+    maxPasswordResetsPerDay?: number;
+    siteUrl?: string;
+    isLicenseActive?: boolean;
+    licenseKey?: string;
+};
+type RateLimitDocument = { _id: string; count: number; createdAt?: Date };
 type AdminProfileUpdate = {
     displayName: string;
     email: string;
@@ -139,6 +155,9 @@ export async function updateAdminProfile(_prevState: unknown, formData: FormData
         const admin = await settings.findOne({ _id: 'admin' });
         if (!admin) return { error: 'Admin record not found' };
 
+        if (typeof admin.passwordSalt !== 'string' || typeof admin.passwordHash !== 'string') {
+            return { error: 'Admin credentials are not configured correctly' };
+        }
         const verification = verifyPassword(currentPassword, admin.passwordSalt, admin.passwordHash);
         if (!verification.valid) return { error: 'Current password incorrect' };
 
@@ -266,7 +285,9 @@ export async function adminForgotPassword(_prevState: unknown, formData: FormDat
         );
 
         const settings = await settingsCollection.findOne({ _id: 'general' });
-        const domain = settings?.siteUrl || (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000');
+        const domain = typeof settings?.siteUrl === 'string'
+            ? settings.siteUrl
+            : (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000');
         const resetLink = `${domain.replace(/\/$/, '')}/admin/reset-password?token=${token}`;
 
         const html = `
