@@ -67,7 +67,7 @@
     <string name="gplay_id_not_set">未配置 Google Play 商品ID。</string>
     <string name="gplay_purchase_failed">Google Play 购买失败: %1$s</string>
     <string name="activity_context_error">Activity 上下文错误。</string>
-    <string name="gplay_product_id_mismatch">Google Play 商品不匹配。</string>
+    <string name="gplay_product_id_mismatch">Google Play 商品不匹配：产品 ID“%1$s”与已配置的产品不符。</string>
     <string name="billing_conn_failed">结算连接失败: %1$s</string>
     <string name="connecting_payment_gateway">正在连接安全支付网关...</string>
     <string name="transaction_completed_success">交易已成功完成！</string>

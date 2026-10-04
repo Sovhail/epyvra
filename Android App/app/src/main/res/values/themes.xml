@@ -4,7 +4,6 @@
     <style name="Theme.Epyvra" parent="android:Theme.DeviceDefault.NoActionBar">
         <item name="android:windowFullscreen">true</item>
         <item name="android:windowContentOverlay">@null</item>
-        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
     </style>
 
     <style name="AdMobOverlayFixTheme" parent="android:Theme.NoTitleBar.Fullscreen">
