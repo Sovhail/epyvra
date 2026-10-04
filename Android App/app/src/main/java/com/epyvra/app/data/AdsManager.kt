@@ -36,6 +36,9 @@ import com.facebook.ads.RewardedVideoAd as FbRewardedVideoAd
 import com.facebook.ads.RewardedVideoAdListener as FbRewardedVideoAdListener
 import com.facebook.ads.Ad as FbAd
 import com.unity3d.mediation.*
+import com.unity3d.mediation.rewarded.LevelPlayReward
+import com.unity3d.mediation.rewarded.LevelPlayRewardedAd
+import com.unity3d.mediation.rewarded.LevelPlayRewardedAdListener
 import com.google.firebase.auth.FirebaseAuth
 import java.security.MessageDigest
 
