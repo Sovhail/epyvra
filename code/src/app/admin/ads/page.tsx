@@ -98,7 +98,7 @@ export default function AdsPage() {
             toast({ title: 'Ads Updated', description: 'All ad settings saved.' });
         } else {
             const failedResult = results.find(r => !r.success);
-            toast({ variant: 'destructive', title: 'Error', description: (failedResult as any)?.error || 'Some settings failed to save.' });
+            toast({ variant: 'destructive', title: 'Error', description: failedResult && 'error' in failedResult ? failedResult.error : 'Some settings failed to save.' });
         }
         setIsSaving(false);
     };

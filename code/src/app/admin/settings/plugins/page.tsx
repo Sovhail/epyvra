@@ -81,7 +81,7 @@ export default function PluginsSettingsPage() {
     setLoading(true);
     const settings = await getPluginsSettings();
     if (settings) {
-      const s = settings as any;
+      const s = settings;
       form.reset({
           gaId: s.gaId || '',
           captchaProvider: s.captchaProvider || 'none',

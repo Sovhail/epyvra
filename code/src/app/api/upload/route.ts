@@ -4,9 +4,12 @@ import { writeFile, stat, mkdir, chmod, readdir, unlink } from 'fs/promises';
 import { join } from 'path';
 import { getServerStorageSettings as getStorageSettings } from '@/lib/server-settings';
 import { DEMO_MODE_MUTATION_MESSAGE, isDemoMode } from '@/lib/demo-mode';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, type S3ClientConfig } from '@aws-sdk/client-s3';
 import { verifyAdminSession } from '@/lib/actions/auth';
 import { assertPublicHttpUrl, normalizeBunnyRegion } from '@/lib/safe-fetch';
+import type { StorageProvider, StorageSettings } from '@/lib/types';
+type CloudStorageConfig = { accessKeyId?: string; secretAccessKey?: string; applicationKeyId?: string; applicationKey?: string; endpoint?: string; bucket: string; region?: string };
+type BunnyStorageConfig = NonNullable<StorageSettings['bunny']>;
 
 // Increase the body size limit for file uploads (Next.js config)
 export const config = {
@@ -36,7 +39,7 @@ async function ensureDir(dirPath: string) {
 /**
  * Uploads a file buffer to an S3-compatible cloud storage provider (Amazon S3, DigitalOcean Spaces, GCS, Backblaze B2).
  */
-async function uploadToS3(buffer: Buffer, originalName: string, subDir: string, config: any, mimeType: string, extension: string, customFilename?: string): Promise<string> {
+async function uploadToS3(buffer: Buffer, originalName: string, subDir: string, config: CloudStorageConfig, mimeType: string, extension: string, customFilename?: string): Promise<string> {
     const filename = customFilename ? `${customFilename}.${extension}` : `${Date.now()}-${originalName.replace(/[^a-z0-9_.-]/gi, '_').toLowerCase()}`;
     const key = `${subDir}/${filename}`;
     const keyWithExt = key.endsWith(`.${extension}`) ? key : `${key}.${extension}`;
@@ -64,10 +67,12 @@ async function uploadToS3(buffer: Buffer, originalName: string, subDir: string, 
     }
 
     // Configure the AWS SDK S3 client options
-    const clientConfig: any = {
+    const accessKeyId = config.accessKeyId || config.applicationKeyId;
+    const secretAccessKey = config.secretAccessKey || config.applicationKey;
+    if (!accessKeyId || !secretAccessKey) throw new Error('Storage credentials are incomplete.');
+    const clientConfig: S3ClientConfig = {
         credentials: { 
-            accessKeyId: config.accessKeyId || config.applicationKeyId, 
-            secretAccessKey: config.secretAccessKey || config.applicationKey 
+            accessKeyId, secretAccessKey
         },
         region: region || 'us-east-1',
     };
@@ -111,7 +116,7 @@ async function uploadToS3(buffer: Buffer, originalName: string, subDir: string, 
 /**
  * Uploads a file buffer to Bunny.net storage zone and returns the pull zone delivery URL.
  */
-async function uploadToBunny(buffer: Buffer, originalName: string, subDir: string, config: any, extension: string, customFilename?: string): Promise<string> {
+async function uploadToBunny(buffer: Buffer, originalName: string, subDir: string, config: BunnyStorageConfig, extension: string, customFilename?: string): Promise<string> {
     const cleanOriginalName = originalName.replace(/[^a-z0-9_.-]/gi, '_').toLowerCase();
     const filename = customFilename ? `${customFilename}.${extension}` : `${Date.now()}-${cleanOriginalName}`;
     const key = `${subDir}/${filename}`;
@@ -341,8 +346,8 @@ async function handleLocalStorage(buffer: Buffer, file: File, type: string, iden
  * Handles uploading files to the active cloud storage provider configured in Settings.
  */
 async function handleCloudStorage(
-    activeProvider: string,
-    storageSettings: any,
+    activeProvider: StorageProvider,
+    storageSettings: StorageSettings | null,
     buffer: Buffer,
     file: File,
     type: string,
@@ -350,11 +355,6 @@ async function handleCloudStorage(
     detectedExt: string,
     detectedMime: string
 ): Promise<string> {
-    const config = storageSettings?.[activeProvider];
-    if (!config) {
-        throw new Error(`Configuration for ${activeProvider} is missing.`);
-    }
-
     const isImage = detectedMime.startsWith('image/');
     let subDir = isImage ? 'images' : 'videos';
     let customName = undefined;
@@ -365,9 +365,11 @@ async function handleCloudStorage(
     }
 
     if (activeProvider === 'bunny') {
-        return await uploadToBunny(buffer, file.name, subDir, config, detectedExt, customName);
+        if (!storageSettings?.bunny) throw new Error('Bunny configuration is missing.');
+        return await uploadToBunny(buffer, file.name, subDir, storageSettings.bunny, detectedExt, customName);
     }
-
+    const config = activeProvider === 's3' ? storageSettings?.s3 : activeProvider === 'digitalocean' ? storageSettings?.digitalocean : activeProvider === 'gcs' ? storageSettings?.gcs : activeProvider === 'backblaze' ? storageSettings?.backblaze : undefined;
+    if (!config) throw new Error(`Configuration for ${activeProvider} is missing.`);
     return await uploadToS3(buffer, file.name, subDir, config, detectedMime, detectedExt, customName);
 }
 

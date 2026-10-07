@@ -2,7 +2,7 @@
 import { getErrorMessage } from '@/lib/error-utils';
 import type { Document, WithId } from 'mongodb';
 import { getDb } from './mongodb';
-import type { Series, Episode, CoinPack, MonetizationSettings, Purchase, Ad, GeneralSettings, Language, UITranslations, CustomPage, ContactMessage, Report, Category, PluginsSettings, RewardTask, RewardsSettings, UserRewardClaim, CoinTransaction, PaymentGatewaySettings, AdminProfile, Favorite, WatchHistory, StorageSettings } from './types';
+import type { Series, Episode, CoinPack, MonetizationSettings, Purchase, Ad, GeneralSettings, Language, UITranslations, CustomPage, ContactMessage, Report, Category, PluginsSettings, RewardTask, RewardsSettings, UserRewardClaim, CoinTransaction, PaymentGatewaySettings, AdminProfile, Favorite, WatchHistory, StorageSettings, AdminUser } from './types';
 import { isDemoMode } from './demo-mode';
 import { safeFetch } from './safe-fetch';
 import { getQueryById, mapDoc } from './actions/utils';
@@ -426,12 +426,12 @@ export async function getCategoryBySlug(slug: string): Promise<Category | null> 
     }
 }
 
-export async function getAllUsersForAdmin(): Promise<Array<Record<string, unknown>>> {
+export async function getAllUsersForAdmin(): Promise<AdminUser[]> {
     try {
         if (!(await canReadPrivateSettings())) return [];
         const db = await getDb();
         const users = await db.collection('users').find({}).sort({ createdAt: -1 }).toArray();
-        return users.map(u => mapDoc(u));
+        return users.map(u => mapDoc(u) as unknown as AdminUser);
     } catch (e) {
         return [];
     }

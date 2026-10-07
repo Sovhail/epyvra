@@ -37,6 +37,7 @@ export type Series = {
   language?: string; // Original language
   targetLanguages?: string[]; // Languages where the movie should be visible
   tmdbId?: number;
+  releaseYear?: number;
   createdAt?: string | Date;
 };
 
@@ -62,6 +63,8 @@ export type UserProfile = {
   referralCount?: number;
   referralEarnings?: number;
 };
+
+export type AdminUser = UserProfile & { id: string; phoneNumber?: string | null };
 
 export type AdminProfile = {
   id?: string;
@@ -216,12 +219,19 @@ export type PluginsSettings = {
     captchaProvider: 'google' | 'cloudflare' | 'hcaptcha' | 'none';
     recaptchaVersion?: 'v2' | 'v3';
     recaptchaSiteKey?: string;
+    recaptchaSecretKey?: string;
     cloudflareSiteKey?: string;
+    cloudflareSecretKey?: string;
     hcaptchaSiteKey?: string;
+    hcaptchaSecretKey?: string;
     videoProtectionEnabled?: boolean;
     videoRotationPeriod: '1h' | '12h' | '24h' | '1w' | '1mo';
     aiProvider: 'groq' | 'openai' | 'gemini';
+    groqApiKey?: string;
+    openaiApiKey?: string;
+    geminiApiKey?: string;
     oneSignalAppId?: string;
+    oneSignalApiKey?: string;
     oneSignalPromptDelay?: number;
     indexNowEnabled?: boolean;
     indexNowKey?: string;
@@ -242,12 +252,15 @@ export type PaymentGatewaySettings = {
   id?: string;
   stripeEnabled?: boolean;
   stripePublishableKey?: string;
+  stripeSecretKey?: string;
   stripeLogoUrl?: string;
   paypalEnabled?: boolean;
   paypalClientId?: string;
+  paypalSecret?: string;
   paypalLogoUrl?: string;
   razorpayEnabled?: boolean;
   razorpayKeyId?: string;
+  razorpayKeySecret?: string;
   razorpayLogoUrl?: string;
   flutterwaveEnabled?: boolean;
   flutterwavePublicKey?: string;
@@ -255,15 +268,21 @@ export type PaymentGatewaySettings = {
   flutterwaveLogoUrl?: string;
   googlePayEnabled?: boolean;
   googlePlayPackageName?: string;
+  googlePlayServiceAccountEmail?: string;
+  googlePlayServiceAccountPrivateKey?: string;
   phonepeEnabled?: boolean;
   phonepeMerchantId?: string;
   phonepeAppId?: string;
+  phonepeSaltKey?: string;
+  phonepeSaltIndex?: string;
   phonepeLogoUrl?: string;
   cashfreeEnabled?: boolean;
   cashfreeAppId?: string;
+  cashfreeSecretKey?: string;
   cashfreeLogoUrl?: string;
   payuEnabled?: boolean;
   payuMerchantKey?: string;
+  payuMerchantSalt?: string;
   payuLogoUrl?: string;
 };
 

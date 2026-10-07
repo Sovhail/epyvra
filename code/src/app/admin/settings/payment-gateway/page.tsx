@@ -98,7 +98,7 @@ export default function PaymentGatewayPage() {
     useEffect(() => {
         getPaymentSettings().then(settings => {
             if (settings) {
-                const s = settings as any;
+                const s = settings;
                 setStripeEnabled(s.stripeEnabled || false);
                 setStripePublishableKey(s.stripePublishableKey || '');
                 setStripeSecretKey(s.stripeSecretKey || '');
@@ -206,7 +206,7 @@ export default function PaymentGatewayPage() {
 
     if (loading) return <PaymentGatewayFormSkeleton />;
 
-    const LogoSection = ({ label, url, onUpload, onDelete, gateway }: any) => (
+    const LogoSection = ({ label, url, onUpload, onDelete, gateway }: { label: string; url: string; onUpload: () => void; onDelete: () => void; gateway: string }) => (
         <div className="space-y-2 pt-2">
             <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{label}</Label>
             <div className="flex items-center gap-4">

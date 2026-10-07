@@ -199,7 +199,9 @@ export default function MobileSettingsPage() {
 
                                     <div className="space-y-2">
                                         <Label>Ads Provider</Label>
-                                        <Select value={settings.adsProvider || 'admob'} onValueChange={v => update('adsProvider', v as any)}>
+                                        <Select value={settings.adsProvider || 'admob'} onValueChange={value => {
+                                            if (value === 'admob' || value === 'applovin' || value === 'facebook' || value === 'levelplay' || value === 'multi') update('adsProvider', value);
+                                        }}>
                                             <SelectTrigger><SelectValue /></SelectTrigger>
                                             <SelectContent>
                                                 <SelectItem value="admob">Google AdMob</SelectItem>

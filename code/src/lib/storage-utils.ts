@@ -3,8 +3,9 @@ import { getErrorMessage, hasErrorCode } from '@/lib/error-utils';
 import fs from 'fs/promises';
 import { resolve, sep } from 'path';
 import { getServerStorageSettings as getStorageSettings } from './server-settings';
-import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, DeleteObjectCommand, type S3ClientConfig } from '@aws-sdk/client-s3';
 import { assertPublicHttpUrl, normalizeBunnyRegion, safeFetch } from './safe-fetch';
+type CloudStorageConfig = { accessKeyId?: string; secretAccessKey?: string; applicationKeyId?: string; applicationKey?: string; endpoint?: string; bucket: string; region?: string };
 
 /**
  * Utility to delete a file from the active storage provider.
@@ -36,8 +37,9 @@ export async function deleteFile(fileUrl: string | null | undefined) {
         }
 
         // 2. Handle Bunny.net Deletion
-        const config = storageSettings?.[activeProvider as keyof typeof storageSettings] as any;
-        if (activeProvider === 'bunny' && config) {
+        const bunnyConfig = activeProvider === 'bunny' ? storageSettings?.bunny : undefined;
+        if (bunnyConfig) {
+            const config = bunnyConfig;
             let pullZone = config.pullZoneUrl || '';
             if (pullZone) {
                 if (!/^https?:\/\//i.test(pullZone)) {
@@ -86,6 +88,7 @@ export async function deleteFile(fileUrl: string | null | undefined) {
         }
 
         // 3. Handle Cloud Storage Deletion (S3, DigitalOcean, B2, GCS)
+        const config: CloudStorageConfig | undefined = activeProvider === 's3' ? storageSettings?.s3 : activeProvider === 'digitalocean' ? storageSettings?.digitalocean : activeProvider === 'gcs' ? storageSettings?.gcs : activeProvider === 'backblaze' ? storageSettings?.backblaze : undefined;
         if (config && config.bucket && (fileUrl.startsWith('http') || fileUrl.includes(config.bucket))) {
             // Extract key from URL
             // Example: https://bucket.s3.region.amazonaws.com/videos/file.mp4 -> videos/file.mp4
@@ -114,10 +117,12 @@ export async function deleteFile(fileUrl: string | null | undefined) {
                 }
             }
 
-            const clientConfig: any = {
+            const accessKeyId = config.accessKeyId || config.applicationKeyId;
+            const secretAccessKey = config.secretAccessKey || config.applicationKey;
+            if (!accessKeyId || !secretAccessKey) throw new Error('Storage credentials are incomplete.');
+            const clientConfig: S3ClientConfig = {
                 credentials: { 
-                    accessKeyId: config.accessKeyId || config.applicationKeyId, 
-                    secretAccessKey: config.secretAccessKey || config.applicationKey 
+                    accessKeyId, secretAccessKey
                 },
                 region: region || 'us-east-1',
             };

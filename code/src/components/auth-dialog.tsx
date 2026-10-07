@@ -43,6 +43,8 @@ import { useTranslation } from '@/lib/translation-provider';
 import { useSettings } from '@/lib/settings-provider';
 import { getPluginsSettings } from '@/lib/data.actions';
 
+declare global { interface Window { recaptchaVerifier?: RecaptchaVerifier } }
+
 const signUpSchema = z
   .object({
     email: z.string().email({ message: 'Invalid email address.' }),
@@ -145,8 +147,9 @@ export function AuthDialog({ isMobile = false }: { isMobile?: boolean }) {
     }
   };
 
-  const getAuthErrorMessage = (error: any) => {
-      switch (error.code) {
+  const getAuthErrorMessage = (error: unknown) => {
+      const code = typeof error === 'object' && error !== null && 'code' in error && typeof error.code === 'string' ? error.code : undefined;
+      switch (code) {
           case 'auth/invalid-credential':
               return 'Email or password is incorrect.';
           case 'auth/user-not-found':
@@ -232,12 +235,12 @@ export function AuthDialog({ isMobile = false }: { isMobile?: boolean }) {
   const handlePhoneSubmit = async (values: z.infer<typeof phoneSchema>) => {
     setLoadingProvider('phone');
     try {
-      if (!(window as any).recaptchaVerifier) {
-        (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+      if (!window.recaptchaVerifier) {
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
           'size': 'invisible',
         });
       }
-      const confirmation = await signInWithPhoneNumber(auth, values.phoneNumber, (window as any).recaptchaVerifier);
+      const confirmation = await signInWithPhoneNumber(auth, values.phoneNumber, window.recaptchaVerifier);
       setConfirmationResult(confirmation);
       setView('otp');
       toast({ title: 'OTP Sent', description: 'Check your phone for the verification code.' });

@@ -14,12 +14,13 @@ import { sendNotificationAction } from '@/lib/actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import type { AdminUser } from '@/lib/types';
 
 export default function NotificationsPage() {
     const { toast } = useToast();
     const [loading, setLoading] = useState(true);
     const [isSending, setIsSending] = useState(false);
-    const [users, setUsers] = useState<any[]>([]);
+    const [users, setUsers] = useState<AdminUser[]>([]);
     
     // Form State
     const [target, setTarget] = useState<'all' | 'specific'>('all');
@@ -80,7 +81,9 @@ export default function NotificationsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                             <Label>Target Audience</Label>
-                            <Select value={target} onValueChange={(v: any) => setTarget(v)}>
+                            <Select value={target} onValueChange={(value) => {
+                                if (value === 'all' || value === 'specific') setTarget(value);
+                            }}>
                                 <SelectTrigger>
                                     <SelectValue />
                                 </SelectTrigger>

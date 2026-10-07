@@ -115,7 +115,7 @@ function RewardTaskEditDialog({ task, platform, onSaved, children }: { task?: Re
             setIsOpen(false);
             onSaved();
         } else {
-            toast({ variant: 'destructive', title: 'Error', description: (result as any).error || 'Could not save task.' });
+            toast({ variant: 'destructive', title: 'Error', description: result.error || 'Could not save task.' });
         }
         setIsSaving(false);
     };
@@ -250,7 +250,7 @@ export default function RewardsPage() {
         } else {
             // Rollback on error
             setSettings(prev => prev ? { ...prev, isEnabled: !isEnabled } : null);
-            toast({ variant: 'destructive', title: 'Error', description: (result as any).error || 'Could not save rewards settings.' });
+            toast({ variant: 'destructive', title: 'Error', description: result.error || 'Could not save rewards settings.' });
         }
         setIsSavingSettings(false);
     };
@@ -261,7 +261,7 @@ export default function RewardsPage() {
         if (result.success) {
             toast({ title: 'Daily Rewards Updated' });
         } else {
-            toast({ variant: 'destructive', title: 'Error', description: (result as any).error || 'Could not save daily rewards.' });
+            toast({ variant: 'destructive', title: 'Error', description: result.error || 'Could not save daily rewards.' });
         }
         setIsSavingSettings(false);
     }
@@ -278,7 +278,7 @@ export default function RewardsPage() {
             toast({ title: 'Task Deleted' });
             fetchData();
         } else {
-            toast({ variant: 'destructive', title: 'Delete Failed', description: (result as any).error });
+            toast({ variant: 'destructive', title: 'Delete Failed', description: result.error });
         }
     };
 

@@ -284,7 +284,7 @@ function MonetizationSettingsSection() {
             currencySymbol: selectedCurrency?.symbol,
         };
         
-        const result = await saveMonetizationSettingsAction(data) as any;
+        const result = await saveMonetizationSettingsAction(data);
         if (result.success) {
             toast({ title: 'Settings Saved', description: 'Monetization settings have been updated.' });
             setSaveSuccess(true);
@@ -400,8 +400,8 @@ function CoinPackEditDialog({ pack, onSaved, children }: { pack?: CoinPack | nul
             setPrice(pack?.price || 0);
             setType(pack?.type || 'coins');
             setDurationDays(pack?.durationDays || 30);
-            setGoogleProductId((pack as any)?.googleProductId || '');
-            setAppleProductId((pack as any)?.appleProductId || '');
+            setGoogleProductId(pack?.googleProductId || '');
+            setAppleProductId(pack?.appleProductId || '');
         }
     }, [isOpen, pack]);
 
@@ -422,7 +422,7 @@ function CoinPackEditDialog({ pack, onSaved, children }: { pack?: CoinPack | nul
             durationDays: type === 'membership' ? Number(durationDays) : undefined,
             googleProductId: googleProductId.trim() || undefined,
             appleProductId: appleProductId.trim() || undefined,
-        }) as any;
+        });
         
         if (result.success) {
             toast({ title: pack ? "Pack Updated" : "Pack Added", description: `"${name}" has been saved.` });
@@ -444,7 +444,9 @@ function CoinPackEditDialog({ pack, onSaved, children }: { pack?: CoinPack | nul
                 <div className="space-y-4 py-4">
                     <div className="space-y-3">
                         <Label>Pack Type</Label>
-                        <RadioGroup value={type} onValueChange={(v: any) => setType(v)} className="flex gap-4">
+                        <RadioGroup value={type} onValueChange={(value) => {
+                            if (value === 'coins' || value === 'subscription') setType(value);
+                        }} className="flex gap-4">
                             <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="coins" id="type-coins" />
                                 <Label htmlFor="type-coins" className="cursor-pointer flex items-center gap-1"><Coins className="h-3 w-3" /> Coins</Label>
@@ -551,7 +553,7 @@ function CoinPacksList() {
     }, []);
 
     const handleDelete = async (id: string) => {
-        const result = await deleteCoinPackAction(id) as any;
+        const result = await deleteCoinPackAction(id);
         if (result.success) {
             toast({ title: 'Pack Deleted' });
             fetchData();
@@ -691,7 +693,7 @@ function PurchaseHistorySection() {
                                 <TableCell>{p.packName}</TableCell>
                                 <TableCell className="font-mono text-xs">{p.amount > 0 ? `${p.amount.toLocaleString()} Coins` : 'VIP Active'}</TableCell>
                                 <TableCell className="font-mono">{settings?.currencySymbol || '$'}{p.price.toFixed(2)}</TableCell>
-                                <TableCell className="text-[10px] text-muted-foreground">{p.createdAt ? format(new Date(p.createdAt as any), 'PP p') : '...'}</TableCell>
+                                <TableCell className="text-[10px] text-muted-foreground">{p.createdAt ? format(new Date(p.createdAt), 'PP p') : '...'}</TableCell>
                             </TableRow>
                         ))}
                     </TableBody>

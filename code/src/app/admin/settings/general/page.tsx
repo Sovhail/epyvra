@@ -1,6 +1,6 @@
 'use client';
 import { getErrorMessage } from '@/lib/error-utils';
-import { useForm } from 'react-hook-form';
+import { useForm, type FieldErrors } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useEffect, useState, useRef, useTransition } from 'react';
@@ -248,7 +248,7 @@ export default function GeneralSettingsPage() {
     }
   };
 
-  const onError = (errors: any) => {
+  const onError = (errors: FieldErrors<FormValues>) => {
       console.log("Form Errors:", errors);
       toast({
           variant: 'destructive',

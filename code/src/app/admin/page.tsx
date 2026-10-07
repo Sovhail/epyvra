@@ -1,5 +1,5 @@
 
-import { MongoClient } from 'mongodb';
+import { MongoClient, type ObjectId } from 'mongodb';
 import { subDays, startOfDay, endOfDay, parseISO, eachDayOfInterval, format } from 'date-fns';
 import { DashboardClient } from '@/components/admin/dashboard-client';
 import type { AdminDashboardData, TopSeriesData, DailyStat } from '@/lib/types';
@@ -12,6 +12,7 @@ export const dynamic = 'force-dynamic';
 type AdminDashboardPageProps = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
+type TopSeriesDocument = { _id: ObjectId; title?: string; views?: number };
 
 async function getDashboardData(
   dateRange: { from: Date; to: Date }
@@ -64,9 +65,9 @@ async function getDashboardData(
 
     const totalRevenue = revenueData[0]?.total || 0;
     
-    const topPerformingSeries: TopSeriesData[] = topSeriesDocs.map((s: any) => ({
+    const topPerformingSeries: TopSeriesData[] = (topSeriesDocs as TopSeriesDocument[]).map((s) => ({
         id: s._id.toString(),
-        title: s.title,
+        title: s.title || 'Untitled',
         views: s.views || 0,
         revenue: 0,
     }));

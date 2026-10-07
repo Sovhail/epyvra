@@ -31,6 +31,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
+declare global { interface Window { Hls?: typeof import('hls.js').default } }
+
 interface SeriesDetailViewProps {
   initialSeries: Series;
   initialEpisodes?: Episode[];
@@ -151,8 +153,8 @@ export function SeriesDetailView({ initialSeries, initialEpisodes = [], initialV
     if (typeof window !== 'undefined') {
       import('hls.js').then((module) => {
         const Hls = module.default;
-        if (Hls && !(window as any).Hls) {
-          (window as any).Hls = Hls;
+        if (Hls && !window.Hls) {
+          window.Hls = Hls;
         }
       }).catch(() => {});
     }
@@ -452,7 +454,7 @@ export function SeriesDetailView({ initialSeries, initialEpisodes = [], initialV
     }
   }, []);
 
-  const handleVideoError = (error: any) => {
+  const handleVideoError = (error: unknown) => {
     console.warn("Video playback warning/error:", error);
     if (retryCount < 2) {
       setRetryCount(prev => prev + 1);
@@ -1061,7 +1063,7 @@ export function SeriesDetailView({ initialSeries, initialEpisodes = [], initialV
                             </h1>
                             <div className="flex flex-wrap items-center gap-3 text-xs font-bold text-white/60 uppercase tracking-widest pt-1">
                                 <span className="bg-white/10 px-2.5 py-0.5 rounded-md text-white font-black">
-                                    {(series as any).releaseYear || (series.createdAt ? new Date(series.createdAt as any).getFullYear() : '2024')}
+                                    {series.releaseYear || (series.createdAt ? new Date(series.createdAt).getFullYear() : '2024')}
                                 </span>
                                 <div className="h-1 w-1 bg-primary rounded-full animate-ping" />
                                 <span>{episodes.length} Episodes</span>

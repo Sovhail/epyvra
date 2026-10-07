@@ -32,7 +32,7 @@ export default function MailboxPage() {
     if (result.success) {
       fetchData();
     } else {
-      toast({ variant: 'destructive', title: 'Update Failed', description: (result as any).error });
+      toast({ variant: 'destructive', title: 'Update Failed', description: result.error });
     }
   };
   

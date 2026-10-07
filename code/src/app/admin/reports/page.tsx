@@ -34,7 +34,7 @@ export default function ReportsPage() {
       toast({ title: 'Updated' });
       fetchData();
     } else {
-      toast({ variant: 'destructive', title: 'Update Failed', description: (result as any).error });
+      toast({ variant: 'destructive', title: 'Update Failed', description: result.error });
     }
   };
 
@@ -44,7 +44,7 @@ export default function ReportsPage() {
       toast({ title: 'Deleted' });
       fetchData();
     } else {
-      toast({ variant: 'destructive', title: 'Delete Failed', description: (result as any).error });
+      toast({ variant: 'destructive', title: 'Delete Failed', description: result.error });
     }
   };
 

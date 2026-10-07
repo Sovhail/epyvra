@@ -18,17 +18,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import type { AdminUser, CoinTransaction } from '@/lib/types';
 
 export default function UsersPage() {
   const { toast } = useToast();
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
   
   // History & Delete Dialog States
-  const [deleteUserId, setDeleteUserId] = useState<any>(null);
-  const [historyUser, setHistoryUser] = useState<any>(null);
-  const [historyTransactions, setHistoryTransactions] = useState<any[]>([]);
+  const [deleteUserId, setDeleteUserId] = useState<AdminUser | null>(null);
+  const [historyUser, setHistoryUser] = useState<AdminUser | null>(null);
+  const [historyTransactions, setHistoryTransactions] = useState<CoinTransaction[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [historyPage, setHistoryPage] = useState(1);
   const HISTORY_PAGE_SIZE = 10;
@@ -83,7 +84,7 @@ export default function UsersPage() {
   const [isEditDialogOpen, setIsEditOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
       displayName: '',
@@ -108,7 +109,7 @@ export default function UsersPage() {
 
   useEffect(() => { fetchData(); }, []);
 
-  const openEditDialog = (user: any) => {
+  const openEditDialog = (user: AdminUser) => {
     setSelectedUser(user);
     setFormData({
         displayName: user.displayName || '',
@@ -195,7 +196,7 @@ export default function UsersPage() {
     setProcessingId(null);
   };
 
-  const handleToggleStatus = async (user: any) => {
+  const handleToggleStatus = async (user: AdminUser) => {
     setProcessingId(user.id);
     const newStatus = !user.disabled;
     const result = await updateUserStatusAction(user.id, newStatus);
@@ -250,7 +251,7 @@ export default function UsersPage() {
               )) : paginatedUsers.map((u) => (
                 <TableRow key={u.id} className="border-white/5 hover:bg-white/5 transition-colors group">
                   <TableCell className="flex items-center gap-3">
-                    <Avatar className="h-12 w-12 border-2 border-primary/20"><AvatarImage src={u.photoURL} /><AvatarFallback className="bg-zinc-800 text-white">{u.displayName?.[0] || u.email?.[0]}</AvatarFallback></Avatar>
+                    <Avatar className="h-12 w-12 border-2 border-primary/20"><AvatarImage src={u.photoURL ?? undefined} /><AvatarFallback className="bg-zinc-800 text-white">{u.displayName?.[0] || u.email?.[0]}</AvatarFallback></Avatar>
                     <div className="flex flex-col">
                         <span className="font-black text-sm text-white tracking-tight">{u.displayName || 'User'}</span>
                         <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest">Joined {new Date(u.createdAt).toLocaleDateString()}</span>

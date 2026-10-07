@@ -111,7 +111,7 @@ export default function StorageSettingsPage() {
     setIsSaving(true);
     setSaveSuccess(false);
     
-    const result = await saveStorageSettingsAction(values) as any;
+    const result = await saveStorageSettingsAction(values);
     if (result.success) {
         toast({ title: 'Success', description: 'Storage settings saved.' });
         setSaveSuccess(true);
