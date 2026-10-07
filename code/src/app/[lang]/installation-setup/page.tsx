@@ -1,7 +1,6 @@
 
 import { getDb } from '@/lib/mongodb';
 import { notFound } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { InstallationContent } from '@/components/installation-content';
 import type { CustomPage } from '@/lib/types';
 

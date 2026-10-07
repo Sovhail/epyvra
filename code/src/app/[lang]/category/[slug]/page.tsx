@@ -1,5 +1,5 @@
 
-import { getCategoryBySlug, getAllSeries } from '@/lib/data.actions';
+import { getCategoryBySlug } from '@/lib/data.actions';
 import { getSeriesByCategory } from '@/lib/data';
 import { SeriesCard } from '@/components/series-card';
 import { notFound } from 'next/navigation';

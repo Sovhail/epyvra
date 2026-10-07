@@ -1,14 +1,12 @@
 'use server';
 
-import { z } from 'zod';
 import { getDb } from '../mongodb';
 import { ObjectId } from 'mongodb';
 import { revalidatePath } from 'next/cache';
-import { createHash, randomBytes } from 'crypto';
+import {  randomBytes } from 'crypto';
 import { getCustomPages } from '../data.actions';
 import {
     getServerPluginsSettings as getPluginsSettings,
-    getServerStorageSettings as getStorageSettings,
     getServerGeneralSettings as getGeneralSettings,
 } from '../server-settings';
 import { deleteFile } from '../storage-utils';
@@ -25,16 +23,12 @@ import type {
     Ad,
     CoinPack,
     Episode,
-    GeneralSettings,
     Language,
     MobileSettings,
     MonetizationSettings,
-    PaymentGatewaySettings,
-    PluginsSettings,
     RewardTask,
     RewardsSettings,
     Series,
-    StorageSettings,
 } from '../types';
 import { getErrorMessage } from '../error-utils';
 
@@ -425,7 +419,7 @@ INPUT JSON: ${JSON.stringify(defaultTranslations)}`;
                 try {
                     const cleaned = content.substring(content.indexOf('{'), content.lastIndexOf('}') + 1);
                     translatedJson = JSON.parse(cleaned);
-                } catch (e2) {
+                } catch {
                     const matches = [...content.matchAll(/"([^"]+)":\s*"((?:[^"\\]|\\.)*)"/g)];
                     if (matches.length > 20) {
                         matches.forEach(m => {
@@ -553,7 +547,7 @@ export async function saveSeriesAction(seriesData: SeriesInput) {
                     await fetch(pingUrl, { method: 'GET' }).catch(() => {});
                 }
             }
-        } catch (e) {
+        } catch {
             // Ignore ping errors
         }
         
@@ -875,7 +869,7 @@ export async function deleteContactAction(id: string) {
     const demoError = getDemoModeMutationError();
     if (demoError) return demoError;
     const db = await getDb();
-    try { await db.collection('contacts').deleteOne(getQueryById(id)); return { success: true }; } catch (e) { return { success: false, error: 'Delete failed' }; }
+    try { await db.collection('contacts').deleteOne(getQueryById(id)); return { success: true }; } catch { return { success: false, error: 'Delete failed' }; }
 }
 
 /**
@@ -923,7 +917,7 @@ export async function deleteRewardTaskAction(id: string) {
 
     const demoError = getDemoModeMutationError();
     if (demoError) return demoError;
-    const db = await getDb(); try { await db.collection('reward-tasks').deleteOne(getQueryById(id)); revalidatePath('/admin/rewards'); return { success: true }; } catch(e) { return { success: false, error: 'Delete failed' }; }
+    const db = await getDb(); try { await db.collection('reward-tasks').deleteOne(getQueryById(id)); revalidatePath('/admin/rewards'); return { success: true }; } catch { return { success: false, error: 'Delete failed' }; }
 }
 
 /**
@@ -1057,7 +1051,7 @@ export async function installSaveSiteConfigAction(data: { siteName: string; site
 /**
  * Increments series views statistics.
  */
-export async function incrementSeriesViewAction(seriesId: string) { const db = await getDb(); try { await db.collection('series').updateOne(getQueryById(seriesId), { $inc: { views: 1 } }); return { success: true }; } catch (e) { return { success: false }; } }
+export async function incrementSeriesViewAction(seriesId: string) { const db = await getDb(); try { await db.collection('series').updateOne(getQueryById(seriesId), { $inc: { views: 1 } }); return { success: true }; } catch { return { success: false }; } }
 
 /**
  * Dispatches Push Notifications.
@@ -1085,7 +1079,7 @@ export async function testOneSignalAction(appId: string, apiKey: string) {
 
     try { const response = await fetch(`https://onesignal.com/api/v1/apps/${appId.trim()}`, { method: 'GET', headers: { 'Authorization': `Basic ${apiKey.trim()}` } });
         const data = await response.json(); if (response.ok) return { success: true, message: `Connected to ${data.name}` }; return { success: false, error: 'Auth failed' };
-    } catch (e) { return { success: false, error: 'Network error' }; }
+    } catch { return { success: false, error: 'Network error' }; }
 }
 
 /**

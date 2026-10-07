@@ -14,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getMobileSettings } from '@/lib/data.actions';
 import { generateMobileApiKeyAction, saveMobileSettingsAction } from '@/lib/actions';
 import type { MobileSettings } from '@/lib/types';
-import { Apple, Copy, ExternalLink, Globe, Loader2, Megaphone, RefreshCw, Save, Settings2, Share2, Smartphone } from 'lucide-react';
+import { Apple, Copy, Globe, Loader2, Megaphone, RefreshCw, Save, Settings2, Share2, Smartphone } from 'lucide-react';
 
 const defaults: MobileSettings = {
     apiKey: '',

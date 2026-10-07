@@ -4,20 +4,19 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Save, CheckCircle, ShieldCheck, Mail, Code, HelpCircle, ExternalLink, Globe, Facebook, Apple, Phone, Send } from 'lucide-react';
+import { Loader2, Save, CheckCircle, ShieldCheck, Mail, Code, HelpCircle, Globe, Facebook, Apple, Phone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { saveGeneralSettingsAction } from '@/lib/actions';
 import { getGeneralSettings } from '@/lib/data.actions';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const authSchema = z.object({
   emailLoginEnabled: z.boolean().default(true),

@@ -4,7 +4,7 @@ import { subDays, startOfDay, endOfDay, parseISO, eachDayOfInterval, format } fr
 import { DashboardClient } from '@/components/admin/dashboard-client';
 import type { AdminDashboardData, TopSeriesData, DailyStat } from '@/lib/types';
 import { Suspense } from 'react';
-import { Card, CardHeader } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export const dynamic = 'force-dynamic';

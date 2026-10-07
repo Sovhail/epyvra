@@ -22,7 +22,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Save, Sparkles, Loader2, CheckCircle, Upload, Star, Zap, Eye, Wand2, BrainCircuit } from 'lucide-react';
+import { Save, Sparkles, Loader2, CheckCircle, Upload, Star, Eye, BrainCircuit } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { generateFullSeriesMetadataAction, saveSeriesAction } from '@/lib/actions';
 import { Switch } from '@/components/ui/switch';
@@ -303,7 +303,7 @@ export function SeriesForm({ series }: SeriesFormProps) {
         } else {
             toast({ variant: 'destructive', title: 'Save Failed', description: result.error });
         }
-    } catch (error) {
+    } catch {
         toast({ variant: 'destructive', title: 'Error' });
     } finally {
         setIsSaving(false);

@@ -5,7 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import type { Series, Episode, Ad, MonetizationSettings } from '@/lib/types';
 import React, { useMemo, useState, useEffect, useRef, useCallback, memo } from 'react';
-import { Lock, Play, Share2, Flag, AlertCircle, Maximize, Minimize, Pause, ChevronLeft, ChevronRight, Settings, Check, ChevronsLeft, ChevronsRight, Heart, Bookmark, Info, Sparkles, Loader2, Volume2, VolumeX, Volume1, MessageCircle, Send, Mail, Copy, Subtitles } from 'lucide-react';
+import { Lock, Play, Share2, Flag, AlertCircle, Maximize, Minimize, Pause, ChevronLeft, ChevronRight, Settings, Check, Heart, Bookmark, Info, Sparkles, Loader2, Volume2, VolumeX, Volume1, MessageCircle, Send, Mail, Copy, Subtitles } from 'lucide-react';
 import ReactPlayer from 'react-player/lazy';
 import { SeriesCard } from '@/components/series-card';
 import { useToast } from '@/hooks/use-toast';

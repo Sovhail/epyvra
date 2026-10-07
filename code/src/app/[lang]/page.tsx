@@ -11,7 +11,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@/components/ui/carousel';
-import { Clapperboard, TrendingUp, Sparkles, PlayCircle } from 'lucide-react';
+import { Clapperboard, TrendingUp, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { i18n } from '@/i18n-config';

@@ -29,7 +29,7 @@ async function ensureDir(dirPath: string) {
   } catch (error) {
     if (hasErrorCode(error, 'ENOENT')) {
       await mkdir(dirPath, { recursive: true });
-      try { await chmod(dirPath, 0o755); } catch (e) {}
+      try { await chmod(dirPath, 0o755); } catch {}
     } else {
       throw error;
     }
@@ -95,7 +95,7 @@ async function uploadToS3(buffer: Buffer, originalName: string, subDir: string, 
             ContentType: mimeType,
             ACL: 'public-read',
         }));
-    } catch (err) {
+    } catch {
         // Gated console.warn removed as per reviewer guidelines to prevent leaking system information
         await s3.send(new PutObjectCommand({
             Bucket: config.bucket,
@@ -323,7 +323,7 @@ async function handleLocalStorage(buffer: Buffer, file: File, type: string, iden
                     }
                 }
             }
-        } catch (e) {
+        } catch {
             // Suppressed non-development outputs
         }
     }
@@ -337,7 +337,7 @@ async function handleLocalStorage(buffer: Buffer, file: File, type: string, iden
     }
 
     await writeFile(filePath, buffer);
-    try { await chmod(filePath, 0o644); } catch (e) {}
+    try { await chmod(filePath, 0o644); } catch {}
 
     return isPaymentLogo ? `/img/${filename}` : `/uploads/${subDir}/${filename}`;
 }

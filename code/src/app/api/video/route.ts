@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
     let decrypted = '';
     try {
         decrypted = decryptPath(encryptedKey, secret);
-    } catch (err) {
+    } catch {
         return new NextResponse('Access Denied: Invalid security key', { status: 403 });
     }
     

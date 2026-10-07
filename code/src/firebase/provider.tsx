@@ -95,7 +95,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       } else {
         setAuthState(prev => ({ ...prev, userProfile: null, isUserLoading: false }));
       }
-    } catch (error) {
+    } catch {
       setAuthState(prev => ({ ...prev, userProfile: null, isUserLoading: false }));
     }
   }, []);

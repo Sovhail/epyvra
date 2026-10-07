@@ -1,10 +1,9 @@
 'use client';
 import { getErrorMessage } from '@/lib/error-utils';
 import { useState, useEffect, useRef } from 'react';
-import type { PaymentGatewaySettings } from '@/lib/types';
 import { getPaymentSettings } from '@/lib/data.actions';
 import { savePaymentSettingsAction } from '@/lib/actions';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -13,7 +12,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, Save, CheckCircle, Upload, X } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import Image from 'next/image';
 
 function PaymentGatewayFormSkeleton() {
     return (

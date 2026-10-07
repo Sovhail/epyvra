@@ -227,7 +227,7 @@ function AITranslationDialog({ languages, children }: { languages: Language[] | 
                 }
                 setIsOpen(false);
                 setSelected(new Set());
-            } catch (e) {
+            } catch {
                 toast({ variant: 'destructive', title: 'An Error Occurred', description: 'The translation process failed unexpectedly.' });
             }
         });

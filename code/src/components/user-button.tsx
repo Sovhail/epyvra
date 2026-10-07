@@ -16,7 +16,6 @@ import {
     SheetHeader,
     SheetTitle,
     SheetTrigger,
-    SheetClose,
 } from '@/components/ui/sheet';
 import { useAuth, useUser } from '@/firebase';
 import { signOut } from 'firebase/auth';

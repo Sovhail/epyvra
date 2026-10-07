@@ -11,7 +11,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Mail, Lock, LogIn, User, Loader2, ShieldCheck, Facebook, Apple } from 'lucide-react';
+import { Mail, LogIn, User, Loader2, ShieldCheck, Facebook, Apple } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -259,7 +259,7 @@ export function AuthDialog({ isMobile = false }: { isMobile?: boolean }) {
       await createUserProfileDocument(result.user);
       toast({ title: 'Phone Sign In Success', description: 'You are now logged in.' });
       setOpen(false);
-    } catch (error) {
+    } catch {
       toast({ variant: 'destructive', title: 'Invalid OTP', description: 'The code you entered is incorrect.' });
     } finally {
       setLoadingProvider(null);

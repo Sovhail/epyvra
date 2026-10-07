@@ -6,7 +6,7 @@ import type { CoinPack, CoinTransaction, MonetizationSettings, PaymentGatewaySet
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Coins, ShoppingCart, AlertCircle, PlusCircle, MinusCircle, ArrowRight, Loader2, Zap, Crown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Coins, ShoppingCart, AlertCircle, PlusCircle, MinusCircle, ArrowRight, Loader2, Zap, Crown } from 'lucide-react';
 import { PaymentDialog } from '@/components/wallet/payment-dialog';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';

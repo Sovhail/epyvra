@@ -1,4 +1,4 @@
-import { getAllSeries, getFeaturedCategories } from '@/lib/data';
+import { getAllSeries } from '@/lib/data';
 import { getCategories } from '@/lib/data.actions';
 import { SeriesCard } from '@/components/series-card';
 import { translationKeys } from '@/lib/translation-keys';

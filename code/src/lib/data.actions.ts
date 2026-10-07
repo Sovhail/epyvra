@@ -84,7 +84,7 @@ export async function isAppInstalled(): Promise<boolean> {
         const db = await getDb();
         const admin = await db.collection<StringIdDocument>('settings').findOne({ _id: 'admin' });
         return !!admin;
-    } catch (e) {
+    } catch {
         return false;
     }
 }
@@ -99,7 +99,7 @@ export async function getAdminProfile(): Promise<AdminProfile | null> {
         const db = await getDb();
         const admin = await db.collection<StringIdDocument>('settings').findOne({ _id: 'admin' });
         return admin ? mapDoc(admin) as unknown as AdminProfile : null;
-    } catch (e) {
+    } catch {
         return null;
     }
 }
@@ -152,7 +152,7 @@ export async function getSimilarSeries(series: Series): Promise<Series[]> {
         }
 
         return similar.map(s => mapDoc(s)) as Series[];
-    } catch(e) {
+    } catch {
         return [];
     }
 }
@@ -173,7 +173,7 @@ export async function getMonetizationSettings(): Promise<MonetizationSettings | 
         const db = await getDb();
         const settings = await db.collection<StringIdDocument>('settings').findOne({ _id: 'monetization' });
         return settings ? (mapDoc(settings) as unknown as MonetizationSettings) : null;
-    } catch (e) {
+    } catch {
         return null;
     }
 }
@@ -185,7 +185,7 @@ export async function getPaymentSettings(): Promise<PaymentGatewaySettings | nul
         if (!settings) return null;
         const mapped = mapDoc(settings) as unknown as PaymentGatewaySettings;
         return (await canReadPrivateSettings()) ? mapped : publicPaymentSettings(mapped);
-    } catch (e) {
+    } catch {
         return null;
     }
 }
@@ -195,7 +195,7 @@ export async function getRewardSettings(): Promise<RewardsSettings | null> {
         const db = await getDb();
         const settings = await db.collection<StringIdDocument>('settings').findOne({ _id: 'rewards' });
         return settings ? (mapDoc(settings) as unknown as RewardsSettings) : null;
-    } catch (e) {
+    } catch {
         return null;
     }
 }
@@ -208,7 +208,7 @@ export async function getRewardTasks(platform: 'website' | 'android' | 'ios' = '
             : { platform };
         const tasks = await db.collection('reward-tasks').find(query).toArray();
         return tasks.map(t => mapDoc(t)) as RewardTask[];
-    } catch (e) {
+    } catch {
         return [];
     }
 }
@@ -219,7 +219,7 @@ export async function getStorageSettings(): Promise<StorageSettings | null> {
         const db = await getDb();
         const settings = await db.collection<StringIdDocument>('settings').findOne({ _id: 'storage' });
         return settings ? (mapDoc(settings) as unknown as StorageSettings) : null;
-    } catch (e) {
+    } catch {
         return null;
     }
 }
@@ -229,7 +229,7 @@ export async function getUserClaims(userId: string): Promise<UserRewardClaim[]> 
         const db = await getDb();
         const claims = await db.collection('reward-claims').find({ userId }).toArray();
         return claims.map(c => mapDoc(c)) as UserRewardClaim[];
-    } catch (e) {
+    } catch {
         return [];
     }
 }
@@ -244,7 +244,7 @@ export async function getUserTransactions(userId: string, limitCount?: number): 
             ...mapDoc(t),
             createdAt: t.createdAt instanceof Date ? t.createdAt : new Date(t.createdAt)
         })) as CoinTransaction[];
-    } catch (e) {
+    } catch {
         return [];
     }
 }
@@ -254,7 +254,7 @@ export async function getUserFavorites(userId: string): Promise<Favorite[]> {
         const db = await getDb();
         const favs = await db.collection('favorites').find({ userId }).toArray();
         return favs.map(f => mapDoc(f)) as Favorite[];
-    } catch (e) {
+    } catch {
         return [];
     }
 }
@@ -264,7 +264,7 @@ export async function getUserHistory(userId: string): Promise<WatchHistory[]> {
         const db = await getDb();
         const hist = await db.collection('history').find({ userId }).sort({ watchedAt: -1 }).toArray();
         return hist.map(h => mapDoc(h)) as WatchHistory[];
-    } catch (e) {
+    } catch {
         return [];
     }
 }
@@ -276,7 +276,7 @@ export async function getPluginsSettings(): Promise<PluginsSettings | null> {
         if (!settings) return null;
         const mapped = mapDoc(settings) as unknown as PluginsSettings;
         return (await canReadPrivateSettings()) ? mapped : publicPluginsSettings(mapped);
-    } catch (e) {
+    } catch {
         return null;
     }
 }
@@ -287,7 +287,7 @@ export async function getAllPurchases(): Promise<Purchase[]> {
         const db = await getDb();
         const purchases = await db.collection('purchases').find({}).sort({ createdAt: -1 }).toArray();
         return purchases.map(p => mapDoc(p)) as Purchase[];
-    } catch (e) {
+    } catch {
         return [];
     }
 }
@@ -297,7 +297,7 @@ export async function getAllSeriesForAdmin(): Promise<Series[]> {
         const db = await getDb();
         const series = await db.collection('series').find({}).sort({ createdAt: -1 }).toArray();
         return series.map(s => mapDoc(s)) as Series[];
-    } catch (e) {
+    } catch {
         return [];
     }
 }
@@ -307,7 +307,7 @@ export async function getSeriesById(id: string): Promise<Series | null> {
         const db = await getDb();
         const series = await db.collection('series').findOne(getQueryById(id));
         return mapDoc(series) as Series | null;
-    } catch (e) {
+    } catch {
         return null;
     }
 }
@@ -317,7 +317,7 @@ export async function getAdSettings(placementId: string = 'main_script_ad'): Pro
         const db = await getDb();
         const ad = await db.collection<StringIdDocument>('ads').findOne({ _id: placementId });
         return ad ? (mapDoc(ad) as unknown as Ad) : null;
-    } catch (e) {
+    } catch {
         return null;
     }
 }
@@ -329,7 +329,7 @@ export async function getGeneralSettings(): Promise<GeneralSettings | null> {
         if (!settings) return null;
         const mapped = mapDoc(settings) as unknown as GeneralSettings;
         return (await canReadPrivateSettings()) ? mapped : publicGeneralSettings(mapped);
-    } catch (e) {
+    } catch {
         return null;
     }
 }
@@ -339,7 +339,7 @@ export async function getAllLanguages(): Promise<Language[]> {
         const db = await getDb();
         const languages = await db.collection('languages').find({}).sort({ name: 1 }).toArray();
         return languages.map(l => mapDoc(l)) as Language[];
-    } catch (e) {
+    } catch {
         return [];
     }
 }
@@ -349,7 +349,7 @@ export async function getTranslations(langCode: string): Promise<UITranslations 
         const db = await getDb();
         const translations = await db.collection<StringIdDocument>('translations').findOne({ _id: langCode });
         return translations ? (mapDoc(translations) as unknown as UITranslations) : null;
-    } catch (e) {
+    } catch {
         return null;
     }
 }
@@ -359,7 +359,7 @@ export async function getCustomPages(): Promise<CustomPage[]> {
         const db = await getDb();
         const pages = await db.collection('pages').find({}).toArray();
         return pages.map(p => mapDoc(p)) as CustomPage[];
-    } catch (e) {
+    } catch {
         return [];
     }
 }
@@ -369,7 +369,7 @@ export async function getPageById(id: string): Promise<CustomPage | null> {
         const db = await getDb();
         const page = await db.collection('pages').findOne(getQueryById(id));
         return page ? mapDoc(page) as unknown as CustomPage : null;
-    } catch (e) {
+    } catch {
         return null;
     }
 }
@@ -380,7 +380,7 @@ export async function getContactMessages(): Promise<ContactMessage[]> {
         const db = await getDb();
         const messages = await db.collection('contacts').find({}).sort({ createdAt: -1 }).toArray();
         return messages.map(m => mapDoc(m)) as ContactMessage[];
-    } catch (e) {
+    } catch {
         return [];
     }
 }
@@ -390,7 +390,7 @@ export async function getContactMessagesCount(): Promise<number> {
         if (!(await canReadPrivateSettings())) return 0;
         const db = await getDb();
         return await db.collection('contacts').countDocuments({ isRead: false });
-    } catch (e) {
+    } catch {
         return 0;
     }
 }
@@ -401,7 +401,7 @@ export async function getReports(): Promise<Report[]> {
         const db = await getDb();
         const reports = await db.collection('reports').find({}).sort({ createdAt: -1 }).toArray();
         return reports.map(r => mapDoc(r)) as Report[];
-    } catch (e) {
+    } catch {
         return [];
     }
 }
@@ -411,7 +411,7 @@ export async function getCategories(): Promise<Category[]> {
         const db = await getDb();
         const categories = await db.collection('categories').find({}).toArray();
         return categories.map(c => mapDoc(c)) as Category[];
-    } catch (e) {
+    } catch {
         return [];
     }
 }
@@ -421,7 +421,7 @@ export async function getCategoryBySlug(slug: string): Promise<Category | null> 
         const db = await getDb();
         const category = await db.collection('categories').findOne({ slug });
         return category ? mapDoc(category) as unknown as Category : null;
-    } catch (e) {
+    } catch {
         return null;
     }
 }
@@ -432,7 +432,7 @@ export async function getAllUsersForAdmin(): Promise<AdminUser[]> {
         const db = await getDb();
         const users = await db.collection('users').find({}).sort({ createdAt: -1 }).toArray();
         return users.map(u => mapDoc(u) as unknown as AdminUser);
-    } catch (e) {
+    } catch {
         return [];
     }
 }
@@ -444,7 +444,7 @@ export async function getMobileSettings(): Promise<import('./types').MobileSetti
         if (!settings) return null;
         const mapped = mapDoc(settings) as unknown as import('./types').MobileSettings;
         return (await canReadPrivateSettings()) ? mapped : publicMobileSettings(mapped);
-    } catch (e) {
+    } catch {
         return null;
     }
 }

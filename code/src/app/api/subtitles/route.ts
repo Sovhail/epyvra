@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
                 'Cache-Control': 'public, max-age=86400'
             }
         });
-    } catch (e) {
+    } catch {
         return new NextResponse('Failed to read subtitle', { status: 500 });
     }
 }

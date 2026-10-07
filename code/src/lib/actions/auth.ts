@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation';
 import { randomBytes } from 'crypto';
 import { hashPassword, verifyPassword } from '../crypto';
 import { getDb } from '../mongodb';
-import { handleError, getQueryById, handleProfileError } from './utils';
+import { handleError, handleProfileError } from './utils';
 import { getDemoModeMutationError } from '../demo-mode';
 import { ADMIN_SESSION_COOKIE, createAdminSessionToken, verifyAdminSessionToken } from '../admin-session';
 import { authorizeInstall } from '../install-auth';

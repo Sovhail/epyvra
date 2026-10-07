@@ -319,7 +319,7 @@ export async function toggleLikeSeriesAction(seriesId: string, userId: string): 
             const likes = result?.likes ?? 0;
             return { success: true, liked: true, likes };
         }
-    } catch (e) {
+    } catch {
         return { success: false, liked: false, likes: 0 };
     }
 }

@@ -21,7 +21,6 @@ import {
   Users,
   Shapes,
   Clapperboard,
-  Flame,
   Bell,
   Flag,
   Coins,

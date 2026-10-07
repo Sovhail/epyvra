@@ -1,6 +1,6 @@
 'use client';
 import { getErrorMessage } from '@/lib/error-utils';
-import { useMemo, useState, useEffect, useRef } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import type { Episode, Series, StorageSettings } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -12,9 +12,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { PlusCircle, Edit, Trash2, Plus, Trash, Loader2, Save, AlertCircle, Subtitles } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Plus, Trash, Loader2, Save, Subtitles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   Dialog,
@@ -30,7 +30,6 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,

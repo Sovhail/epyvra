@@ -1,9 +1,9 @@
 'use client';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { translationKeys } from '@/lib/translation-keys';
 import { getTranslations, getCustomPages, getDemoModeStatus } from '@/lib/data.actions';
-import { saveLanguageTranslationsAction, translateLanguageAction } from '@/lib/actions';
+import { saveLanguageTranslationsAction } from '@/lib/actions';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Save, ArrowLeft, Globe, Search, BookText, Sparkles, ExternalLink } from 'lucide-react';
+import { Loader2, Save, ArrowLeft, Globe, Search, BookText, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';

@@ -17,7 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Save, Loader2, Megaphone, Gift, FileText, Code, Video } from 'lucide-react';
+import { Save, Loader2, Megaphone, FileText, Code, Video } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 
 function AdField({ id, label, value, onChange, placeholder, isScript = true }: { id: string, label: string, value: string, onChange: (v: string) => void, placeholder?: string, isScript?: boolean }) {

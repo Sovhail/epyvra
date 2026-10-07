@@ -1,6 +1,6 @@
 
 'use client';
-import React, { useState, useMemo, useEffect, useTransition } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { CoinPack, MonetizationSettings, Purchase } from '@/lib/types';
 import { format } from 'date-fns';
 import { useForm } from 'react-hook-form';
@@ -35,7 +35,6 @@ import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -51,7 +50,7 @@ import {
 } from "@/components/ui/select"
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Edit, Trash2, PlusCircle, Save, Loader2, Coins, ArrowLeft, ArrowRight, CheckCircle, Zap, UserCheck } from 'lucide-react';
+import { Edit, Trash2, PlusCircle, Save, Loader2, Coins, CheckCircle, Zap, UserCheck } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -65,7 +64,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { cn } from '@/lib/utils';
 import { getCoinPacks, getMonetizationSettings, getAllPurchases } from '@/lib/data.actions';
 import { saveCoinPackAction, deleteCoinPackAction, saveMonetizationSettingsAction } from '@/lib/actions';
@@ -445,7 +444,7 @@ function CoinPackEditDialog({ pack, onSaved, children }: { pack?: CoinPack | nul
                     <div className="space-y-3">
                         <Label>Pack Type</Label>
                         <RadioGroup value={type} onValueChange={(value) => {
-                            if (value === 'coins' || value === 'subscription') setType(value);
+                            if (value === 'coins' || value === 'membership') setType(value);
                         }} className="flex gap-4">
                             <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="coins" id="type-coins" />

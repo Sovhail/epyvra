@@ -49,7 +49,7 @@ export async function callAi(prompt: string, jsonMode: boolean = false) {
                 );
                 if (anyChat) candidateModels = [anyChat];
             }
-        } catch (e) {
+        } catch {
             // fallback to preferredModels
         }
 

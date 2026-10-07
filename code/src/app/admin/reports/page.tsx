@@ -4,15 +4,13 @@ import React, { useState, useEffect } from 'react';
 import type { Report } from '@/lib/types';
 import { getReports } from '@/lib/data.actions';
 import { updateReportStatusAction, deleteReportAction } from '@/lib/actions';
-import { formatDistanceToNow } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Trash2, ShieldCheck, ShieldX, MoreVertical } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 export default function ReportsPage() {
   const { toast } = useToast();

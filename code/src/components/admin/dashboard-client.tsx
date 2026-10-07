@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import type { DateRange } from 'react-day-picker';
 
@@ -23,7 +23,6 @@ import {
   TrendingUp,
   Server,
   ShieldCheck,
-  CheckCircle2,
   BarChart3
 } from 'lucide-react';
 import {
@@ -42,8 +41,6 @@ import {
   ResponsiveContainer,
   AreaChart,
   Area,
-  BarChart,
-  Bar,
   Legend
 } from 'recharts';
 import { Badge } from '@/components/ui/badge';

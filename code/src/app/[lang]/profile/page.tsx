@@ -205,7 +205,7 @@ export default function ProfilePage() {
                             try {
                                 const errorData = await res.json();
                                 if (errorData.error) errorMessage = errorData.error;
-                            } catch (jsonError) { /* Not a JSON response */ }
+                            } catch { /* Not a JSON response */ }
                         }
                         throw new Error(errorMessage);
                     }

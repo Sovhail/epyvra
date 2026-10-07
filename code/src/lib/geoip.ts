@@ -30,7 +30,7 @@ async function fetchFromIpApi(ip: string): Promise<GeoData | null> {
         };
     }
     return null;
-  } catch (error) {
+  } catch {
     return null;
   }
 }
@@ -58,7 +58,7 @@ async function fetchFromIpWho(ip: string): Promise<GeoData | null> {
       };
     }
     return null;
-  } catch (error) {
+  } catch {
     return null;
   }
 }
@@ -87,7 +87,7 @@ async function fetchFromFreeGeoIp(ip: string): Promise<GeoData | null> {
       };
     }
     return null;
-  } catch (error) {
+  } catch {
     return null;
   }
 }
@@ -108,7 +108,7 @@ export async function getGeoData(ip: string): Promise<GeoData | null> {
       if (data && data.country) {
         return data;
       }
-    } catch (error) {
+    } catch {
       // Log the error for the specific service but continue to the next one
       console.warn(`A GeoIP service failed, trying next...`);
     }

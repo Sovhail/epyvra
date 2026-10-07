@@ -162,7 +162,7 @@ export default function PluginsSettingsPage() {
           } else {
               toast({ variant: 'destructive', title: 'Test Failed', description: result.error });
           }
-      } catch (e) {
+      } catch {
           toast({ variant: 'destructive', title: 'Error', description: 'Request failed.' });
       } finally {
           setIsTestingOneSignal(false);

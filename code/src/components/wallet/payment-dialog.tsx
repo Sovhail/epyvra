@@ -12,14 +12,11 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Lock, ExternalLink, ShieldCheck, Check } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Loader2, ShieldCheck, Check } from 'lucide-react';
 import { useTranslation } from '@/lib/translation-provider';
 
 interface PaymentDialogProps {

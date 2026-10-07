@@ -1,6 +1,6 @@
 'use client';
 import { getErrorMessage } from '@/lib/error-utils';
-import { useMemo, useState, useEffect, useRef } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import type { Episode, Series, StorageSettings } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -230,7 +230,7 @@ function EpisodeDialog({ seriesId, episodeToEdit, children, nextEpisodeNumber, o
                                  } else {
                                      reject(new Error(res.error || 'URL missing from upload response.'));
                                  }
-                             } catch (e) {
+                             } catch {
                                  reject(new Error('Invalid JSON response from upload server.'));
                              }
                          } else {
@@ -241,7 +241,7 @@ function EpisodeDialog({ seriesId, episodeToEdit, children, nextEpisodeNumber, o
                                 try {
                                     const res = JSON.parse(xhr.responseText);
                                     if (res.error) errorMessage = res.error;
-                                } catch (e) { /* Not a JSON response */ }
+                                } catch { /* Not a JSON response */ }
                             }
                             reject(new Error(errorMessage));
                          }

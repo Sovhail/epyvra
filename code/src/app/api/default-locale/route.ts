@@ -8,7 +8,7 @@ export async function GET() {
         const response = NextResponse.json({ defaultLocale });
         response.cookies.set('defaultLocale', defaultLocale, { maxAge: 31536000, path: '/' });
         return response;
-    } catch (e) {
+    } catch {
         return NextResponse.json({ defaultLocale: 'en' });
     }
 }

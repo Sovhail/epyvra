@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { Search, Menu, User as UserIcon, Heart, LogOut, Wallet, Coins, Gift } from 'lucide-react';
+import { Search, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -13,7 +13,7 @@ import { useUser, useAuth } from '@/firebase';
 import { AuthDialog } from '@/components/auth-dialog';
 import { UserButton } from '@/components/user-button';
 import { Skeleton } from './ui/skeleton';
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { SearchDialog } from './search-dialog';
 import { LanguageSwitcher } from './language-switcher';
 import { useParams } from 'next/navigation';
@@ -21,8 +21,6 @@ import { i18n } from '@/i18n-config';
 import { useTranslation } from '@/lib/translation-provider';
 import { useSettings } from '@/lib/settings-provider';
 import Image from 'next/image';
-import { getRewardSettings, getMonetizationSettings } from '@/lib/data.actions';
-import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 
 const StaticLogo = () => (

@@ -13,7 +13,7 @@ export const countryCodeToEmoji = (countryCode: string) => {
             .split('')
             .map((char) => String.fromCodePoint(char.charCodeAt(0) + 127397))
             .join('');
-    } catch(e) {
+    } catch {
         return '🏳️';
     }
 };

@@ -47,7 +47,7 @@ export function InstallationContent({ htmlContent }: { htmlContent: string }) {
                 setTimeout(() => {
                    btn.textContent = oldText;
                 }, 2000);
-            } catch (err) {
+            } catch {
                 toast({ variant: 'destructive', title: 'Copy Failed', description: 'Could not copy to clipboard.' });
             }
         };

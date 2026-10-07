@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { getAllUsersForAdmin, getUserTransactions } from '@/lib/data.actions';
 import { updateUserStatusAction, deleteUserAction, adminUpdateUserAction } from '@/lib/actions';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -173,7 +173,7 @@ export default function UsersPage() {
         } else {
             toast({ variant: 'destructive', title: 'Update Failed', description: result.error });
         }
-      } catch (err) {
+      } catch {
         toast({ variant: 'destructive', title: 'Error', description: 'Server communication error' });
       } finally {
         setIsSaving(false);

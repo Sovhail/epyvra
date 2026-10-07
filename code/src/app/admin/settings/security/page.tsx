@@ -10,7 +10,7 @@ import { saveGeneralSettingsAction } from '@/lib/actions';
 import { getGeneralSettings } from '@/lib/data.actions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -110,7 +110,7 @@ export default function SecuritySettingsPage() {
         } else {
             toast({ variant: 'destructive', title: 'Error', description: data.error || 'Failed to send test email.' });
         }
-    } catch (e) {
+    } catch {
         toast({ variant: 'destructive', title: 'Error', description: 'Network error while sending test email.' });
     } finally {
         setIsTestingMail(false);

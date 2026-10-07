@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import type { CustomPage } from '@/lib/types';
-import { Facebook, Instagram, Twitter, Youtube, Music2, Apple } from 'lucide-react';
+import { Facebook, Instagram, Twitter, Youtube, Music2 } from 'lucide-react';
 import Link from 'next/link';
 import { Skeleton } from './ui/skeleton';
 import { useParams } from 'next/navigation';
@@ -10,7 +10,6 @@ import { i18n } from '@/i18n-config';
 import { useSettings } from '@/lib/settings-provider';
 import { useTranslation } from '@/lib/translation-provider';
 import { getCustomPages } from '@/lib/data.actions';
-import { cn } from '@/lib/utils';
 
 const socialIcons: { [key: string]: React.ElementType } = {
     facebook: Facebook,
