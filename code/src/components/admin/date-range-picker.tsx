@@ -20,15 +20,8 @@ interface DateRangePickerProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export function DateRangePicker({
   className,
-  date,
   setDate,
 }: DateRangePickerProps) {
-  // Fix for Hydration Error: Ensure we only render the date string after mounting
-  const [mounted, setMounted] = React.useState(false);
-
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const handlePresetChange = (value: string) => {
     const now = new Date();

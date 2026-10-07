@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Smartphone, Download, X } from 'lucide-react';
-import { useTranslation } from '@/lib/translation-provider';
 
 interface BeforeInstallPromptEvent extends Event {
     prompt(): Promise<void>;
@@ -13,7 +12,6 @@ interface BeforeInstallPromptEvent extends Event {
 export function PwaInstallPrompt({ delay }: { delay: number }) {
     const [isVisible, setIsVisible] = useState(false);
     const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-    const { t } = useTranslation();
 
     useEffect(() => {
         // Listen for the install prompt from the browser

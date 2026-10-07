@@ -72,7 +72,7 @@ export function SeriesDetailView({ initialSeries, initialEpisodes = [], initialV
   const series = initialSeries;
   const seriesId = series.id;
 
-  const { user, userProfile, refreshProfile } = useUser();
+  const { user, userProfile } = useUser();
   const [showUnlockDialog, setShowUnlockDialog] = useState(false);
   const [isReporting, setIsReporting] = useState(false);
   const [episodeToUnlock, setEpisodeToUnlock] = useState<Episode | null>(null);
@@ -97,7 +97,6 @@ export function SeriesDetailView({ initialSeries, initialEpisodes = [], initialV
   const [videoError, setVideoError] = useState(false);
   const [volume, setVolume] = useState(1.0); 
   const [isMuted, setIsMuted] = useState(false);
-  const [showVolumeSlider, setShowVolumeSlider] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1.0);
   const [isRewinding, setIsRewinding] = useState(false);
   const [showEndOverlay, setShowEndOverlay] = useState(false);

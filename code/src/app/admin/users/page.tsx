@@ -196,19 +196,6 @@ export default function UsersPage() {
     setProcessingId(null);
   };
 
-  const handleToggleStatus = async (user: AdminUser) => {
-    setProcessingId(user.id);
-    const newStatus = !user.disabled;
-    const result = await updateUserStatusAction(user.id, newStatus);
-    if (result.success) {
-      toast({ title: newStatus ? 'User Disabled' : 'User Activated', description: `Account for ${user.displayName || user.email} has been updated.` });
-      fetchData();
-    } else {
-      toast({ variant: 'destructive', title: 'Error', description: result.error });
-    }
-    setProcessingId(null);
-  };
-
   return (
     <div className="space-y-6 max-w-full overflow-hidden">
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">

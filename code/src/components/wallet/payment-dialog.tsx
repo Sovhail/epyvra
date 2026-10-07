@@ -30,7 +30,7 @@ interface PaymentDialogProps {
 }
 
 export function PaymentDialog({
-  open, onOpenChange, pack, user, paymentSettings, monetizationSettings, onPurchaseSuccess
+  open, onOpenChange, pack, user, paymentSettings, monetizationSettings
 }: PaymentDialogProps) {
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [selectedGateway, setSelectedGateway] = useState<string>('');
@@ -138,8 +138,6 @@ export function PaymentDialog({
   ].filter(g => enabledGateways.includes(g.id));
 
   // To prevent caching during logo updates in admin, add a timestamp
-  const logoUrl = getGatewayLogo(currentTab);
-  const finalLogoUrl = logoUrl.startsWith('/') ? `${logoUrl}?v=${Date.now()}` : logoUrl;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

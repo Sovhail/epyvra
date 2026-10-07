@@ -9,7 +9,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import { useUser, useAuth } from '@/firebase';
+import { useUser } from '@/firebase';
 import { AuthDialog } from '@/components/auth-dialog';
 import { UserButton } from '@/components/user-button';
 import { Skeleton } from './ui/skeleton';
@@ -21,7 +21,6 @@ import { i18n } from '@/i18n-config';
 import { useTranslation } from '@/lib/translation-provider';
 import { useSettings } from '@/lib/settings-provider';
 import Image from 'next/image';
-import { useToast } from '@/hooks/use-toast';
 
 const StaticLogo = () => (
     <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -56,10 +55,8 @@ const DynamicLogo = () => {
 };
 
 export function Header() {
-  const auth = useAuth();
-  const { user, userProfile, loading } = useUser();
+  const { user, loading } = useUser();
   const { t } = useTranslation();
-  const { toast } = useToast();
   const [searchOpen, setSearchOpen] = React.useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   

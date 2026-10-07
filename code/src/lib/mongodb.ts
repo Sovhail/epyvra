@@ -69,6 +69,5 @@ export async function getDb() {
 
 // Keep the default export signature for compatibility
 export default clientPromise || (async () => {
-  const db = await getDb();
   return new MongoClient(uri, options);
 })();

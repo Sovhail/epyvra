@@ -85,7 +85,7 @@ export function useCollection<T = DocumentData>(
         setError(null);
         setIsLoading(false);
       },
-      (error: FirestoreError) => {
+      () => {
         // This logic extracts the path from either a ref or a query
         const path: string =
           memoizedTargetRefOrQuery.type === 'collection'

@@ -13,7 +13,6 @@ interface FirebaseClientProviderProps {
 
 export function FirebaseClientProvider({
   children,
-  lang,
   settings,
 }: FirebaseClientProviderProps) {
   const firebaseServices = useMemo(() => {
