@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, Save, CheckCircle, Upload, X } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 
 function PaymentGatewayFormSkeleton() {
     return (
@@ -211,7 +212,7 @@ export default function PaymentGatewayPage() {
                 <div className="h-14 w-32 bg-black/40 rounded-xl border border-dashed border-white/10 flex items-center justify-center relative overflow-hidden group">
                     {url ? (
                         <>
-                            <img src={`${url}?v=${Date.now()}`} alt="Logo" className="h-full w-full object-contain p-2" />
+                            <Image src={`${url}?v=${Date.now()}`} alt="Logo" fill unoptimized className="object-contain p-2" />
                             <button onClick={onDelete} className="absolute inset-0 bg-red-600/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                 <X className="h-4 w-4 text-white" />
                             </button>

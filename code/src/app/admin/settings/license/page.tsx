@@ -87,7 +87,7 @@ export default function LicenseSettingsPage() {
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 3000);
       })
-      .catch((error) => {
+      .catch(() => {
         toast({ variant: 'destructive', title: 'Error', description: 'Failed to save settings.' });
         errorEmitter.emit('permission-error', new FirestorePermissionError({
             path: settingsRef.path,

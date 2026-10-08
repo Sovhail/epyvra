@@ -57,7 +57,7 @@ export default function EditTranslationPage() {
             getDemoModeStatus()
         ]).then(([dbTranslations, pagesData, isDemo]) => {
             const newTranslations: Record<string, string> = {};
-            translationKeys.forEach(({ key, default: defaultValue }) => {
+            translationKeys.forEach(({ key }) => {
                 if (dbTranslations && dbTranslations[key] !== undefined) {
                     newTranslations[key] = dbTranslations[key];
                 } else {

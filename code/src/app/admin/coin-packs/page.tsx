@@ -1,6 +1,6 @@
 
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import type { CoinPack, MonetizationSettings, Purchase } from '@/lib/types';
 import { format } from 'date-fns';
 import { useForm } from 'react-hook-form';
@@ -236,7 +236,6 @@ function MonetizationSettingsSection() {
     const { toast } = useToast();
     const [isSaving, setIsSaving] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
-    const [settings, setSettings] = useState<MonetizationSettings | null>(null);
     const [loading, setLoading] = useState(true);
 
     const monetizationSchema = z.object({
@@ -254,10 +253,9 @@ function MonetizationSettingsSection() {
         },
     });
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         setLoading(true);
         const data = await getMonetizationSettings();
-        setSettings(data);
         if (data) {
             form.reset({
                 episodeCost: data.episodeCost || 0,
@@ -266,11 +264,11 @@ function MonetizationSettingsSection() {
             });
         }
         setLoading(false);
-    };
+    }, [form]);
 
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [fetchData]);
 
     const onSubmit = async (values: z.infer<typeof monetizationSchema>) => {
         setIsSaving(true);

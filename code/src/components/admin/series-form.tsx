@@ -628,7 +628,7 @@ export function SeriesForm({ series }: SeriesFormProps) {
                 <FormField
                   control={form.control}
                   name="coverUrl"
-                  render={({ field }) => (
+                  render={() => (
                     <FormItem>
                       <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Poster / Cover Image</FormLabel>
                       <FormControl>
@@ -659,7 +659,7 @@ export function SeriesForm({ series }: SeriesFormProps) {
                 <FormField
                   control={form.control}
                   name="featuredCoverUrl"
-                  render={({ field }) => (
+                  render={() => (
                     <FormItem>
                       <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Featured Image (Optional)</FormLabel>
                       <FormControl>

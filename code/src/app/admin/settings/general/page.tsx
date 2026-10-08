@@ -3,7 +3,7 @@ import { getErrorMessage } from '@/lib/error-utils';
 import { useForm, type FieldErrors } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useEffect, useState, useRef, useTransition } from 'react';
+import { useCallback, useEffect, useState, useRef, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,7 @@ import { revalidateAllAction, saveGeneralSettingsAction } from '@/lib/actions';
 import { getGeneralSettings } from '@/lib/data.actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
+import Image from 'next/image';
 
 const formSchema = z.object({
   siteName: z.string().optional(),
@@ -96,7 +97,7 @@ export default function GeneralSettingsPage() {
     },
   });
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     const settings = await getGeneralSettings();
     if (settings) {
@@ -130,11 +131,11 @@ export default function GeneralSettingsPage() {
       setWebpEnabled(settings.webpConversionEnabled !== false);
     }
     setLoading(false);
-  };
+  }, [form]);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   const handleClearCache = () => {
     startRevalidateTransition(async () => {
@@ -305,14 +306,14 @@ export default function GeneralSettingsPage() {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
-                            <FormField name="logoUrl" control={form.control} render={({ field }) => (
+                            <FormField name="logoUrl" control={form.control} render={() => (
                                 <FormItem>
                                     <FormLabel className="flex items-center gap-2"><ImageIcon className="h-4 w-4"/> Site Logo</FormLabel>
                                     <div className="flex flex-col gap-4">
                                         <div className="relative group h-12 w-32 bg-muted/30 rounded-md border border-dashed flex items-center justify-center overflow-hidden">
                                             {logoPreview ? (
                                                 <>
-                                                    <img src={logoPreview} alt="Logo" className="h-full w-auto object-contain p-1" />
+                                                    <Image src={logoPreview} alt="Logo" fill unoptimized className="object-contain p-1" />
                                                     <button 
                                                         type="button"
                                                         onClick={() => handleImageDelete('logo')}
@@ -333,14 +334,14 @@ export default function GeneralSettingsPage() {
                                     </div>
                                 </FormItem>
                             )}/>
-                            <FormField name="faviconUrl" control={form.control} render={({ field }) => (
+                            <FormField name="faviconUrl" control={form.control} render={() => (
                                 <FormItem>
                                     <FormLabel className="flex items-center gap-2"><Globe className="h-4 w-4"/> Favicon (Auto 32x32)</FormLabel>
                                     <div className="flex flex-col gap-4">
                                          <div className="relative group h-12 w-12 bg-muted/30 rounded-md border border-dashed flex items-center justify-center overflow-hidden text-center">
                                             {faviconPreview ? (
                                                 <>
-                                                    <img src={faviconPreview} alt="Favicon" className="h-8 w-8 object-contain mx-auto" />
+                                                    <Image src={faviconPreview} alt="Favicon" width={32} height={32} unoptimized className="object-contain mx-auto" />
                                                     <button 
                                                         type="button"
                                                         onClick={() => handleImageDelete('favicon')}
@@ -388,14 +389,14 @@ export default function GeneralSettingsPage() {
                             </FormItem>
                         )}/>
 
-                        <FormField name="watermarkUrl" control={form.control} render={({ field }) => (
+                        <FormField name="watermarkUrl" control={form.control} render={() => (
                             <FormItem>
                                 <FormLabel>Watermark Logo</FormLabel>
                                 <div className="flex items-center gap-4">
                                     <div className="h-16 w-28 rounded-lg border-2 border-dashed border-white/20 flex items-center justify-center relative overflow-hidden bg-black/40 group p-1">
                                         {watermarkPreview ? (
                                             <>
-                                                <img src={watermarkPreview} alt="Watermark" className="h-full w-full object-contain mx-auto select-none" />
+                                                <Image src={watermarkPreview} alt="Watermark" fill unoptimized className="object-contain select-none" />
                                                 <button 
                                                     type="button"
                                                     onClick={() => handleImageDelete('watermark')}

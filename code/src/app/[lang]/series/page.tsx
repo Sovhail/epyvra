@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { i18n } from '@/i18n-config';
 
-const getT = (lang: string) => {
+const getT = () => {
     const defaultTranslations = translationKeys.reduce((acc, item) => {
         acc[item.key] = item.default;
         return acc;
@@ -19,7 +19,7 @@ export default async function AllSeriesPage({ params }: { params: Promise<{ lang
   const { lang } = await params;
   const resolvedLang = lang || i18n.defaultLocale;
   const langPrefix = resolvedLang === i18n.defaultLocale ? '' : `/${resolvedLang}`;
-  const t = getT(resolvedLang);
+  const t = getT();
 
   // Fetch all categories and all series for the current language
   const [allSeries, categories] = await Promise.all([

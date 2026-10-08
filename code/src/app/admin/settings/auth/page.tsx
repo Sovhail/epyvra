@@ -2,7 +2,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Save, CheckCircle, ShieldCheck, Mail, Code, HelpCircle, Globe, Facebook, Apple, Phone } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -72,7 +72,7 @@ export default function AuthSettingsPage() {
     },
   });
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     const settings = await getGeneralSettings();
     if (settings) {
@@ -101,11 +101,11 @@ export default function AuthSettingsPage() {
       });
     }
     setLoading(false);
-  };
+  }, [form]);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   const parseFirebaseConfig = (raw: string) => {
     const extract = (key: string) => {

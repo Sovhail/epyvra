@@ -1,5 +1,5 @@
 'use client';
-import { createContext, useContext, useMemo, useState, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useMemo, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import type { Favorite, Series } from './types';
@@ -20,7 +20,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
     const [favorites, setFavorites] = useState<Favorite[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         if (!user) {
             setFavorites([]);
             setLoading(false);
@@ -30,11 +30,11 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
         const data = await getUserFavorites(user.uid);
         setFavorites(data);
         setLoading(false);
-    };
+    }, [user]);
 
     useEffect(() => {
         fetchData();
-    }, [user]);
+    }, [fetchData]);
 
     const favoriteIds = useMemo(() => {
         return new Set(favorites.map(fav => fav.seriesId));

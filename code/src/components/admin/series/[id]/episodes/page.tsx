@@ -1,6 +1,6 @@
 'use client';
 import { getErrorMessage } from '@/lib/error-utils';
-import { useMemo, useState, useEffect } from 'react';
+import { useCallback, useMemo, useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import type { Episode, Series, StorageSettings } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -73,7 +73,7 @@ function EpisodeDialog({ seriesId, episodeToEdit, children, nextEpisodeNumber, o
 
     const isEditMode = !!episodeToEdit;
 
-    const createNewSource = (quality = '720p', url = '', sourceType: 'upload' | 'link' | 'embed' = 'upload'): VideoSourceState => ({
+    const createNewSource = useCallback((quality = '720p', url = '', sourceType: 'upload' | 'link' | 'embed' = 'upload'): VideoSourceState => ({
         key: `source-${Date.now()}-${Math.random()}`,
         quality,
         sourceType,
@@ -81,13 +81,13 @@ function EpisodeDialog({ seriesId, episodeToEdit, children, nextEpisodeNumber, o
         file: null,
         uploadProgress: 0,
         status: 'idle',
-    });
+    }), []);
 
-    const createNewEpisode = (episodeNumber: number): EpisodeState => ({
+    const createNewEpisode = useCallback((episodeNumber: number): EpisodeState => ({
         key: `episode-${Date.now()}-${Math.random()}`,
         episodeInSeason: episodeNumber,
         sources: [createNewSource()],
-    });
+    }), [createNewSource]);
 
     useEffect(() => {
         if (isOpen) {
@@ -110,7 +110,7 @@ function EpisodeDialog({ seriesId, episodeToEdit, children, nextEpisodeNumber, o
                 setEpisodes([createNewEpisode(nextEpisodeNumber)]);
             }
         }
-    }, [isOpen, episodeToEdit, isEditMode, nextEpisodeNumber]);
+    }, [isOpen, episodeToEdit, isEditMode, nextEpisodeNumber, createNewEpisode, createNewSource]);
 
     // --- Handlers for form state changes ---
 
@@ -457,7 +457,7 @@ export default function SeriesEpisodesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (typeof seriesId !== 'string') return;
     setLoading(true);
     try {
@@ -473,11 +473,11 @@ export default function SeriesEpisodesPage() {
     } finally {
         setLoading(false);
     }
-  };
+  }, [seriesId, toast]);
 
   useEffect(() => {
     fetchData();
-  }, [seriesId]);
+  }, [fetchData]);
 
   const nextEpisodeNumber = useMemo(() => {
       if (episodes.length === 0) return 1;

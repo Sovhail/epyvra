@@ -6,7 +6,7 @@ import { notFound } from 'next/navigation';
 import { i18n } from '@/i18n-config';
 import { translationKeys } from '@/lib/translation-keys';
 
-const getT = (lang: string) => {
+const getT = () => {
     const defaultTranslations = translationKeys.reduce((acc, item) => {
         acc[item.key] = item.default;
         return acc;
@@ -17,7 +17,7 @@ const getT = (lang: string) => {
 export default async function CategoryPage({ params }: { params: Promise<{ lang: string, slug: string }> }) {
     const { lang, slug } = await params;
     const currentLang = lang || i18n.defaultLocale;
-    const t = getT(currentLang);
+    const t = getT();
 
     const category = await getCategoryBySlug(slug);
 

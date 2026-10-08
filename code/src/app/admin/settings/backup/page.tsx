@@ -33,19 +33,14 @@ export default function BackupSettingsPage() {
     });
     
     // Transitions
-    const [isMongoTesting, startMongoTestTransition] = useTransition();
+    const [, startMongoTestTransition] = useTransition();
     const [isMongoImporting, startMongoImportTransition] = useTransition();
-    const [isMongoExporting, startMongoExportTransition] = useTransition();
+    const [, startMongoExportTransition] = useTransition();
 
     // MongoDB file state
     const [selectedMongoFile, setSelectedMongoFile] = useState<File | null>(null);
     const [mongoFileContent, setMongoFileContent] = useState<string>('');
     
-    const [isClient, setIsClient] = useState(false);
-
-    useEffect(() => {
-        setIsClient(true);
-    }, []);
     
     // Reset status after a few seconds
     useEffect(() => {

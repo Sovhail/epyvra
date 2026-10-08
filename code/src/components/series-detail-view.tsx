@@ -532,7 +532,7 @@ export function SeriesDetailView({ initialSeries, initialEpisodes = [], initialV
     setIsRewinding(false);
   };
 
-  const onMasterPointerUp = (e: React.PointerEvent) => {
+  const onMasterPointerUp = () => {
     if (longPressTimerRef.current) {
         clearTimeout(longPressTimerRef.current);
         longPressTimerRef.current = null;
@@ -732,9 +732,12 @@ export function SeriesDetailView({ initialSeries, initialEpisodes = [], initialV
                             )}
                             style={{ opacity: (settings.watermarkOpacity ?? 80) / 100 }}
                         >
-                            <img 
+                            <Image 
                                 src={settings.watermarkUrl} 
                                 alt="Watermark" 
+                                width={100}
+                                height={28}
+                                unoptimized
                                 className="h-6 sm:h-7 w-auto max-w-[100px] object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] select-none"
                             />
                         </div>

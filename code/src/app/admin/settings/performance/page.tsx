@@ -2,7 +2,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Save, CheckCircle, Zap, Timer, Smartphone, HardDrive, Image as ImageIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -41,7 +41,7 @@ export default function PerformanceSettingsPage() {
     },
   });
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     const settings = await getGeneralSettings();
     if (settings) {
@@ -53,11 +53,11 @@ export default function PerformanceSettingsPage() {
       });
     }
     setLoading(false);
-  };
+  }, [form]);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   const onSubmit = async (values: PerformanceFormValues) => {
     setIsSaving(true);

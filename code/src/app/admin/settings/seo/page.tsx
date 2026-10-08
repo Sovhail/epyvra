@@ -2,7 +2,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Save, CheckCircle, Search, Globe, FileText, ExternalLink, Link as LinkIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -43,7 +43,7 @@ export default function SeoSettingsPage() {
     },
   });
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     const settings = await getGeneralSettings();
     if (settings) {
@@ -56,11 +56,11 @@ export default function SeoSettingsPage() {
       setSiteUrl(settings.siteUrl || '');
     }
     setLoading(false);
-  };
+  }, [form]);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   const onSubmit = async (values: SeoFormValues) => {
     setIsSaving(true);

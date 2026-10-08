@@ -54,9 +54,10 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { ScrollArea } from '@/components/ui/scroll-area';
+import Image from 'next/image';
 
 const Logo = () => (
-    <img src="/img/epyvra-logo.png" alt="EPYVRA" width="32" height="32" className="rounded-lg object-contain" />
+    <Image src="/img/epyvra-logo.png" alt="EPYVRA" width={32} height={32} className="rounded-lg object-contain" />
 );
 
 export function AdminLayoutShell({

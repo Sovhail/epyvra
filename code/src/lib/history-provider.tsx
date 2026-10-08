@@ -1,5 +1,5 @@
 'use client';
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import type { WatchHistory } from './types';
@@ -22,7 +22,7 @@ export function WatchHistoryProvider({ children }: { children: ReactNode }) {
     const [watchHistory, setWatchHistory] = useState<WatchHistory[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         if (!user) {
             setWatchHistory([]);
             setLoading(false);
@@ -32,11 +32,11 @@ export function WatchHistoryProvider({ children }: { children: ReactNode }) {
         const data = await getUserHistory(user.uid);
         setWatchHistory(data);
         setLoading(false);
-    };
+    }, [user]);
 
     useEffect(() => {
         fetchData();
-    }, [user]);
+    }, [fetchData]);
 
     const updateHistory = async (payload: { seriesId: string; episodeId: string; episodeInSeason: number; progress: number }, options?: { silent?: boolean }) => {
         if (!user) return;

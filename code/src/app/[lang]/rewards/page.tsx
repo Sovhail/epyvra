@@ -1,6 +1,6 @@
 
 'use client';
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useUser } from '@/firebase';
 import { getRewardTasks, getRewardSettings, getUserClaims } from '@/lib/data.actions';
 import type { RewardTask, RewardsSettings, UserRewardClaim } from '@/lib/types';
@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 import { useTranslation } from '@/lib/translation-provider';
 import { useRouter } from 'next/navigation';
 
-function RewardTaskItem({ task, claim, onClaimed }: { task: RewardTask, claim?: UserRewardClaim, onClaimed: () => void }) {
+function RewardTaskItem({ task, onClaimed }: { task: RewardTask, onClaimed: () => void }) {
     const { user, refreshProfile } = useUser();
     const { toast } = useToast();
     const { t } = useTranslation();
@@ -55,7 +55,7 @@ function RewardTaskItem({ task, claim, onClaimed }: { task: RewardTask, claim?: 
             document.removeEventListener('visibilitychange', handleVisibilityChange);
             if (timerRef.current) clearInterval(timerRef.current);
         };
-    }, [isLinkTimerActive, task.timerSeconds]);
+    }, [isLinkTimerActive, task.timerSeconds, toast]);
 
     const handleAction = async () => {
         if (!user) return;
@@ -259,7 +259,7 @@ export default function RewardsPage() {
     const [loading, setLoading] = useState(true);
     const [isCheckingIn, setIsCheckingIn] = useState(false);
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         if (!user) return;
         setLoading(true);
         const [tData, sData, cData] = await Promise.all([
@@ -272,12 +272,12 @@ export default function RewardsPage() {
         setSettings(sData);
         setClaims(cData);
         setLoading(false);
-    };
+    }, [user]);
 
     useEffect(() => {
         if (user) fetchData();
         else if (!userLoading) setLoading(false);
-    }, [user, userLoading]);
+    }, [user, userLoading, fetchData]);
 
     const handleDailyCheckIn = async () => {
         if (!user || isCheckingIn) return;
@@ -398,8 +398,7 @@ export default function RewardsPage() {
                             </div>
                         ) : (
                             availableTasks.map(task => {
-                                const claim = claims.find(c => c.taskId === task.id);
-                                return <RewardTaskItem key={task.id} task={task} claim={claim} onClaimed={fetchData} />;
+                                return <RewardTaskItem key={task.id} task={task} onClaimed={fetchData} />;
                             })
                         )}
                     </div>

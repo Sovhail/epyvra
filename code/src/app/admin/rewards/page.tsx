@@ -1,6 +1,6 @@
 
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import type { RewardTask, RewardsSettings } from '@/lib/types';
 import { getRewardTasks, getRewardSettings } from '@/lib/data.actions';
 import { saveRewardTaskAction, deleteRewardTaskAction, saveRewardSettingsAction } from '@/lib/actions';
@@ -211,18 +211,18 @@ export default function RewardsPage() {
     const [dailyRewards, setDailyRewards] = useState<number[]>([]);
     const [platform, setPlatform] = useState<RewardPlatform>('website');
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         setLoading(true);
         const [tData, sData] = await Promise.all([getRewardTasks(platform), getRewardSettings()]);
         setTasks(tData);
         setSettings(sData);
         setDailyRewards(sData?.dailyRewards || [10, 20, 30, 40, 50, 60, 70]);
         setLoading(false);
-    };
+    }, [platform]);
 
     useEffect(() => {
         fetchData();
-    }, [platform]);
+    }, [fetchData]);
 
     const handleSaveGlobal = async (isEnabled: boolean) => {
         // Optimistic update

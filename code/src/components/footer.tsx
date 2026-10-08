@@ -10,6 +10,7 @@ import { i18n } from '@/i18n-config';
 import { useSettings } from '@/lib/settings-provider';
 import { useTranslation } from '@/lib/translation-provider';
 import { getCustomPages } from '@/lib/data.actions';
+import Image from 'next/image';
 
 const socialIcons: { [key: string]: React.ElementType } = {
     facebook: Facebook,
@@ -72,9 +73,11 @@ export function Footer() {
             rel="noopener noreferrer" 
             className="transition-all hover:scale-105 active:scale-95 inline-block"
         >
-            <img 
+            <Image 
                 src={type === 'apple' ? '/images/appstore.png' : '/images/googleplay.png'} 
                 alt={type === 'apple' ? 'Download on the App Store' : 'Get it on Google Play'} 
+                width={135}
+                height={42}
                 className="h-[42px] w-auto object-contain"
             />
         </a>
@@ -90,7 +93,7 @@ export function Footer() {
                     {/* 1. BRAND & DESCRIPTION */}
                     <div className="flex flex-col items-center md:items-start gap-4">
                         <Link href={langPrefix || '/'} className="flex items-center gap-2 mb-2">
-                            <img src="/img/epyvra-logo.png" alt="EPYVRA" className="h-10 w-10 rounded-md object-contain" />
+                            <Image src="/img/epyvra-logo.png" alt="EPYVRA" width={40} height={40} className="h-10 w-10 rounded-md object-contain" />
                             <span className="text-xl font-bold tracking-tight text-white">
                                 {settings?.siteName || 'EPYVRA'}
                             </span>

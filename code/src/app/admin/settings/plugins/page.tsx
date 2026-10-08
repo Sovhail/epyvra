@@ -3,7 +3,7 @@ import { getErrorMessage } from '@/lib/error-utils';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -77,7 +77,7 @@ export default function PluginsSettingsPage() {
     },
   });
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     const settings = await getPluginsSettings();
     if (settings) {
@@ -106,11 +106,11 @@ export default function PluginsSettingsPage() {
       });
     }
     setLoading(false);
-  };
+  }, [form]);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   const onTestAi = async () => {
       const provider = form.getValues('aiProvider');

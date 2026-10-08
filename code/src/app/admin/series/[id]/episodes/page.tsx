@@ -1,8 +1,8 @@
 'use client';
 import { getErrorMessage } from '@/lib/error-utils';
-import { useMemo, useState, useEffect } from 'react';
+import { useCallback, useMemo, useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import type { Episode, Series, StorageSettings } from '@/lib/types';
+import type { Episode, Series } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -41,7 +41,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getEpisodesForSeries, getSeriesById, getStorageSettings } from '@/lib/data.actions';
+import { getEpisodesForSeries, getSeriesById } from '@/lib/data.actions';
 import { saveEpisodeAction, deleteEpisodeAction } from '@/lib/actions';
 import { BulkUploadDialog } from '@/components/admin/bulk-upload-dialog';
 
@@ -97,11 +97,10 @@ function EpisodeDialog({ seriesId, episodeToEdit, children, nextEpisodeNumber, o
     const [isOpen, setIsOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [episodes, setEpisodes] = useState<EpisodeState[]>([]);
-    const [storageSettings, setStorageSettings] = useState<StorageSettings | null>(null);
 
     const isEditMode = !!episodeToEdit;
 
-    const createNewSource = (quality = '720p', url = '', sourceType: 'upload' | 'link' | 'embed' = 'upload'): VideoSourceState => ({
+    const createNewSource = useCallback((quality = '720p', url = '', sourceType: 'upload' | 'link' | 'embed' = 'upload'): VideoSourceState => ({
         key: `source-${Date.now()}-${Math.random()}`,
         quality,
         sourceType,
@@ -109,7 +108,7 @@ function EpisodeDialog({ seriesId, episodeToEdit, children, nextEpisodeNumber, o
         file: null,
         uploadProgress: 0,
         status: 'idle',
-    });
+    }), []);
 
     const createNewSubtitle = (language = 'English', languageCode = 'en', url = '', sourceType: 'upload' | 'link' = 'upload'): SubtitleState => ({
         key: `sub-${Date.now()}-${Math.random()}`,
@@ -122,16 +121,15 @@ function EpisodeDialog({ seriesId, episodeToEdit, children, nextEpisodeNumber, o
         status: 'idle',
     });
 
-    const createNewEpisode = (episodeNumber: number): EpisodeState => ({
+    const createNewEpisode = useCallback((episodeNumber: number): EpisodeState => ({
         key: `episode-${Date.now()}-${Math.random()}`,
         episodeInSeason: episodeNumber,
         sources: [createNewSource()],
         subtitles: [],
-    });
+    }), [createNewSource]);
 
     useEffect(() => {
         if (isOpen) {
-            getStorageSettings().then(setStorageSettings);
             if (isEditMode && episodeToEdit) {
                 const sources = (episodeToEdit.videoSources && episodeToEdit.videoSources.length > 0)
                     ? episodeToEdit.videoSources.map(s => {
@@ -155,7 +153,7 @@ function EpisodeDialog({ seriesId, episodeToEdit, children, nextEpisodeNumber, o
                 setEpisodes([createNewEpisode(nextEpisodeNumber)]);
             }
         }
-    }, [isOpen, episodeToEdit, isEditMode, nextEpisodeNumber]);
+    }, [isOpen, episodeToEdit, isEditMode, nextEpisodeNumber, createNewEpisode, createNewSource]);
 
     const handleEpisodeChange = (epIndex: number, field: 'episodeInSeason', value: number) => {
         const newEpisodes = [...episodes];
@@ -589,16 +587,16 @@ export default function SeriesEpisodesPage() {
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (!seriesId) return;
     setLoading(true);
     const [seriesData, episodesData] = await Promise.all([getSeriesById(seriesId), getEpisodesForSeries(seriesId)]);
     setSeries(seriesData);
     setEpisodes(episodesData.sort((a, b) => a.episodeInSeason - b.episodeInSeason));
     setLoading(false);
-  };
+  }, [seriesId]);
 
-  useEffect(() => { fetchData(); }, [seriesId]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const nextEpisodeNumber = useMemo(() => {
       if (episodes.length === 0) return 1;

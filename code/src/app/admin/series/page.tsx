@@ -45,7 +45,7 @@ import { Input } from '@/components/ui/input';
 import { getAllSeriesForAdmin, getAllLanguages } from '@/lib/data.actions';
 import { deleteSeriesAction } from '@/lib/actions';
 
-function DeleteSeriesAlert({ seriesId, seriesTitle, onConfirm }: { seriesId: string, seriesTitle: string, onConfirm: () => void }) {
+function DeleteSeriesAlert({ seriesTitle, onConfirm }: { seriesTitle: string, onConfirm: () => void }) {
     return (
         <AlertDialogContent>
             <AlertDialogHeader>
@@ -261,7 +261,7 @@ export default function AdminSeriesPage() {
                 ))}
                 </TableBody>
             </Table>
-             {selectedSeries && <DeleteSeriesAlert seriesId={selectedSeries.id} seriesTitle={selectedSeries.title} onConfirm={handleConfirmDelete} />}
+             {selectedSeries && <DeleteSeriesAlert seriesTitle={selectedSeries.title} onConfirm={handleConfirmDelete} />}
             </AlertDialog>
             {!loading && displayedSeries.length === 0 && (
              <div className="text-center py-20 text-muted-foreground">
