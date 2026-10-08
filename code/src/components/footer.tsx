@@ -90,13 +90,7 @@ export function Footer() {
                     {/* 1. BRAND & DESCRIPTION */}
                     <div className="flex flex-col items-center md:items-start gap-4">
                         <Link href={langPrefix || '/'} className="flex items-center gap-2 mb-2">
-                            {settings?.logoUrl ? (
-                                <img src={settings.logoUrl} alt={settings.siteName || 'EPYVRA'} className="h-8 w-auto object-contain" />
-                            ) : (
-                                <div className="bg-primary text-primary-foreground font-bold rounded-lg w-8 h-8 flex items-center justify-center text-lg">
-                                    {settings?.siteName ? settings.siteName.charAt(0).toUpperCase() : 'S'}
-                                </div>
-                            )}
+                            <img src="/img/epyvra-logo.png" alt="EPYVRA" className="h-10 w-10 rounded-md object-contain" />
                             <span className="text-xl font-bold tracking-tight text-white">
                                 {settings?.siteName || 'EPYVRA'}
                             </span>

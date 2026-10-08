@@ -3,7 +3,6 @@ import { getGeneralSettings } from '@/lib/data.actions';
 
 export default async function manifest(): Promise<MetadataRoute.Manifest> {
   const settings = await getGeneralSettings();
-  const favicon = settings?.faviconUrl || '/favicon.ico';
   const siteName = settings?.siteName || 'EPYVRA';
 
   return {
@@ -16,17 +15,17 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
     theme_color: '#f857a6',
     icons: [
       {
-        src: favicon,
-        sizes: 'any',
-        type: 'image/x-icon',
-      },
-      {
-        src: favicon,
+        src: '/img/epyvra-icon-192.png',
         sizes: '192x192',
         type: 'image/png',
       },
       {
-        src: favicon,
+        src: '/img/epyvra-icon-512.png',
+        sizes: '512x512',
+        type: 'image/png',
+      },
+      {
+        src: '/img/epyvra-icon-512.png',
         sizes: '512x512',
         type: 'image/png',
       },

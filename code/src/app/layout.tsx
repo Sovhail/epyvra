@@ -5,7 +5,7 @@ import { getGeneralSettings } from '@/lib/data.actions';
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getGeneralSettings();
-  const favicon = settings?.faviconUrl || '/favicon.ico';
+  const favicon = '/img/epyvra-icon-512.png';
   const siteName = settings?.siteName || 'EPYVRA';
   
   return {
@@ -20,7 +20,7 @@ export async function generateMetadata(): Promise<Metadata> {
             { url: favicon, sizes: '16x16', type: 'image/png' },
         ],
         apple: [
-            { url: favicon, sizes: '180x180', type: 'image/png' },
+            { url: '/img/epyvra-apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
         ],
         shortcut: [favicon],
     },

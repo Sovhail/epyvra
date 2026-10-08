@@ -56,7 +56,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 const Logo = () => (
-    <img src="/img/admin-logo.png" alt="Admin Logo" width="32" height="32" className="rounded-lg object-contain" />
+    <img src="/img/epyvra-logo.png" alt="EPYVRA" width="32" height="32" className="rounded-lg object-contain" />
 );
 
 export function AdminLayoutShell({
