@@ -1,0 +1,12 @@
+# Owner-specific release signing material. Never commit these files.
+Android App/keystore/
+Android App/.release-signing.env
+
+# Local service configuration and generated build output.
+Android App/google-services.json
+Android App/.gradle/
+Android App/build/
+Android App/app/build/
+code/.env.local
+code/.next/
+code/node_modules/
