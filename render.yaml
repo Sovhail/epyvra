@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: epyvra-web
+    runtime: node
+    plan: free
+    region: frankfurt
+    branch: main
+    rootDir: code
+    buildCommand: npm ci && npm run typecheck && npm run lint && npm run build
+    startCommand: npm start
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DEMO_MODE
+        value: "false"
+      - key: MONGODB_URI
+        sync: false
+      - key: NEXT_PUBLIC_SITE_URL
+        sync: false
+      - key: ADMIN_SESSION_SECRET
+        generateValue: true
+      - key: INSTALL_SETUP_TOKEN
+        generateValue: true
+      - key: VIDEO_SECRET
+        generateValue: true
+      - key: PREMIUM_MEDIA_TOKEN_TTL_SECONDS
+        value: "300"
+      - key: PREMIUM_MEDIA_BIND_IP
+        value: "true"
+      - key: BUNNY_CDN_HOST
+        sync: false
+      - key: BUNNY_CDN_TOKEN_KEY
+        sync: false
+      - key: EPYVRA_REMOTE_FETCH_HOSTS
+        sync: false
