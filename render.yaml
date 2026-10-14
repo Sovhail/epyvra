@@ -28,9 +28,3 @@ services:
         value: "300"
       - key: PREMIUM_MEDIA_BIND_IP
         value: "true"
-      - key: BUNNY_CDN_HOST
-        sync: false
-      - key: BUNNY_CDN_TOKEN_KEY
-        sync: false
-      - key: EPYVRA_REMOTE_FETCH_HOSTS
-        sync: false
