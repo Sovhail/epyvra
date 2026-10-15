@@ -1,21 +1,36 @@
 import { initializeApp, getApps, cert, type ServiceAccount } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
+import { readFile } from 'node:fs/promises';
 import { getServerGeneralSettings as getGeneralSettings } from './server-settings';
 
 let initialized = false;
+
+async function getConfiguredServiceAccount(): Promise<unknown> {
+    const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH?.trim();
+    if (serviceAccountPath) {
+        return JSON.parse(await readFile(serviceAccountPath, 'utf8')) as unknown;
+    }
+
+    const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON?.trim();
+    if (serviceAccountJson) {
+        return JSON.parse(serviceAccountJson) as unknown;
+    }
+
+    const settings = await getGeneralSettings();
+    return settings?.firebaseServiceAccount;
+}
 
 export async function getFirebaseAdmin() {
     if (initialized && getApps().length > 0) {
         return { auth: () => getAuth() };
     }
 
-    const settings = await getGeneralSettings();
-    if (!settings?.firebaseServiceAccount) {
-        throw new Error('Firebase Service Account JSON is not configured in Admin Settings.');
+    const configuredAccount = await getConfiguredServiceAccount();
+    if (!configuredAccount) {
+        throw new Error('Firebase Service Account is not configured.');
     }
 
     try {
-        const configuredAccount: unknown = settings.firebaseServiceAccount;
         let parsedAccount: unknown;
 
         if (typeof configuredAccount === 'string') {
