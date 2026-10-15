@@ -25,8 +25,6 @@ type SettingsDocument = {
     maxFailedLoginsPerIp?: number;
     maxPasswordResetsPerDay?: number;
     siteUrl?: string;
-    isLicenseActive?: boolean;
-    licenseKey?: string;
 };
 type RateLimitDocument = { _id: string; count: number; createdAt?: Date };
 type AdminProfileUpdate = {
@@ -214,17 +212,6 @@ export async function installSetupAdminAction(data: { username: string, email: s
     } catch (e) {
         return handleError('installSetupAdminAction', e, 'Admin profile setup failed.');
     }
-}
-
-/**
- * Validates the product license key.
- */
-export async function testLicenseAction(licenseKey: string) {
-    if (!(await verifyAdminSession())) return { success: false, message: 'Unauthorized access.' };
-    const demoError = getDemoModeMutationError();
-    if (demoError) return demoError;
-        if (licenseKey.length > 10) { const db = await getDb(); await db.collection<SettingsDocument>('settings').updateOne({ _id: 'general' }, { $set: { isLicenseActive: true, licenseKey } }, { upsert: true }); return { success: true, message: 'License activated successfully!' }; }
-    return { success: false, message: 'Invalid license key.' };
 }
 
 /**

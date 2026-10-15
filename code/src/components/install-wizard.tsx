@@ -17,12 +17,6 @@ export function InstallWizard() {
     const [isLoading, setIsLoading] = useState(false);
     const [setupToken, setSetupToken] = useState('');
 
-    // Step 1: License Activation
-    const [purchaseCode, setPurchaseCode] = useState('');
-    const [domain, setDomain] = useState('');
-    const [licenseStatus, setLicenseStatus] = useState<'idle' | 'activating' | 'success' | 'error'>('idle');
-    const [licenseMessage, setLicenseMessage] = useState('');
-    
     // Step 2: Database Test
     const [dbStatus, setDbStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
     const [dbMessage, setDbStatusMessage] = useState('');
@@ -43,44 +37,9 @@ export function InstallWizard() {
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
-            setDomain(window.location.hostname);
             setSiteUrl(window.location.origin);
         }
     }, []);
-
-    const handleVerifyLicense = async () => {
-        if (!purchaseCode || !domain) {
-            toast({ variant: 'destructive', title: 'Required', description: 'Please enter purchase code and domain.' });
-            return;
-        }
-        setLicenseStatus('activating');
-        setLicenseMessage('Connecting to activation server...');
-
-        try {
-            const res = await fetch('/api/install/activate', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ purchaseCode, domain, setupToken }),
-            });
-            const data = await res.json();
-            if (res.ok && data.success) {
-                setLicenseStatus('success');
-                setLicenseMessage(data.message || 'License activated successfully!');
-                toast({ title: 'Success', description: 'License verified and saved.' });
-            } else {
-                setLicenseStatus('error');
-                setLicenseMessage(data.error || 'Failed to activate license.');
-                toast({ variant: 'destructive', title: 'Verification Failed', description: data.error });
-            }
-        } catch (error) {
-            const message = error instanceof Error ? error.message : 'An error occurred during verification.';
-            setLicenseStatus('error');
-            setLicenseMessage(message);
-            toast({ variant: 'destructive', title: 'Error', description: message });
-        }
-    };
 
     const handleTestDb = async () => {
         setDbStatus('testing');
@@ -210,61 +169,25 @@ export function InstallWizard() {
                 </div>
 
                 <Card className="bg-slate-900 border-slate-800 shadow-2xl overflow-hidden">
-                    {/* STEP 1: License Activation */}
+                    {/* STEP 1: Owner authorization */}
                     {step === 1 && (
                         <>
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
                                     <KeyRound className="h-5 w-5 text-pink-400" />
-                                    Step 1: License Activation
+                                    Step 1: Owner Authorization
                                 </CardTitle>
-                                <CardDescription>Activate your product license using your Envato Purchase Code.</CardDescription>
+                                <CardDescription>Enter the private installation token configured in Render.</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="purchaseCode">Envato Purchase Code</Label>
-                                    <Input 
-                                        id="purchaseCode" 
-                                        placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" 
-                                        value={purchaseCode} 
-                                        onChange={e => setPurchaseCode(e.target.value)} 
-                                        className="bg-slate-800/50 border-slate-700"
-                                        disabled={licenseStatus === 'success'}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="domain">Current Domain</Label>
-                                    <Input 
-                                        id="domain" 
-                                        placeholder="yourdomain.com" 
-                                        value={domain} 
-                                        onChange={e => setDomain(e.target.value)} 
-                                        className="bg-slate-800/50 border-slate-700"
-                                        disabled={licenseStatus === 'success'}
-                                    />
-                                </div>
-
-                                <div className={cn(
-                                    "p-4 rounded-xl border flex flex-col gap-2 text-xs",
-                                    licenseStatus === 'success' ? "bg-green-500/10 border-green-500/30 text-green-400" : 
-                                    licenseStatus === 'error' ? "bg-red-500/10 border-red-500/30 text-red-400" : "hidden"
-                                )}>
-                                    <p className="font-semibold">{licenseStatus === 'success' ? 'Verification Success' : 'Verification Failed'}</p>
-                                    <p>{licenseMessage}</p>
-                                </div>
+                                <p className="text-sm text-slate-300">
+                                    EPYVRA does not contact an external license server. The token is verified server-side for every installation change and is never stored in the database.
+                                </p>
                             </CardContent>
-                            <CardFooter className="flex gap-4">
+                            <CardFooter>
                                 <Button 
-                                    className="flex-1" 
-                                    onClick={handleVerifyLicense} 
-                                    disabled={licenseStatus === 'activating' || licenseStatus === 'success'}
-                                >
-                                    {licenseStatus === 'activating' ? <Loader2 className="animate-spin mr-2" /> : null}
-                                    {licenseStatus === 'success' ? 'License Activated' : 'Verify & Activate'}
-                                </Button>
-                                <Button 
-                                    className="flex-1" 
-                                    disabled={licenseStatus !== 'success'} 
+                                    className="w-full"
+                                    disabled={!setupToken.trim()}
                                     onClick={() => setStep(2)}
                                 >
                                     Next: Connect Database <ArrowRight className="ml-2 h-4 w-4" />

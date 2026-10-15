@@ -82,7 +82,6 @@ test('installation mutations require a one-time setup token and cannot overwrite
   const installAuth = await source('src', 'lib', 'install-auth.ts');
   const auth = await source('src', 'lib', 'actions', 'auth.ts');
   const content = await source('src', 'lib', 'actions', 'content.ts');
-  const activation = await source('src', 'app', 'api', 'install', 'activate', 'route.ts');
   assert.match(installAuth, /INSTALL_SETUP_TOKEN/);
   assert.match(installAuth, /findOne\(\{ _id: 'admin' \}\)/);
   assert.match(auth, /authorizeInstall\(data\.setupToken\)/);
@@ -90,14 +89,22 @@ test('installation mutations require a one-time setup token and cannot overwrite
   const setupAdmin = auth.match(/export async function installSetupAdminAction[\s\S]*?\n\}/)?.[0] ?? '';
   assert.doesNotMatch(setupAdmin, /upsert:\s*true/);
   assert.match(content, /installInitializeDbAction[\s\S]*?authorizeInstall\(setupToken\)/);
-  assert.match(activation, /authorizeInstall\([^)]*setupToken/);
+});
+
+test('owner installation has no external marketplace license dependency', async () => {
+  const wizard = await source('src', 'components', 'install-wizard.tsx');
+  const adminLayout = await source('src', 'app', 'admin', 'layout.tsx');
+  const middleware = await source('src', 'middleware.ts');
+  const dataActions = await source('src', 'lib', 'data.actions.ts');
+  for (const implementation of [wizard, adminLayout, middleware, dataActions]) {
+    assert.doesNotMatch(implementation, /Envato|DevSnaplix|purchaseCode|verifyLicensePeriodically|\/activate/i);
+  }
+  assert.match(wizard, /INSTALL_SETUP_TOKEN/);
 });
 
 test('server-side remote fetches reject private networks and validate every redirect', async () => {
   const safeFetch = await source('src', 'lib', 'safe-fetch.ts');
   const video = await source('src', 'app', 'api', 'video', 'route.ts');
-  const activation = await source('src', 'app', 'api', 'install', 'activate', 'route.ts');
-  const dataActions = await source('src', 'lib', 'data.actions.ts');
   assert.match(safeFetch, /node:dns\/promises/);
   assert.match(safeFetch, /Only HTTP\(S\) remote URLs are allowed/);
   assert.match(safeFetch, /a === 127/);
@@ -109,8 +116,6 @@ test('server-side remote fetches reject private networks and validate every redi
   assert.match(safeFetch, /allowedHosts\.includes\(url\.hostname\.toLowerCase\(\)\)/);
   assert.match(safeFetch, /assertPublicHttpUrl\(new URL\(location, current\)/);
   assert.match(video, /safeFetch\(filePath/);
-  assert.match(activation, /safeFetch\(apiUrl/);
-  assert.match(dataActions, /safeFetch\(apiUrl/);
 });
 
 test('storage provider host components are constrained before credentials are sent', async () => {

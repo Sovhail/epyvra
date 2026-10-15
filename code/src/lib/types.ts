@@ -308,9 +308,6 @@ export type GeneralSettings = {
     youtube?: string;
     twitter?: string;
   };
-  licenseKey?: string;
-  codecanyonUsername?: string;
-  isLicenseActive?: boolean;
   appStoreUrl?: string;
   playStoreUrl?: string;
   apiKey?: string;

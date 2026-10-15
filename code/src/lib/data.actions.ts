@@ -4,7 +4,6 @@ import type { Document, WithId } from 'mongodb';
 import { getDb } from './mongodb';
 import type { Series, Episode, CoinPack, MonetizationSettings, Purchase, Ad, GeneralSettings, Language, UITranslations, CustomPage, ContactMessage, Report, Category, PluginsSettings, RewardTask, RewardsSettings, UserRewardClaim, CoinTransaction, PaymentGatewaySettings, AdminProfile, Favorite, WatchHistory, StorageSettings, AdminUser } from './types';
 import { isDemoMode } from './demo-mode';
-import { safeFetch } from './safe-fetch';
 import { getQueryById, mapDoc } from './actions/utils';
 
 type StringIdDocument = { _id: string; [key: string]: unknown };
@@ -446,106 +445,5 @@ export async function getMobileSettings(): Promise<import('./types').MobileSetti
         return (await canReadPrivateSettings()) ? mapped : publicMobileSettings(mapped);
     } catch {
         return null;
-    }
-}
-
-export async function verifyLicensePeriodically(domain: string): Promise<boolean> {
-    try {
-        const db = await getDb();
-        const settings = await db.collection<StringIdDocument>('settings').findOne({ _id: 'general' });
-        
-        // If settings doesn't exist, we let the installer run
-        if (!settings) {
-            return true;
-        }
-
-        // If license is explicitly inactive, block
-        if (settings.isLicenseActive === false) {
-            return false;
-        }
-
-        const purchaseCode = settings.purchaseCode;
-
-        // If no purchase code is configured, block
-        if (!purchaseCode) {
-            return false;
-        }
-
-        const lastCheck = settings.lastLicenseCheckAt;
-        const oneDay = 24 * 60 * 60 * 1000;
-
-        // If checked within the last 24 hours, return cached status
-        if ((typeof lastCheck === 'string' || lastCheck instanceof Date)
-            && (Date.now() - new Date(lastCheck).getTime() < oneDay)) {
-            return settings.isLicenseActive !== false;
-        }
-
-        // Otherwise, make the check request to DevSnaplix API server
-        const apiUrl = process.env.DEVSNAPLIX_API_URL || 'https://devsnaplix-api.gadohost.com/api/verify';
-        
-        console.log(`[License Check] Verifying license for domain ${domain} against ${apiUrl}...`);
-        
-        try {
-            const response = await safeFetch(apiUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    purchaseCode: purchaseCode,
-                    domain: domain,
-                }),
-            });
-
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                // Verification successful
-                await db.collection<StringIdDocument>('settings').updateOne(
-                    { _id: 'general' },
-                    { 
-                        $set: { 
-                            isLicenseActive: true, 
-                            licenseKey: data.licenseKey,
-                            lastLicenseCheckAt: new Date()
-                        } 
-                    }
-                );
-                return true;
-            } else {
-                // Verification failed (code revoked, invalid, or wrong domain)
-                console.warn(`[License Check] Verification failed: ${data.error || 'Unknown error'}`);
-                await db.collection<StringIdDocument>('settings').updateOne(
-                    { _id: 'general' },
-                    { 
-                        $set: { 
-                            isLicenseActive: false,
-                            lastLicenseCheckAt: new Date()
-                        } 
-                    }
-                );
-                return false;
-            }
-        } catch (fetchError) {
-            console.error('[License Check] Network error calling verification API:', getErrorMessage(fetchError));
-            // On network failure, update last check time to retry in 4 hours, and let client pass
-            const retryTime = new Date(Date.now() - (24 - 4) * 60 * 60 * 1000); // 4 hours retry window
-            await db.collection<StringIdDocument>('settings').updateOne(
-                { _id: 'general' },
-                { 
-                    $set: { 
-                        lastLicenseCheckAt: retryTime
-                    } 
-                }
-            );
-            return true;
-        }
-    } catch (e) {
-        if (process.env.NODE_ENV !== 'production') {
-            console.error('[License Check] Error in verifyLicensePeriodically:', e);
-        } else {
-            console.error('[License Check] Error in verifyLicensePeriodically:', getErrorMessage(e, 'Database error'));
-        }
-        return true; // Fallback in case of database error
     }
 }

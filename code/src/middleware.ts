@@ -65,10 +65,9 @@ export async function middleware(request: NextRequest) {
         return NextResponse.next();
     }
 
-    // Bypass localization for installation, activation, and share pages
+    // Bypass localization for installation and share pages
     if (
         pathname === '/install' || pathname.startsWith('/install/') ||
-        pathname === '/activate' || pathname.startsWith('/activate/') ||
         pathname === '/share' || pathname.startsWith('/share/')
     ) {
         return NextResponse.next();

@@ -215,9 +215,9 @@ export function DashboardClient({ initialData, dateRange }: DashboardClientProps
                 <div className="p-4 bg-primary/5 rounded-xl border border-primary/10 mt-2">
                     <div className="flex items-center gap-2 text-primary mb-2">
                         <ShieldCheck className="h-4 w-4" />
-                        <span className="text-[11px] font-black">License Status</span>
+                        <span className="text-[11px] font-black">Installation Security</span>
                     </div>
-                    <p className="text-[10px] text-muted-foreground leading-relaxed">System is running on a verified Envato Purchase Code. Multi-site protection active.</p>
+                    <p className="text-[10px] text-muted-foreground leading-relaxed">Owner setup is protected by a private, server-side installation token.</p>
                 </div>
             </CardContent>
         </Card>
