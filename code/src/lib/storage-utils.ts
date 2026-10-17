@@ -4,7 +4,7 @@ import fs from 'fs/promises';
 import { resolve, sep } from 'path';
 import { getServerStorageSettings as getStorageSettings } from './server-settings';
 import { S3Client, DeleteObjectCommand, type S3ClientConfig } from '@aws-sdk/client-s3';
-import { assertPublicHttpUrl, normalizeBunnyRegion, safeFetch } from './safe-fetch';
+import { assertPublicHttpUrl, normalizeBunnyRegion } from './safe-fetch';
 type CloudStorageConfig = { accessKeyId?: string; secretAccessKey?: string; applicationKeyId?: string; applicationKey?: string; endpoint?: string; bucket: string; region?: string };
 
 /**
@@ -72,7 +72,10 @@ export async function deleteFile(fileUrl: string | null | undefined) {
                 const url = `https://${host}/${storageZoneName}/${key}`;
                 
                 try {
-                    const response = await safeFetch(url, {
+                    // The Bunny Storage endpoint is constructed from a validated region and
+                    // is not user-controlled. Do not route it through the remote-media host
+                    // allowlist, which intentionally contains CDN delivery hosts only.
+                    const response = await fetch(url, {
                         method: 'DELETE',
                         headers: {
                             'AccessKey': apiKey

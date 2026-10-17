@@ -506,10 +506,10 @@ export async function saveSeriesAction(seriesData: SeriesInput) {
         if (id) {
             const current = await db.collection('series').findOne(getQueryById(id));
             // Cleanup old cover if changed
-            if (current?.coverUrl && data.coverUrl && current.coverUrl !== data.coverUrl) {
+            if (current?.coverUrl && current.coverUrl !== data.coverUrl) {
                 await deleteFile(current.coverUrl);
             }
-            if (current?.featuredCoverUrl && data.featuredCoverUrl && current.featuredCoverUrl !== data.featuredCoverUrl) {
+            if (current?.featuredCoverUrl && current.featuredCoverUrl !== data.featuredCoverUrl) {
                 await deleteFile(current.featuredCoverUrl);
             }
             await db.collection('series').updateOne(getQueryById(id), { $set: { ...data, updatedAt: new Date() } });
@@ -1200,4 +1200,3 @@ export async function generateMobileApiKeyAction() {
         return handleError('generateMobileApiKeyAction', e, 'Failed to generate API key.');
     }
 }
-
