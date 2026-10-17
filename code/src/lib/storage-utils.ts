@@ -40,23 +40,28 @@ export async function deleteFile(fileUrl: string | null | undefined) {
         const bunnyConfig = activeProvider === 'bunny' ? storageSettings?.bunny : undefined;
         if (bunnyConfig) {
             const config = bunnyConfig;
-            let pullZone = config.pullZoneUrl || '';
-            if (pullZone) {
-                if (!/^https?:\/\//i.test(pullZone)) {
-                    pullZone = `https://${pullZone}`;
-                }
-                if (!pullZone.endsWith('/')) {
-                    pullZone += '/';
-                }
-            }
-            if (pullZone && (fileUrl.startsWith('http') || fileUrl.includes(pullZone))) {
-                let key = fileUrl.replace(pullZone, '');
-                if (key.startsWith('/')) {
-                    key = key.substring(1);
-                }
+            const pullZoneUrl = config.pullZoneUrl?.trim();
+            if (pullZoneUrl) {
+                const normalizedPullZoneUrl = /^https?:\/\//i.test(pullZoneUrl)
+                    ? pullZoneUrl
+                    : `https://${pullZoneUrl}`;
+                const configuredHost = new URL(normalizedPullZoneUrl).hostname.toLowerCase();
+                const storedUrl = new URL(fileUrl);
+                const storedHost = storedUrl.hostname.toLowerCase();
+                const isConfiguredHost = storedHost === configuredHost;
+                // Keep deletion compatible with URLs saved before a custom Bunny hostname
+                // was configured. Bunny's generated pull-zone host always ends in b-cdn.net.
+                const isLegacyBunnyHost = storedHost.endsWith('.b-cdn.net');
+                if (!isConfiguredHost && !isLegacyBunnyHost) return;
+
+                const key = storedUrl.pathname.replace(/^\/+/, '');
+                if (!key) return;
                 
                 const storageZoneName = config.storageZoneName;
-                const apiKey = config.apiKey;
+                const apiKey = config.apiKey?.trim();
+                if (!storageZoneName || !apiKey) {
+                    throw new Error('Bunny storage credentials are incomplete.');
+                }
                 const region = normalizeBunnyRegion(config.region);
                 
                 let host = 'storage.bunnycdn.com';
