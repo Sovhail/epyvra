@@ -18,16 +18,13 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
         src: '/img/epyvra-icon-192.png',
         sizes: '192x192',
         type: 'image/png',
+        purpose: 'any',
       },
       {
         src: '/img/epyvra-icon-512.png',
         sizes: '512x512',
         type: 'image/png',
-      },
-      {
-        src: '/img/epyvra-icon-512.png',
-        sizes: '512x512',
-        type: 'image/png',
+        purpose: 'maskable',
       },
     ],
   };

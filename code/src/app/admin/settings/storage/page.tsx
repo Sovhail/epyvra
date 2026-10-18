@@ -19,7 +19,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 const storageFormSchema = z.object({
   activeProvider: z.enum(['local', 'digitalocean', 's3', 'gcs', 'backblaze', 'bunny']).default('local'),
-  videoUploadMaxSizeMb: z.coerce.number().min(1).default(100),
+  videoUploadMaxSizeMb: z.coerce.number().int().min(1).max(200).default(100),
   digitalocean: z.object({
     accessKeyId: z.string().optional(),
     secretAccessKey: z.string().optional(),

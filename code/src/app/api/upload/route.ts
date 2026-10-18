@@ -139,7 +139,7 @@ async function uploadToBunny(buffer: Buffer, originalName: string, subDir: strin
             'AccessKey': apiKey,
             'Content-Type': 'application/octet-stream',
         },
-        body: buffer
+        body: new Uint8Array(buffer)
     });
     
     if (!response.ok) {
@@ -236,10 +236,12 @@ async function validateRequest(request: NextRequest): Promise<NextResponse | nul
         return NextResponse.json({ success: false, error: DEMO_MODE_MUTATION_MESSAGE }, { status: 403 });
     }
 
+    const settings = await getStorageSettings();
+    const configuredMb = Math.min(200, Math.max(1, Math.trunc(Number(settings?.videoUploadMaxSizeMb) || 100)));
     const contentLength = Number(request.headers.get('content-length') || 0);
-    const MAX_LIMIT = 2 * 1024 * 1024 * 1024; // 2GB
+    const MAX_LIMIT = configuredMb * 1024 * 1024;
     if (contentLength > MAX_LIMIT) {
-        return NextResponse.json({ success: false, error: 'File size exceeds limit (Max 2GB).' }, { status: 413 });
+        return NextResponse.json({ success: false, error: `File size exceeds limit (Max ${configuredMb}MB).` }, { status: 413 });
     }
 
     return null;
@@ -279,9 +281,11 @@ async function parseAndValidateFile(request: NextRequest): Promise<{
     const isSubtitle = detectedMime === 'text/vtt' || detectedExt === 'vtt' || detectedExt === 'srt';
     
     // Strict file-specific size checks
-    const sizeLimit = isSubtitle ? 5 * 1024 * 1024 : isImage ? 10 * 1024 * 1024 : 2 * 1024 * 1024 * 1024; // 5MB subtitles, 10MB images, 2GB videos
+    const settings = await getStorageSettings();
+    const videoLimitMb = Math.min(200, Math.max(1, Math.trunc(Number(settings?.videoUploadMaxSizeMb) || 100)));
+    const sizeLimit = isSubtitle ? 5 * 1024 * 1024 : isImage ? 10 * 1024 * 1024 : videoLimitMb * 1024 * 1024;
     if (file.size > sizeLimit) {
-        return NextResponse.json({ success: false, error: `File size exceeds allowed limit (${isSubtitle ? '5MB' : isImage ? '10MB' : '2GB'}).` }, { status: 413 });
+        return NextResponse.json({ success: false, error: `File size exceeds allowed limit (${isSubtitle ? '5MB' : isImage ? '10MB' : `${videoLimitMb}MB`}).` }, { status: 413 });
     }
 
     return { buffer, file, type, identifier, detectedMime, detectedExt };

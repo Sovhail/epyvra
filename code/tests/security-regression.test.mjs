@@ -241,3 +241,19 @@ test('Android checkout trusts only exact first-party result callbacks', async ()
   assert.match(checkout, /isAllowedCheckoutNavigation\(url, loadUrl\)/);
   assert.doesNotMatch(checkout, /loadUrl\.contains\("status=success"\)/);
 });
+
+test('storage settings and uploads enforce server-side bounds', async () => {
+  const content = await source('src', 'lib', 'actions', 'content.ts');
+  const upload = await source('src', 'app', 'api', 'upload', 'route.ts');
+  const nextConfig = await source('next.config.ts');
+  const render = await source('..', 'render.yaml');
+  assert.match(content, /providers\.includes\(data\.activeProvider as StorageProvider\)/);
+  assert.match(content, /Math\.min\(200, Math\.max\(1/);
+  assert.match(content, /method: 'DELETE'/);
+  assert.match(content, /epyvra_apk_/);
+  assert.match(upload, /settings\?\.videoUploadMaxSizeMb/);
+  assert.match(upload, /configuredMb \* 1024 \* 1024/);
+  assert.match(nextConfig, /bodySizeLimit: '200mb'/);
+  assert.match(nextConfig, /Strict-Transport-Security/);
+  assert.match(render, /npm run test:security/);
+});

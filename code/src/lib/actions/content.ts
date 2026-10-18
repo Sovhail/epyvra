@@ -29,6 +29,8 @@ import type {
     RewardTask,
     RewardsSettings,
     Series,
+    StorageProvider,
+    StorageSettings,
 } from '../types';
 import { getErrorMessage } from '../error-utils';
 
@@ -1090,7 +1092,31 @@ export async function saveStorageSettingsAction(data: UnknownRecord) {
 
     const demoError = getDemoModeMutationError();
     if (demoError) return demoError;
-    const db = await getDb(); await db.collection<StringIdDocument>('settings').updateOne({ _id: 'storage' }, { $set: data }, { upsert: true }); revalidatePath('/admin/settings/storage'); return { success: true };
+    const providers: StorageProvider[] = ['local', 'digitalocean', 's3', 'gcs', 'backblaze', 'bunny'];
+    if (typeof data.activeProvider !== 'string' || !providers.includes(data.activeProvider as StorageProvider)) {
+        return { success: false, error: 'Invalid storage provider.' };
+    }
+
+    const readConfig = (name: keyof StorageSettings, allowed: string[]) => {
+        const value = data[name];
+        if (!isRecord(value)) return undefined;
+        return Object.fromEntries(allowed.map(key => [key, typeof value[key] === 'string' ? value[key].trim() : '']));
+    };
+    const requestedLimit = Number(data.videoUploadMaxSizeMb);
+    const sanitized: Omit<StorageSettings, 'id'> = {
+        activeProvider: data.activeProvider as StorageProvider,
+        // Render's 512 MB instances cannot safely buffer multi-gigabyte multipart bodies.
+        videoUploadMaxSizeMb: Number.isFinite(requestedLimit) ? Math.min(200, Math.max(1, Math.trunc(requestedLimit))) : 100,
+        digitalocean: readConfig('digitalocean', ['accessKeyId', 'secretAccessKey', 'endpoint', 'bucket', 'region']) as StorageSettings['digitalocean'],
+        s3: readConfig('s3', ['accessKeyId', 'secretAccessKey', 'bucket', 'region']) as StorageSettings['s3'],
+        gcs: readConfig('gcs', ['accessKeyId', 'secretAccessKey', 'bucket']) as StorageSettings['gcs'],
+        backblaze: readConfig('backblaze', ['applicationKeyId', 'applicationKey', 'bucket', 'endpoint']) as StorageSettings['backblaze'],
+        bunny: readConfig('bunny', ['storageZoneName', 'apiKey', 'region', 'pullZoneUrl']) as StorageSettings['bunny'],
+    };
+    const db = await getDb();
+    await db.collection<StringIdDocument>('settings').updateOne({ _id: 'storage' }, { $set: sanitized }, { upsert: true });
+    revalidatePath('/admin/settings/storage');
+    return { success: true };
 }
 
 /**
@@ -1127,6 +1153,7 @@ export async function testStorageConnectionAction(provider: string, configValue:
                 body: 'test'
             });
             if (response.ok) {
+                await fetch(url, { method: 'DELETE', headers: { 'AccessKey': apiKey } }).catch(() => undefined);
                 return { success: true, message: 'Connected to BUNNY.NET' };
             } else {
                 const errMsg = await response.text();
@@ -1194,7 +1221,7 @@ export async function generateMobileApiKeyAction() {
     if (!(await import('./auth').then(m => m.verifyAdminSession()))) return { success: false, error: 'Unauthorized access.' };
 
     try {
-        const key = 'snap_apk_' + randomBytes(24).toString('hex');
+        const key = 'epyvra_apk_' + randomBytes(24).toString('hex');
         return { success: true, apiKey: key };
     } catch (e) {
         return handleError('generateMobileApiKeyAction', e, 'Failed to generate API key.');

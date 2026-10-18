@@ -4,38 +4,7 @@ interface GeoData {
   city?: string;
 }
 
-// --- Service 1: ip-api.com ---
-interface IpApiComResponse {
-  status: 'success' | 'fail';
-  country?: string;
-  countryCode?: string;
-  city?: string;
-  message?: string;
-}
-
-async function fetchFromIpApi(ip: string): Promise<GeoData | null> {
-  // This service does not work for localhost, it resolves the server's public IP.
-  const isLocal = ip === '127.0.0.1' || ip === '::1';
-  const requestIp = isLocal ? '' : ip;
-
-  try {
-    const response = await fetch(`http://ip-api.com/json/${requestIp}`);
-    if (!response.ok) return null;
-    const data: IpApiComResponse = await response.json();
-    if (data.status === 'success' && data.country) {
-        return {
-          country: data.country,
-          countryCode: data.countryCode,
-          city: data.city,
-        };
-    }
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-// --- Service 2: ipwho.is ---
+// --- Service 1: ipwho.is ---
 interface IpWhoResponse {
     success: boolean;
     country?: string;
@@ -47,7 +16,7 @@ async function fetchFromIpWho(ip: string): Promise<GeoData | null> {
   const isLocal = ip === '127.0.0.1' || ip === '::1';
   const requestIp = isLocal ? '' : ip;
   try {
-    const response = await fetch(`http://ipwho.is/${requestIp}`);
+    const response = await fetch(`https://ipwho.is/${encodeURIComponent(requestIp)}`);
     if (!response.ok) return null;
     const data: IpWhoResponse = await response.json();
     if (data.success && data.country) {
@@ -64,7 +33,7 @@ async function fetchFromIpWho(ip: string): Promise<GeoData | null> {
 }
 
 
-// --- Service 3: freegeoip.app ---
+// --- Service 2: freegeoip.app ---
 interface FreeGeoIpResponse {
   country_name?: string;
   country_code?: string;
@@ -76,7 +45,7 @@ async function fetchFromFreeGeoIp(ip: string): Promise<GeoData | null> {
   if (isLocal) return null; // This service requires a public IP
 
   try {
-    const response = await fetch(`https://freegeoip.app/json/${ip}`);
+    const response = await fetch(`https://freegeoip.app/json/${encodeURIComponent(ip)}`);
     if (!response.ok) return null;
     const data: FreeGeoIpResponse = await response.json();
     if (data.country_name) {
@@ -96,7 +65,6 @@ async function fetchFromFreeGeoIp(ip: string): Promise<GeoData | null> {
 export async function getGeoData(ip: string): Promise<GeoData | null> {
   // The services will be called in this order.
   const services = [
-    fetchFromIpApi,
     fetchFromIpWho,
     fetchFromFreeGeoIp
   ];
