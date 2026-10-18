@@ -21,7 +21,8 @@ export async function GET(request: NextRequest) {
         const generalSettings = await db.collection<Record<string, unknown> & { _id: string }>('settings').findOne({ _id: 'general' });
         const siteUrl = typeof generalSettings?.siteUrl === 'string' ? generalSettings.siteUrl : '';
         const emailLoginEnabled = generalSettings?.emailLoginEnabled !== false;
-        const googleLoginEnabled = generalSettings?.googleLoginEnabled !== false;
+        // Google Sign-In must fail closed until its OAuth client is explicitly configured.
+        const googleLoginEnabled = generalSettings?.googleLoginEnabled === true;
         const facebookLoginEnabled = generalSettings?.facebookLoginEnabled === true;
         const appleLoginEnabled = generalSettings?.appleLoginEnabled === true;
         const phoneLoginEnabled = generalSettings?.phoneLoginEnabled === true;

@@ -54,7 +54,7 @@
 - [x] Android release signing guard: passed; `bundleRelease` stopped because signing inputs were absent and did not fall back to the debug key.
 - [ ] Release bundle: blocked until the owner supplies the production keystore and signing values.
 - [x] Android Firebase base runtime: Firebase app `com.epyvra.app` was created and its ignored local `Android App/app/google-services.json` was validated by `processDebugGoogleServices`.
-- [ ] Firebase Google Sign-In: blocked until release SHA-1/SHA-256 are registered and Firebase supplies the Web OAuth client ID. Email/password Firebase Auth is configured.
+- [ ] Firebase Google Sign-In: debug SHA-1/SHA-256 are registered, but Google provider/Web OAuth client and release certificate hashes remain blocked. Email/password Firebase Auth is configured; Google login now fails closed until explicitly enabled.
 - [ ] Android production configuration: the APK now has a generated catalog API key, but the matching value must be saved to the production Atlas `settings.mobile` document. OneSignal and production ad IDs also remain owner/vendor inputs.
 - [x] Android API base URL points to `https://epyvra.com/api/mobile/v1`.
 - [x] Production dependency audit reduced from 106 findings (3 critical, 32 high) to 7 findings (0 critical, 6 high, 1 moderate).
