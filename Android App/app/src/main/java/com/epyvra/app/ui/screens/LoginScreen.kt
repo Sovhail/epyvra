@@ -219,7 +219,9 @@ fun LoginScreen(navController: NavController, viewModel: EpyvraViewModel) {
                 ) {
 
                     // ── Social Login Buttons (dynamic from admin) ──────────
-                    if (appSettings.googleLoginEnabled) {
+                    val googleOAuthConfigured = AppConfig.FIREBASE_WEB_CLIENT_ID.isNotBlank() &&
+                        AppConfig.FIREBASE_WEB_CLIENT_ID != "YOUR_FIREBASE_WEB_CLIENT_ID_HERE"
+                    if (appSettings.googleLoginEnabled && googleOAuthConfigured) {
                         SocialLoginButton(
                             text = stringResource(R.string.google_sign_in),
                             iconRes = R.drawable.ic_google,
