@@ -44,15 +44,22 @@
 - [ ] `epyvra://` and verified `https://epyvra.com/share/...` links pass; `assetlinks.json` matches the release certificate.
 - [ ] Final repository-wide brand residue is classified and documented in `REBRAND_REPORT.md`.
 
-## Current verification snapshot (2026-10-03)
+## Current verification snapshot (2026-10-17)
 
-- [x] Security regression suite: 18/18 passed.
-- [x] Backend TypeScript: passed.
-- [x] Security-sensitive targeted ESLint: passed.
-- [ ] Full ESLint: failed with 422 errors and 266 warnings; rules were not disabled or weakened.
-- [ ] Next.js production build: application compilation passed, then the enforced ESLint phase failed on the same debt.
-- [ ] Android unit/lint/debug/release matrix: the correct local SDK was detected during verification, but dependency resolution failed because `artifacts.applovin.com` could not resolve. A preceding configuration-cache serialization failure was bypassed with `--no-configuration-cache`; no source result was produced.
-- [ ] Android release build additionally requires the owner-supplied release keystore inputs and must fail closed until they exist.
+- [x] Security regression suites: 22 core tests and 4 premium-media tests passed.
+- [x] Backend TypeScript: passed with zero errors.
+- [x] Full ESLint: passed with zero errors and zero warnings; no rules were disabled.
+- [x] Next.js production build: passed.
+- [x] Android unit tests, lint gate, and debug APK build: passed.
+- [x] Android release signing guard: passed; `bundleRelease` stopped because signing inputs were absent and did not fall back to the debug key.
+- [ ] Release bundle: blocked until the owner supplies the production keystore and signing values.
+- [ ] Android Firebase runtime: blocked because `Android App/app/google-services.json` for `com.epyvra.app` is absent.
+- [ ] Android production configuration: blocked until Mobile App settings provide matching API key, OneSignal App ID, Firebase web client ID, and release version metadata. The APK currently retains explicit placeholders and the AdMob test application ID.
+- [x] Android API base URL points to `https://epyvra.com/api/mobile/v1`.
+- [x] Production dependency audit reduced from 106 findings (3 critical, 32 high) to 7 findings (0 critical, 6 high, 1 moderate).
+- [ ] Remaining dependency advisories require coordinated Tailwind 3 to 4 and Next 15 to 16 migrations; they are tracked in `RC_AUDIT_2026-10-17.md` and were not hidden or suppressed.
+- [x] Storage configuration is server-allowlisted, upload size is server-capped, Bunny connection probes clean up test objects, and upload/delete security regressions pass.
+- [x] PWA manifests use local EPYVRA icons and contain no remote placeholder artwork.
 - [x] CODE VERIFIED / AUTOMATED TEST VERIFIED: premium HLS/DASH issuance requires Firebase entitlement, emits short-lived episode-directory Bunny path tokens, defaults to IP binding, redacts permanent premium URLs, and preserves relative manifest/segment authorization.
 - [ ] SANDBOX VERIFIED / PRODUCTION CREDENTIAL REQUIRED: configure Bunny Token Authentication with the same server-side key and prove unsigned direct master/variant/DASH manifest, `.ts`, and `.m4s` requests fail while signed playback succeeds and expires. CDN/origin enforcement is not claimed without this evidence.
 - [ ] LevelPlay, Play Billing, OneSignal, Firebase, Bunny.net, and deep-link lifecycle require device/vendor-console tests with owner-supplied sandbox configuration.
