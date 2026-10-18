@@ -1064,10 +1064,27 @@ export async function sendNotificationAction(payload: { target: 'all' | 'specifi
     const demoError = getDemoModeMutationError();
     if (demoError) return demoError;
     try { const plugins = await getPluginsSettings() as ServerPluginsSettings | null; if (!plugins?.oneSignalAppId || !plugins?.oneSignalApiKey) throw new Error('OneSignal not configured.');
-        const body: UnknownRecord = { app_id: plugins.oneSignalAppId, headings: { en: payload.title }, contents: { en: payload.message } };
-        if (payload.target === 'all') body.included_segments = ['Total Subscriptions']; else body.include_external_user_ids = [payload.userId];
-        const response = await fetch('https://onesignal.com/api/v1/notifications', { method: 'POST', headers: { 'Authorization': `Basic ${plugins.oneSignalApiKey}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-        const data = await response.json(); if (!response.ok) throw new Error(data.errors?.[0] || 'OneSignal API Error');
+        const body: UnknownRecord = {
+            app_id: plugins.oneSignalAppId.trim(),
+            target_channel: 'push',
+            name: `EPYVRA admin notification ${new Date().toISOString()}`,
+            headings: { en: payload.title },
+            contents: { en: payload.message },
+        };
+        if (payload.target === 'all') {
+            body.included_segments = ['Subscribed Users'];
+        } else {
+            if (!payload.userId) throw new Error('A target user is required.');
+            body.include_aliases = { external_id: [payload.userId] };
+        }
+        const response = await fetch('https://api.onesignal.com/notifications', {
+            method: 'POST',
+            headers: { 'Authorization': `Key ${plugins.oneSignalApiKey.trim()}`, 'Content-Type': 'application/json; charset=utf-8' },
+            body: JSON.stringify(body),
+        });
+        const data: unknown = await response.json();
+        if (!response.ok) throw new Error(getOneSignalError(data, response.status));
+        if (!isRecord(data) || typeof data.id !== 'string') throw new Error('OneSignal returned an invalid response.');
         const db = await getDb(); await db.collection('notifications').insertOne({ ...payload, sentAt: new Date(), status: 'sent', oneSignalId: data.id });
         return { success: true, message: `Broadcast successful.` };
     } catch (e) { return handleError('sendNotificationAction', e, 'Failed to send notification.'); }
@@ -1079,9 +1096,24 @@ export async function sendNotificationAction(payload: { target: 'all' | 'specifi
 export async function testOneSignalAction(appId: string, apiKey: string) {
     if (!(await import('./auth').then(m => m.verifyAdminSession()))) return { success: false, error: 'Unauthorized access.' };
 
-    try { const response = await fetch(`https://onesignal.com/api/v1/apps/${appId.trim()}`, { method: 'GET', headers: { 'Authorization': `Basic ${apiKey.trim()}` } });
-        const data = await response.json(); if (response.ok) return { success: true, message: `Connected to ${data.name}` }; return { success: false, error: 'Auth failed' };
+    try { const response = await fetch(`https://api.onesignal.com/apps/${encodeURIComponent(appId.trim())}`, { method: 'GET', headers: { 'Authorization': `Key ${apiKey.trim()}`, 'Accept': 'application/json' } });
+        const data: unknown = await response.json();
+        if (response.ok && isRecord(data)) return { success: true, message: `Connected to ${typeof data.name === 'string' ? data.name : 'OneSignal'}` };
+        return { success: false, error: getOneSignalError(data, response.status) };
     } catch { return { success: false, error: 'Network error' }; }
+}
+
+function getOneSignalError(data: unknown, status: number): string {
+    if (isRecord(data)) {
+        if (typeof data.message === 'string' && data.message.trim()) return data.message;
+        if (Array.isArray(data.errors)) {
+            const first = data.errors.find((error): error is string => typeof error === 'string' && error.trim().length > 0);
+            if (first) return first;
+        }
+        if (isRecord(data.errors) && typeof data.errors.message === 'string') return data.errors.message;
+    }
+    if (status === 401 || status === 403) return 'Invalid OneSignal App API Key or the key does not have access to this App ID.';
+    return `OneSignal request failed (HTTP ${status}).`;
 }
 
 /**
