@@ -46,8 +46,7 @@ import com.epyvra.app.ui.screens.*
 import com.epyvra.app.ui.theme.MyApplicationTheme
 import com.epyvra.app.viewmodel.ConnectionState
 import com.epyvra.app.viewmodel.EpyvraViewModel
-import com.epyvra.app.data.AppConfig
-import com.onesignal.OneSignal
+import com.epyvra.app.notifications.OneSignalManager
 
 private val EPYVRA_DEEP_LINK_ID = Regex("^[A-Za-z0-9_-]{1,128}$")
 
@@ -143,6 +142,32 @@ class MainActivity : ComponentActivity() {
         setFullScreen()
     }
 
+    override fun onStart() {
+        super.onStart()
+        OneSignalManager.setRegistrationListener {
+            runOnUiThread {
+                if (!isFinishing && !isDestroyed) {
+                    android.app.AlertDialog.Builder(this)
+                        .setTitle("Your OneSignal SDK integration is complete!")
+                        .setMessage(
+                            "You can now send Push Notifications & In-App Messages through " +
+                                "OneSignal. Tap below to enable push notifications."
+                        )
+                        .setPositiveButton("Got it") { _, _ ->
+                            OneSignalManager.requestPushPermission()
+                        }
+                        .setCancelable(false)
+                        .show()
+                }
+            }
+        }
+    }
+
+    override fun onStop() {
+        OneSignalManager.setRegistrationListener(null)
+        super.onStop()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         val preferences = getSharedPreferences("epyvra_settings", android.content.Context.MODE_PRIVATE)
         val languageCode = preferences.getString("language_code", "en") ?: "en"
@@ -171,20 +196,6 @@ class MainActivity : ComponentActivity() {
                     val viewModel: EpyvraViewModel = viewModel()
                     val connectionState by viewModel.connectionState.collectAsState()
                     val appSettings by viewModel.appSettings.collectAsState()
-
-                    // Initialize OneSignal Push Notifications (Dynamic from Admin Panel or AppConfig)
-                    LaunchedEffect(appSettings.oneSignalAppId) {
-                        val targetAppId = appSettings.oneSignalAppId.takeIf { it.isNotBlank() }
-                            ?: AppConfig.ONESIGNAL_APP_ID
-                        if (targetAppId.isNotBlank() && targetAppId != "YOUR_ONESIGNAL_APP_ID_HERE") {
-                            try {
-                                OneSignal.initWithContext(this@MainActivity, targetAppId)
-                                OneSignal.Notifications.requestPermission(true)
-                            } catch (e: Exception) {
-                                e.printStackTrace()
-                            }
-                        }
-                    }
 
                     val requiresForceUpdate = appSettings.forceUpdateEnabled &&
                         BuildConfig.VERSION_CODE < appSettings.versionCode &&

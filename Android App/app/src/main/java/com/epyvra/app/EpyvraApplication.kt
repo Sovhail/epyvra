@@ -6,12 +6,39 @@ import coil.ImageLoaderFactory
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import okhttp3.OkHttpClient
+import com.epyvra.app.data.AppConfig
+import com.epyvra.app.notifications.OneSignalManager
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.FirebaseApp
 import java.util.concurrent.TimeUnit
 
 class EpyvraApplication : Application(), ImageLoaderFactory {
 
+    private lateinit var authStateListener: FirebaseAuth.AuthStateListener
+
     override fun onCreate() {
         super.onCreate()
+        OneSignalManager.initialize(
+            context = this,
+            appId = AppConfig.ONESIGNAL_APP_ID,
+            enableDebugLogging = BuildConfig.DEBUG
+        )
+
+        // Firebase's startup provider runs before Application.onCreate on a device.
+        // Robolectric tests may intentionally omit it, so only bind identity when
+        // the default Firebase app is actually available.
+        if (FirebaseApp.getApps(this).isNotEmpty()) {
+            authStateListener = FirebaseAuth.AuthStateListener { auth ->
+                val user = auth.currentUser
+                if (user == null) {
+                    OneSignalManager.logout()
+                } else {
+                    OneSignalManager.login(user.uid)
+                    user.email?.let(OneSignalManager::setEmail)
+                }
+            }
+            FirebaseAuth.getInstance().addAuthStateListener(authStateListener)
+        }
     }
 
     override fun newImageLoader(): ImageLoader {
