@@ -12,7 +12,7 @@ object AppConfig {
     // -------------------------------------------------------------------------
     const val API_URL = "https://epyvra.com/api/mobile/v1"
     const val API_KEY = "epyvra_apk_dbedfbbbf7baeef759cd0728af1792e8bfd31203171329c1"
-    const val ONESIGNAL_APP_ID = "YOUR_ONESIGNAL_APP_ID_HERE"
+    const val ONESIGNAL_APP_ID = "8c1905bc-6bac-496b-8a0a-25475f7123e8"
     const val FIREBASE_WEB_CLIENT_ID = "YOUR_FIREBASE_WEB_CLIENT_ID_HERE"
     // -------------------------------------------------------------------------
 
