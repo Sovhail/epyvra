@@ -67,3 +67,14 @@
 - [ ] Rewrite or exclude the upstream `Documontation/*.html` manuals and replace all legacy artwork before distribution.
 
 No publish, production deployment, DNS change, or production credential activation is authorized by this checklist.
+
+## Production remediation snapshot (2026-10-20)
+
+- [x] PROD-01: `https://epyvra.com/` and `/admin/login` return HTTP 200. Firebase browser SDK initialization is deferred until hydration, and the proxy no longer performs a self-request during startup.
+- [x] PROD-01: the first 19 runtime log lines checked after the live deployment contained zero error/exception matches; the former `Component auth has not been registered yet` failure did not recur.
+- [x] PROD-02: `npm audit --omit=dev` reports 0 critical, 0 high, 0 moderate, and 0 total production vulnerabilities after the Next.js 16 and Tailwind CSS 4 migrations.
+- [x] Clean-install web gates: `npm ci`, TypeScript, ESLint, 22 core security tests, 4 premium-media tests, and the Next.js production build all pass without suppressed rules.
+- [x] Android gates: `lintDebug`, `testDebugUnitTest`, and `assembleDebug` pass.
+- [x] PROD-05: the live Mobile API returns version code 9, package `com.epyvra.app`, the canonical Play URL, disabled Google login, a configured OneSignal App ID, and accepts the exact API key compiled into Android.
+- [ ] The release update URL intentionally remains empty until an official Play listing or owner-approved release artifact exists. Force Update must remain disabled until that URL is real and tested.
+- [ ] Rotate the Render API token, OneSignal REST API key, MongoDB password, and any other secret pasted into chat during setup, then update the corresponding provider/runtime configuration.
