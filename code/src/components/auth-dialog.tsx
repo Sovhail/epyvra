@@ -166,6 +166,7 @@ export function AuthDialog({ isMobile = false }: { isMobile?: boolean }) {
   const handleEmailSignIn = async (values: z.infer<typeof signInSchema>) => {
     setLoadingProvider('email');
     try {
+      if (!auth) throw new Error('Authentication is still initializing.');
       await signInWithEmailAndPassword(auth, values.email, values.password);
       toast({ title: t('auth_toast_signin_success_title'), description: t('auth_toast_signin_success_desc') });
       setOpen(false);
@@ -179,6 +180,7 @@ export function AuthDialog({ isMobile = false }: { isMobile?: boolean }) {
   const handleEmailSignUp = async (values: z.infer<typeof signUpSchema>) => {
     setLoadingProvider('email');
     try {
+      if (!auth) throw new Error('Authentication is still initializing.');
       const cred = await createUserWithEmailAndPassword(auth, values.email, values.password);
       await createUserProfileDocument(cred.user);
       toast({ title: t('auth_toast_signup_success_title'), description: t('auth_toast_signup_success_desc') });
@@ -194,6 +196,7 @@ export function AuthDialog({ isMobile = false }: { isMobile?: boolean }) {
       setLoadingProvider('google');
       const provider = new GoogleAuthProvider();
       try {
+          if (!auth) throw new Error('Authentication is still initializing.');
           const result = await signInWithPopup(auth, provider);
           await createUserProfileDocument(result.user);
           setOpen(false);
@@ -208,6 +211,7 @@ export function AuthDialog({ isMobile = false }: { isMobile?: boolean }) {
     setLoadingProvider('facebook');
     const provider = new FacebookAuthProvider();
     try {
+        if (!auth) throw new Error('Authentication is still initializing.');
         const result = await signInWithPopup(auth, provider);
         await createUserProfileDocument(result.user);
         setOpen(false);
@@ -222,6 +226,7 @@ export function AuthDialog({ isMobile = false }: { isMobile?: boolean }) {
     setLoadingProvider('apple');
     const provider = new OAuthProvider('apple.com');
     try {
+        if (!auth) throw new Error('Authentication is still initializing.');
         const result = await signInWithPopup(auth, provider);
         await createUserProfileDocument(result.user);
         setOpen(false);
@@ -235,6 +240,7 @@ export function AuthDialog({ isMobile = false }: { isMobile?: boolean }) {
   const handlePhoneSubmit = async (values: z.infer<typeof phoneSchema>) => {
     setLoadingProvider('phone');
     try {
+      if (!auth) throw new Error('Authentication is still initializing.');
       if (!window.recaptchaVerifier) {
         window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
           'size': 'invisible',
@@ -463,5 +469,4 @@ export function AuthDialog({ isMobile = false }: { isMobile?: boolean }) {
     </Dialog>
   );
 }
-
 

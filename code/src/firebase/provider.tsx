@@ -9,9 +9,9 @@ import type { UserProfile } from '@/lib/types';
 
 interface FirebaseProviderProps {
   children: ReactNode;
-  firebaseApp: FirebaseApp;
-  firestore: Firestore;
-  auth: Auth;
+  firebaseApp: FirebaseApp | null;
+  firestore: Firestore | null;
+  auth: Auth | null;
 }
 
 // Internal state for user authentication and MongoDB profile
@@ -47,6 +47,14 @@ export interface FirebaseServicesAndUser {
 }
 
 export const FirebaseContext = createContext<FirebaseContextState | undefined>(undefined);
+
+export const useFirebaseContext = (): FirebaseContextState => {
+  const context = useContext(FirebaseContext);
+  if (context === undefined) {
+    throw new Error('Firebase hooks must be used within a FirebaseProvider.');
+  }
+  return context;
+};
 
 export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   children,
@@ -153,10 +161,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
 };
 
 export const useFirebase = (): FirebaseServicesAndUser => {
-  const context = useContext(FirebaseContext);
-  if (context === undefined) {
-    throw new Error('useFirebase must be used within a FirebaseProvider.');
-  }
+  const context = useFirebaseContext();
   if (!context.areServicesAvailable || !context.firebaseApp || !context.firestore || !context.auth) {
     throw new Error('Firebase core services not available.');
   }
@@ -172,18 +177,18 @@ export const useFirebase = (): FirebaseServicesAndUser => {
   };
 };
 
-export const useAuth = (): Auth => {
-  const { auth } = useFirebase();
+export const useAuth = (): Auth | null => {
+  const { auth } = useFirebaseContext();
   return auth;
 };
 
-export const useFirestore = (): Firestore => {
-  const { firestore } = useFirebase();
+export const useFirestore = (): Firestore | null => {
+  const { firestore } = useFirebaseContext();
   return firestore;
 };
 
-export const useFirebaseApp = (): FirebaseApp => {
-  const { firebaseApp } = useFirebase();
+export const useFirebaseApp = (): FirebaseApp | null => {
+  const { firebaseApp } = useFirebaseContext();
   return firebaseApp;
 };
 

@@ -19,6 +19,7 @@ export function BlockedUserScreen() {
 
     const handleLogout = async () => {
         try {
+            if (!auth) throw new Error('Authentication is still initializing.');
             await signOut(auth);
             toast({ title: t('user_button_toast_signout_success_title') });
         } catch (error) {

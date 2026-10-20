@@ -1,34 +1,10 @@
-'use server';
 import { NextResponse, type NextRequest } from 'next/server';
 import { i18n } from '@/i18n-config';
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from '@/lib/admin-session';
 
 const { locales, defaultLocale: staticDefaultLocale } = i18n;
 
-let cachedDefaultLocale = '';
-let cacheTime = 0;
-
-async function getDefaultLocale(origin: string): Promise<string> {
-    if (cachedDefaultLocale && Date.now() - cacheTime < 10000) {
-        return cachedDefaultLocale;
-    }
-    try {
-        const res = await fetch(`${origin}/api/default-locale`);
-        if (res.ok) {
-            const data = await res.json();
-            if (data.defaultLocale) {
-                cachedDefaultLocale = data.defaultLocale;
-                cacheTime = Date.now();
-                return cachedDefaultLocale;
-            }
-        }
-    } catch (e) {
-        console.error('Failed to fetch default locale in middleware:', e);
-    }
-    return staticDefaultLocale;
-}
-
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     // Security Check: Allow HLS playlists (.m3u8), TS chunks (.ts), DASH (.mpd, .m4s), and subtitles (.vtt, .srt)
@@ -88,8 +64,13 @@ export async function middleware(request: NextRequest) {
         return NextResponse.next();
     }
 
-    // Get default locale with caching (Site-wide setting)
-    const siteDefaultLocale = await getDefaultLocale(request.nextUrl.origin);
+    // Never fetch this deployment from its own middleware. On single-instance
+    // platforms that can deadlock or fail during cold starts. The browser-side
+    // settings provider persists the configured locale in this cookie.
+    const configuredLocale = request.cookies.get('defaultLocale')?.value;
+    const siteDefaultLocale = configuredLocale && locales.some(locale => locale === configuredLocale)
+        ? configuredLocale
+        : staticDefaultLocale;
     const userLocale = request.cookies.get('userLocale')?.value;
 
     const pathnameHasLocale = locales.some(

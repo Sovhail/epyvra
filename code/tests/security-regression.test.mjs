@@ -68,7 +68,7 @@ test('browser settings use explicit projections and raw settings remain server-o
 
 test('admin sessions are signed, expiring, and checked against server state', async () => {
   const session = await source('src', 'lib', 'admin-session.ts');
-  const middleware = await source('src', 'middleware.ts');
+  const middleware = await source('src', 'proxy.ts');
   const auth = await source('src', 'lib', 'actions', 'auth.ts');
   assert.match(session, /HMAC/);
   assert.match(session, /ADMIN_SESSION_SECRET/);
@@ -94,7 +94,7 @@ test('installation mutations require a one-time setup token and cannot overwrite
 test('owner installation has no external marketplace license dependency', async () => {
   const wizard = await source('src', 'components', 'install-wizard.tsx');
   const adminLayout = await source('src', 'app', 'admin', 'layout.tsx');
-  const middleware = await source('src', 'middleware.ts');
+  const middleware = await source('src', 'proxy.ts');
   const dataActions = await source('src', 'lib', 'data.actions.ts');
   for (const implementation of [wizard, adminLayout, middleware, dataActions]) {
     assert.doesNotMatch(implementation, /Envato|DevSnaplix|purchaseCode|verifyLicensePeriodically|\/activate/i);
