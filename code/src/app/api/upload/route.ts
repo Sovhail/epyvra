@@ -11,15 +11,6 @@ import type { StorageProvider, StorageSettings } from '@/lib/types';
 type CloudStorageConfig = { accessKeyId?: string; secretAccessKey?: string; applicationKeyId?: string; applicationKey?: string; endpoint?: string; bucket: string; region?: string };
 type BunnyStorageConfig = NonNullable<StorageSettings['bunny']>;
 
-// Increase the body size limit for file uploads (Next.js config)
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '2gb',
-    },
-  },
-};
-
 /**
  * Ensures that a directory exists, and sets its permissions to 0o755.
  */
@@ -321,7 +312,7 @@ async function handleLocalStorage(buffer: Buffer, file: File, type: string, iden
             const existingFiles = await readdir(uploadDir);
             for (const f of existingFiles) {
                 if (f.startsWith(`logo-${cleanIdentifier}.`)) {
-                    const deletePath = join(uploadDir, f);
+                    const deletePath = join(process.cwd(), 'public', 'img', f);
                     if (deletePath.startsWith(uploadDir)) {
                         await unlink(deletePath);
                     }
@@ -333,7 +324,13 @@ async function handleLocalStorage(buffer: Buffer, file: File, type: string, iden
     }
 
     await ensureDir(uploadDir);
-    const filePath = join(uploadDir, filename);
+    const filePath = isPaymentLogo
+        ? join(process.cwd(), 'public', 'img', filename)
+        : isImage
+            ? join(process.cwd(), 'public', 'uploads', 'images', filename)
+            : isSubtitle
+                ? join(process.cwd(), 'public', 'uploads', 'subtitles', filename)
+                : join(process.cwd(), 'public', 'uploads', 'videos', filename);
     
     // Explicitly verify resolved absolute path to block any path traversal
     if (!filePath.startsWith(uploadDir)) {
