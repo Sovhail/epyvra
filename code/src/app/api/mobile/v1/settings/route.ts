@@ -126,7 +126,7 @@ export async function GET(request: NextRequest) {
             termsOfServiceUrl: mobileSetting.termsOfServiceUrl || '',
             rateUsUrl: mobileSetting.rateUsUrl || '',
             updateUrl: mobileSetting.updateUrl || '',
-            versionCode: Number(mobileSetting.versionCode || 1),
+            versionCode: Number(mobileSetting.versionCode || 9),
             forceUpdateEnabled: mobileSetting.forceUpdateEnabled === true,
             forceLoginEnabled: mobileSetting.forceLoginEnabled === true,
             languages: mappedLanguages,

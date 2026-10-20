@@ -22,7 +22,7 @@ const defaults: MobileSettings = {
     termsOfServiceUrl: '',
     rateUsUrl: '',
     updateUrl: '',
-    versionCode: 1,
+    versionCode: 9,
     forceUpdateEnabled: false,
     forceLoginEnabled: false,
     adsProvider: 'admob',
@@ -150,7 +150,7 @@ export default function MobileSettingsPage() {
                                         <Switch checked={!!settings.forceLoginEnabled} onCheckedChange={v => update('forceLoginEnabled', v)} />
                                     </div>
                                     <SettingInput label="Update Link" value={settings.updateUrl || ''} onChange={v => update('updateUrl', v)} placeholder="https://example.com/app-debug.apk" />
-                                    <SettingInput label="Version Code" value={String(settings.versionCode || 1)} onChange={v => update('versionCode', Number(v))} type="number" />
+                                    <SettingInput label="Version Code" value={String(settings.versionCode || 9)} onChange={v => update('versionCode', Number(v))} type="number" />
                                 </CardContent>
                             </Card>
 

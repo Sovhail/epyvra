@@ -7,7 +7,7 @@ services:
     branch: main
     rootDir: code
     buildCommand: npm ci --include=dev && npm run typecheck && npm run lint && npm run test:security && npm run build
-    startCommand: npm start
+    startCommand: node scripts/migrate-production-settings.mjs && npm start
     autoDeployTrigger: commit
     envVars:
       - key: NODE_ENV

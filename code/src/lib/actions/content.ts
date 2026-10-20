@@ -1225,7 +1225,7 @@ export async function saveMobileSettingsAction(settings: MobileSettings | string
         const data = typeof settings === 'string' ? { apiKey: settings } : settings;
         await db.collection<StringIdDocument>('settings').updateOne(
             { _id: 'mobile' },
-            { $set: { ...data, versionCode: Number(data.versionCode || 1), updatedAt: new Date() } },
+            { $set: { ...data, versionCode: Number(data.versionCode || 9), updatedAt: new Date() } },
             { upsert: true }
         );
         
