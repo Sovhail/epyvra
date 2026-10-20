@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { FirebaseProvider } from '@/firebase/provider';
-import { initializeFirebase } from '@/firebase';
+import { initializeFirebase } from '@/firebase/init';
 import type { GeneralSettings } from '@/lib/types';
 import type { FirebaseApp } from 'firebase/app';
 import type { Auth } from 'firebase/auth';
