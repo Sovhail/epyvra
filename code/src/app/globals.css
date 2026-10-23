@@ -7,6 +7,16 @@ body {
     radial-gradient(circle at 12% -10%, hsl(280 85% 60% / 0.16), transparent 34rem),
     radial-gradient(circle at 92% 8%, hsl(327 86% 58% / 0.12), transparent 30rem);
   background-attachment: fixed;
+  min-height: 100vh;
+}
+
+::selection {
+  color: white;
+  background: hsl(var(--primary) / 0.75);
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 @layer base {
@@ -83,6 +93,9 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+  }
+  :focus-visible {
+    outline-color: hsl(var(--primary));
   }
 }
 

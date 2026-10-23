@@ -44,17 +44,25 @@ export function Header() {
   const { t } = useTranslation();
   const [searchOpen, setSearchOpen] = React.useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const [scrolled, setScrolled] = React.useState(false);
   
   const params = useParams();
   const lang = (params?.lang as string) || i18n.defaultLocale;
   const langPrefix = lang === i18n.defaultLocale ? '' : `/${lang}`;
 
+  React.useEffect(() => {
+    const updateHeader = () => setScrolled(window.scrollY > 24);
+    updateHeader();
+    window.addEventListener('scroll', updateHeader, { passive: true });
+    return () => window.removeEventListener('scroll', updateHeader);
+  }, []);
+
   return (
-    <header className="absolute top-0 z-40 w-full bg-gradient-to-b from-black/80 to-transparent">
+    <header className={`fixed top-0 z-40 w-full transition-all duration-300 ${scrolled ? 'border-b border-white/10 bg-background/85 shadow-2xl shadow-black/20 backdrop-blur-xl' : 'bg-gradient-to-b from-black/85 to-transparent'}`}>
       <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
-      <div className="container mx-auto px-4 flex h-16 items-center justify-between">
+      <div className={`container mx-auto flex items-center justify-between px-4 transition-all duration-300 ${scrolled ? 'h-14' : 'h-16 md:h-20'}`}>
         <div className="flex items-center gap-4">
-          <Link href={langPrefix || '/'} className="hover:opacity-90 transition-opacity">
+          <Link href={langPrefix || '/'} className="rounded-xl hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
             <DynamicLogo />
           </Link>
           
@@ -74,7 +82,7 @@ export function Header() {
             <LanguageSwitcher />
           </div>
 
-          <Button variant="ghost" size="icon" className="text-white" onClick={() => setSearchOpen(true)}>
+          <Button aria-label={t('common_search') || 'Search'} variant="ghost" size="icon" className="rounded-full text-white hover:bg-white/10" onClick={() => setSearchOpen(true)}>
             <Search className="h-5 w-5" />
           </Button>
 

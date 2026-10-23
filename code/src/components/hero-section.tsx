@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import Autoplay from 'embla-carousel-autoplay';
-import { Play } from 'lucide-react';
+import { Play, Sparkles, Star } from 'lucide-react';
 import * as React from 'react';
 
 import type { Series } from '@/lib/types';
@@ -66,7 +66,13 @@ export function HeroSection({ series }: HeroSectionProps) {
   if (!series?.length) {
     return (
       <section className="flex min-h-[440px] items-center justify-center bg-gradient-to-b from-slate-900 via-slate-950 to-background pt-20">
-        <p className="text-sm font-medium text-muted-foreground">No featured series available.</p>
+        <div className="mx-auto max-w-2xl px-6 text-center">
+          <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/25 bg-primary/10 shadow-[0_0_45px_hsl(var(--primary)/0.25)]">
+            <Sparkles className="h-7 w-7 text-primary" />
+          </div>
+          <h1 className="text-4xl font-black tracking-tight text-white sm:text-6xl">EPYVRA</h1>
+          <p className="mt-4 text-base text-white/55 sm:text-lg">Stories in every swipe.</p>
+        </div>
       </section>
     );
   }
@@ -135,13 +141,21 @@ export function HeroSection({ series }: HeroSectionProps) {
                     <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent" />
                     
                     {/* Content overlay */}
-                    <div className="absolute bottom-0 left-0 w-full p-6 pb-14 sm:p-12 sm:pb-20 md:p-16 md:pb-24 lg:p-24 lg:pb-32 flex flex-col items-start gap-4 sm:gap-6 z-20">
+                    <div className="absolute bottom-0 left-0 z-20 flex w-full flex-col items-start gap-4 p-6 pb-14 sm:gap-5 sm:p-12 sm:pb-20 md:p-16 md:pb-24 lg:p-24 lg:pb-28">
+                        <div className="flex flex-wrap items-center gap-2 text-[10px] font-black uppercase tracking-[0.18em] text-white/80 sm:text-xs">
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/15 px-3 py-1.5 backdrop-blur-md">
+                            <Sparkles className="h-3.5 w-3.5 text-primary" /> EPYVRA Original
+                          </span>
+                          {item.releaseYear && <span className="rounded-full border border-white/15 bg-black/25 px-3 py-1.5 backdrop-blur-md">{item.releaseYear}</span>}
+                          {item.isPremium && <span className="inline-flex items-center gap-1 rounded-full border border-amber-300/25 bg-amber-300/15 px-3 py-1.5 text-amber-200 backdrop-blur-md"><Star className="h-3 w-3 fill-current" /> Premium</span>}
+                        </div>
                         <h2 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white drop-shadow-2xl line-clamp-2 max-w-4xl">
                            {item.title}
                         </h2>
+                        {item.description && <p className="hidden max-w-2xl text-sm leading-relaxed text-white/70 drop-shadow-lg sm:line-clamp-2 sm:text-base md:block">{item.description}</p>}
                         
                         <Link href={getSeriesUrl(item)}>
-                            <Button size="lg" className="bg-primary hover:bg-primary/90 hover:scale-105 active:scale-95 text-white font-bold rounded-lg px-6 sm:px-10 py-6 sm:py-7 text-base sm:text-lg shadow-xl transition-all">
+                            <Button size="lg" className="rounded-full bg-gradient-to-r from-primary to-accent px-7 py-6 text-base font-black text-white shadow-[0_15px_45px_hsl(var(--primary)/0.35)] transition-all hover:scale-105 hover:shadow-[0_18px_55px_hsl(var(--primary)/0.5)] active:scale-95 sm:px-10 sm:py-7 sm:text-lg">
                                 <Play className="w-5 h-5 sm:w-6 sm:h-6 mr-2 fill-current" />
                                 {t('hero_watch_now') || 'Watch Now'}
                             </Button>

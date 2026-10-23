@@ -61,7 +61,7 @@ export function Footer() {
 
     if (pagesLoading) return <FooterSkeleton />;
 
-    const defaultCopyright = `© 2026 EPYVRA. All rights reserved.`;
+    const defaultCopyright = `© ${new Date().getFullYear()} EPYVRA. All rights reserved.`;
     const showCopyright = settings?.showCopyright !== false;
     const showVersion = settings?.showVersion === true;
     const appVersion = settings?.appVersion || '1.0.0';

@@ -108,12 +108,14 @@ export function SeriesCard({ series, badgeText, href }: SeriesCardProps) {
             )}
             <button 
                 onClick={handleFavoriteClick}
+                type="button"
+                aria-label={`${isFavorite ? 'Remove' : 'Add'} ${series.title} ${isFavorite ? 'from' : 'to'} favorites`}
                 className={cn(
-                    "h-7 w-7 rounded-xl backdrop-blur-md flex items-center justify-center transition-all duration-300",
+                    "h-9 w-9 rounded-full backdrop-blur-md flex items-center justify-center transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                     isFavorite ? "bg-primary text-white shadow-lg shadow-primary/40" : "bg-black/40 text-white hover:bg-primary"
                 )}
             >
-                <Bookmark className={cn("h-3.5 w-3.5", isFavorite && "fill-current")} />
+                <Bookmark className={cn("h-4 w-4", isFavorite && "fill-current")} />
             </button>
         </div>
     </div>

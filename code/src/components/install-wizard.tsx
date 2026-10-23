@@ -129,14 +129,14 @@ export function InstallWizard() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-            <div className="max-w-xl w-full space-y-8">
+        <div className="min-h-screen overflow-x-hidden bg-slate-950 flex items-center justify-center px-4 py-10 sm:p-6">
+            <div className="max-w-xl min-w-0 w-full space-y-8">
                 {/* Header */}
                 <div className="text-center space-y-2">
                     <div className="inline-flex p-3 rounded-2xl bg-primary/10 mb-4 animate-bounce">
                         <Rocket className="h-8 w-8 text-primary" />
                     </div>
-                    <h1 className="text-4xl font-black text-white tracking-tighter">EPYVRA Setup</h1>
+                    <h1 className="text-3xl font-black text-white tracking-tighter sm:text-4xl">EPYVRA Setup</h1>
                     <p className="text-slate-400">Platform Initialization Wizard</p>
                 </div>
 
@@ -150,25 +150,24 @@ export function InstallWizard() {
                         onChange={(event) => setSetupToken(event.target.value)}
                         placeholder="Value of INSTALL_SETUP_TOKEN"
                     />
-                    <p className="text-xs text-slate-500">Required for every installation mutation and never stored by EPYVRA.</p>
+                    <p className="break-words text-xs leading-relaxed text-slate-500">Required for every installation mutation and never stored by EPYVRA.</p>
                 </div>
 
                 {/* Progress Indicators */}
-                <div className="flex justify-between px-2 mb-4">
+                <div className="relative grid grid-cols-5 items-center gap-2 px-1 mb-4 before:absolute before:left-[10%] before:right-[10%] before:top-1/2 before:h-1 before:-translate-y-1/2 before:rounded before:bg-slate-800">
                     {[1, 2, 3, 4, 5].map((i) => (
-                        <div key={i} className="flex items-center">
+                        <div key={i} className="relative z-10 flex items-center justify-center">
                             <div className={cn(
-                                "w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all duration-500",
+                                "h-9 w-9 rounded-full flex items-center justify-center font-bold transition-all duration-500 sm:h-10 sm:w-10",
                                 step >= i ? "bg-primary text-white shadow-[0_0_15px_rgba(248,87,166,0.5)]" : "bg-slate-800 text-slate-500"
                             )}>
                                 {step > i ? <CheckCircle2 className="h-6 w-6" /> : i}
                             </div>
-                            {i < 5 && <div className={cn("w-12 h-1 mx-1 rounded", step > i ? "bg-primary" : "bg-slate-800")} />}
                         </div>
                     ))}
                 </div>
 
-                <Card className="bg-slate-900 border-slate-800 shadow-2xl overflow-hidden">
+                <Card className="min-w-0 overflow-hidden border-slate-800 bg-slate-900 shadow-2xl [&_*]:min-w-0">
                     {/* STEP 1: Owner authorization */}
                     {step === 1 && (
                         <>

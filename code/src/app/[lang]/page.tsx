@@ -74,7 +74,9 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
     getFeaturedCategories()
   ]);
 
-  const heroSeries = allSeries.filter(s => s.isFeatured);
+  const featuredSeries = allSeries.filter(s => s.isFeatured);
+  // Keep the storefront hero useful when no title was explicitly featured.
+  const heroSeries = featuredSeries.length > 0 ? featuredSeries : allSeries.slice(0, 5);
 
   return (
     <div className="flex flex-col min-h-screen bg-background relative overflow-hidden">
@@ -100,7 +102,7 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
                 </p>
                 <div className="mt-8">
                     <Button asChild size="lg" className="rounded-full px-10 font-black tracking-tight">
-                        <Link href="/admin/series">{t('home_empty_catalog_cta_2')}</Link>
+                        <Link href={`${langPrefix}/series`}>{t('home_more_videos')}</Link>
                     </Button>
                 </div>
             </div>
