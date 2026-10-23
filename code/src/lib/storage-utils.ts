@@ -11,8 +11,8 @@ type CloudStorageConfig = { accessKeyId?: string; secretAccessKey?: string; appl
  * Utility to delete a file from the active storage provider.
  * Supports local filesystem and S3-compatible providers.
  */
-export async function deleteFile(fileUrl: string | null | undefined) {
-    if (!fileUrl) return;
+export async function deleteFile(fileUrl: string | null | undefined): Promise<boolean> {
+    if (!fileUrl) return true;
 
     try {
         const storageSettings = await getStorageSettings();
@@ -31,9 +31,10 @@ export async function deleteFile(fileUrl: string | null | undefined) {
             } catch (err) {
                 if (!hasErrorCode(err, 'ENOENT')) {
                     console.error(`Error deleting local file ${filePath}:`, err);
+                    return false;
                 }
             }
-            return;
+            return true;
         }
 
         // 2. Handle Bunny.net Deletion
@@ -52,10 +53,10 @@ export async function deleteFile(fileUrl: string | null | undefined) {
                 // Keep deletion compatible with URLs saved before a custom Bunny hostname
                 // was configured. Bunny's generated pull-zone host always ends in b-cdn.net.
                 const isLegacyBunnyHost = storedHost.endsWith('.b-cdn.net');
-                if (!isConfiguredHost && !isLegacyBunnyHost) return;
+                if (!isConfiguredHost && !isLegacyBunnyHost) return true;
 
                 const key = storedUrl.pathname.replace(/^\/+/, '');
-                if (!key) return;
+                if (!key) return true;
                 
                 const storageZoneName = config.storageZoneName;
                 const apiKey = config.apiKey?.trim();
@@ -82,17 +83,20 @@ export async function deleteFile(fileUrl: string | null | undefined) {
                         }
                     });
                     
-                    if (response.ok) {
+                    if (response.ok || response.status === 404) {
                         console.log(`Successfully deleted file from bunny.net: ${key}`);
+                        return true;
                     } else {
                         const errMsg = await response.text();
                         console.error(`Failed to delete file from bunny.net: ${response.statusText} (${errMsg})`);
+                        return false;
                     }
                 } catch (deleteErr) {
                     console.error(`Failed to send delete request to bunny.net:`, getErrorMessage(deleteErr));
+                    return false;
                 }
             }
-            return;
+            return true;
         }
 
         // 3. Handle Cloud Storage Deletion (S3, DigitalOcean, B2, GCS)
@@ -147,7 +151,9 @@ export async function deleteFile(fileUrl: string | null | undefined) {
             }));
             console.log(`Successfully deleted cloud file: ${key} from ${activeProvider}`);
         }
+        return true;
     } catch (error) {
         console.error(`Failed to delete file ${fileUrl}:`, error);
+        return false;
     }
 }

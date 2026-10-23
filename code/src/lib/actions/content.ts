@@ -570,30 +570,52 @@ export async function deleteSeriesAction(id: string) {
     const db = await getDb();
     try {
         const series = await db.collection('series').findOne(getQueryById(id));
-        if (series?.coverUrl) {
-            await deleteFile(series.coverUrl);
-        }
-        if (series?.featuredCoverUrl) {
-            await deleteFile(series.featuredCoverUrl);
-        }
+        if (!series) return { success: false, error: 'Series not found.' };
 
-        await db.collection('series').deleteOne(getQueryById(id));
-        
-        // Also delete episodes and their files
-        const episodes = await db.collection('episodes').find({ seriesId: id }).toArray();
+        const seriesReferenceFilter = ObjectId.isValid(id)
+            ? { $in: [id, new ObjectId(id)] }
+            : id;
+        const episodes = await db.collection('episodes').find({ seriesId: seriesReferenceFilter }).toArray();
+        const mediaUrls = new Set<string>();
+        if (typeof series.coverUrl === 'string') mediaUrls.add(series.coverUrl);
+        if (typeof series.featuredCoverUrl === 'string') mediaUrls.add(series.featuredCoverUrl);
+
         for (const ep of episodes) {
             if (ep.videoSources && Array.isArray(ep.videoSources)) {
                 for (const src of ep.videoSources) {
-                    if (src.url) await deleteFile(src.url);
+                    if (typeof src.url === 'string') mediaUrls.add(src.url);
                 }
             }
-            if (ep.videoUrl) {
-                await deleteFile(ep.videoUrl);
+            if (typeof ep.videoUrl === 'string') mediaUrls.add(ep.videoUrl);
+            if (ep.subtitles && Array.isArray(ep.subtitles)) {
+                for (const subtitle of ep.subtitles) {
+                    if (typeof subtitle.url === 'string') mediaUrls.add(subtitle.url);
+                }
             }
         }
-        await db.collection('episodes').deleteMany({ seriesId: id });
+
+        // Keep the database records when managed storage cleanup fails. This makes
+        // deletion retryable and prevents reporting success while paid media remains.
+        const deletionResults = await Promise.all([...mediaUrls].map(url => deleteFile(url)));
+        if (deletionResults.some(result => !result)) {
+            return { success: false, error: 'Some media files could not be deleted. Please retry.' };
+        }
+
+        const episodeIds = episodes.map(ep => ep._id.toString());
+        await db.collection('episodes').deleteMany({ seriesId: seriesReferenceFilter });
+        await Promise.all([
+            db.collection('favorites').deleteMany({ seriesId: seriesReferenceFilter }),
+            db.collection('history').deleteMany({ seriesId: seriesReferenceFilter }),
+            db.collection('series_likes').deleteMany({ seriesId: seriesReferenceFilter }),
+            db.collection('reports').deleteMany({ seriesId: seriesReferenceFilter }),
+            episodeIds.length > 0
+                ? db.collection('unlocked-episodes').deleteMany({ episodeId: { $in: episodeIds } })
+                : Promise.resolve(),
+        ]);
+        await db.collection('series').deleteOne(getQueryById(id));
         
         revalidatePath('/admin/series');
+        revalidatePath('/', 'layout');
         return { success: true };
     } catch (e) { return handleError('deleteSeriesAction', e, 'Failed to delete series.'); }
 }
