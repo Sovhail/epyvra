@@ -4,18 +4,18 @@ import Script from 'next/script';
 import { getPluginsSettings } from '@/lib/data.actions';
 
 interface OneSignalSdk {
-    push(callback: () => void): void;
-    init?(options: {
+    init(options: {
         appId: string;
-        allowLocalhostAsSecureOrigin: boolean;
-        notifyButton: { enable: boolean };
-    }): void;
-    showSlidedownPrompt?: () => void;
+        allowLocalhostAsSecureOrigin?: boolean;
+        serviceWorkerPath?: string;
+        serviceWorkerParam?: { scope: string };
+    }): Promise<void>;
+    Slidedown?: { promptPush(): Promise<void> };
 }
 
 declare global {
     interface Window {
-        OneSignal?: OneSignalSdk | Array<() => void>;
+        OneSignalDeferred?: Array<(OneSignal: OneSignalSdk) => void | Promise<void>>;
     }
 }
 
@@ -26,42 +26,30 @@ export function OneSignalInitializer() {
                 const appId = settings.oneSignalAppId;
                 const delay = (settings.oneSignalPromptDelay || 5) * 1000;
 
-                // Standard OneSignal Web SDK Initialization
-                const initialize = () => {
-                    const oneSignal = window.OneSignal;
-                    if (!oneSignal || Array.isArray(oneSignal)) return;
-                    oneSignal.init?.({
+                // Use the current OneSignal Web SDK and isolate its worker from the PWA worker.
+                const initialize = async (oneSignal: OneSignalSdk) => {
+                    await oneSignal.init({
                         appId: appId,
                         allowLocalhostAsSecureOrigin: true,
-                        notifyButton: {
-                            enable: false,
-                        },
+                        serviceWorkerPath: 'onesignal/OneSignalSDKWorker.js',
+                        serviceWorkerParam: { scope: '/onesignal/' },
                     });
 
-                    // To show prompt after delay on every refresh during testing, 
-                    // users usually need to clear their browser cache/site data.
+                    // The browser prompt is requested only after the configured delay.
                     setTimeout(() => {
-                        const current = window.OneSignal;
-                        if (current && !Array.isArray(current)) current.showSlidedownPrompt?.();
+                        void oneSignal.Slidedown?.promptPush();
                     }, delay);
                 };
 
-                const oneSignal = window.OneSignal;
-                if (!oneSignal) {
-                    const queue: Array<() => void> = [initialize];
-                    window.OneSignal = queue;
-                } else if (Array.isArray(oneSignal)) {
-                    oneSignal.push(initialize);
-                } else {
-                    oneSignal.push(initialize);
-                }
+                window.OneSignalDeferred = window.OneSignalDeferred || [];
+                window.OneSignalDeferred.push(initialize);
             }
         });
     }, []);
 
     return (
         <Script 
-            src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" 
+            src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js"
             strategy="afterInteractive" 
         />
     );
