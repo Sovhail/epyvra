@@ -54,8 +54,8 @@ test('server-side Bunny proxy signing supports a custom Pull Zone hostname', () 
     ttlSeconds: 120,
     nowSeconds: 1_000,
   });
-  assert.match(signed, /^https:\/\/media\.epyvra\.test\/bcdn_token=HS256-/);
-  assert.match(signed, /token_path=%2Fvideos%2Fepisode-1\.mp4&expires=1120\/videos\/episode-1\.mp4$/);
+  assert.match(signed, /^https:\/\/media\.epyvra\.test\/videos\/episode-1\.mp4\?token=HS256-/);
+  assert.match(signed, /&expires=1120$/);
 });
 
 test('server-side Bunny proxy signing rejects a host mismatch', () => {

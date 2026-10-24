@@ -67,6 +67,9 @@ function advancedToken(key: string, path: string, expiresAt: number, ip: string)
   hmac.update(path);
   hmac.update(String(expiresAt));
   if (ip) hmac.update(ipBytes(ip));
+  // Bunny's current HS256 format folds IP bytes before the sorted signing
+  // parameters. Changing this order produces a syntactically valid token that
+  // Bunny correctly rejects with HTTP 403.
   hmac.update(`token_path=${path}`);
   return `HS256-${ip ? '1-' : ''}${base64Url(hmac.digest())}`;
 }
@@ -147,14 +150,12 @@ export function signBunnyUpstreamUrl(input: {
     throw new Error('Bunny upstream source URL is not canonical.');
   }
 
-  const extension = source.pathname.toLowerCase().split('.').pop() ?? '';
-  const contentPath = ['m3u8', 'mpd'].includes(extension)
-    ? episodeDirectory(source.pathname)
-    : source.pathname;
   const expiresAt = (input.nowSeconds ?? Math.floor(Date.now() / 1000)) + ttlSeconds;
-  const token = advancedToken(tokenKey, contentPath, expiresAt, '');
-  const authSegment = `bcdn_token=${token}&token_path=${encodeURIComponent(contentPath)}&expires=${expiresAt}`;
-  return `${source.origin}/${authSegment}${source.pathname}`;
+  const hmac = createHmac('sha256', tokenKey);
+  hmac.update(source.pathname);
+  hmac.update(String(expiresAt));
+  const token = `HS256-${base64Url(hmac.digest())}`;
+  return `${source.toString()}?token=${token}&expires=${expiresAt}`;
 }
 
 export function verifyBunnyMediaUrl(input: {
