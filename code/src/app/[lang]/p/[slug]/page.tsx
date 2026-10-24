@@ -51,7 +51,7 @@ export default async function DynamicPage({ params }: { params: Promise<{ slug: 
 
     const rtlLocales = ['ar', 'fa', 'he', 'ur'];
     const isRTL = rtlLocales.includes(currentLang);
-    const isLegalPage = slug === 'privacy-policy' || slug === 'terms-and-conditions';
+    const isLegalPage = ['privacy-policy', 'terms-and-conditions', 'terms-copyright'].includes(slug);
 
     return (
         <main className={isLegalPage ? 'legal-page-shell' : ''}>
