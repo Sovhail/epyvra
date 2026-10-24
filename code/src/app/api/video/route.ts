@@ -6,7 +6,7 @@ import { getServerPluginsSettings as getPluginsSettings } from '@/lib/server-set
 import { getServerStorageSettings as getStorageSettings } from '@/lib/server-settings';
 import { decryptPath } from '@/lib/crypto';
 import { getVideoSecret } from '@/lib/video-secret';
-import { safeFetch } from '@/lib/safe-fetch';
+import { normalizeBunnyRegion, safeFetch } from '@/lib/safe-fetch';
 import { signBunnyUpstreamUrl } from '@/lib/premium-media';
 
 function streamFile(path: string, options?: { start?: number; end?: number }): ReadableStream<Uint8Array> {
@@ -75,6 +75,22 @@ function getTimeKeys(period: string, now: number): string[] {
     return [current, previous];
 }
 
+function bunnyStorageUrl(source: URL, zoneName: string, regionValue: unknown): string {
+    const zone = zoneName.trim().toLowerCase();
+    if (!/^[a-z0-9-]{1,64}$/.test(zone)) throw new Error('Invalid Bunny storage zone name.');
+    const region = normalizeBunnyRegion(regionValue);
+    const host = region ? `${region}.storage.bunnycdn.com` : 'storage.bunnycdn.com';
+    const segments = source.pathname.split('/').filter(Boolean).map(segment => {
+        const decoded = decodeURIComponent(segment);
+        if (!decoded || decoded === '.' || decoded === '..' || decoded.includes('/') || decoded.includes('\\')) {
+            throw new Error('Invalid Bunny storage object path.');
+        }
+        return encodeURIComponent(decoded);
+    });
+    if (segments.length === 0) throw new Error('Bunny storage object path is empty.');
+    return `https://${host}/${encodeURIComponent(zone)}/${segments.join('/')}`;
+}
+
 /**
  * This API route acts as a secure proxy for uploaded/cloud video files.
  * It decrypts the secure parameter and streams the content.
@@ -129,10 +145,13 @@ export async function GET(request: NextRequest) {
         try {
             let upstreamUrl = filePath;
             const storageSettings = await getStorageSettings();
-            if (storageSettings?.activeProvider === 'bunny' && storageSettings.bunny?.pullZoneUrl) {
-                const pullZone = new URL(storageSettings.bunny.pullZoneUrl);
+            const bunny = storageSettings?.activeProvider === 'bunny' ? storageSettings.bunny : undefined;
+            let bunnySource: URL | null = null;
+            if (bunny?.pullZoneUrl) {
+                const pullZone = new URL(bunny.pullZoneUrl);
                 const source = new URL(filePath);
                 if (source.hostname.toLowerCase() === pullZone.hostname.toLowerCase()) {
+                    bunnySource = source;
                     upstreamUrl = signBunnyUpstreamUrl({
                         sourceUrl: filePath,
                         expectedHost: pullZone.hostname,
@@ -149,10 +168,27 @@ export async function GET(request: NextRequest) {
                 headers['range'] = range;
             }
             
-            const response = await safeFetch(upstreamUrl, {
+            let response = await safeFetch(upstreamUrl, {
                 headers,
                 cache: 'no-store',
             }, 3);
+
+            // A Pull Zone may reject an otherwise valid CDN token when its key
+            // was rotated or another Bunny security control is enabled. Keep
+            // the public CDN protected and retry server-to-server through the
+            // authenticated Storage API. The credential never reaches clients.
+            if (response.status === 403 && bunnySource && bunny?.storageZoneName && bunny.apiKey) {
+                const storageHeaders: Record<string, string> = {
+                    'AccessKey': bunny.apiKey,
+                    'accept-encoding': 'identity',
+                };
+                if (range) storageHeaders.range = range;
+                response = await fetch(bunnyStorageUrl(bunnySource, bunny.storageZoneName, bunny.region), {
+                    headers: storageHeaders,
+                    cache: 'no-store',
+                    redirect: 'error',
+                });
+            }
             
             const responseHeaders = new Headers();
             const contentType = response.headers.get('content-type') || response.headers.get('Content-Type');

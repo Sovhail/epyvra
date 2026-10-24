@@ -118,6 +118,10 @@ test('server-side remote fetches reject private networks and validate every redi
   assert.match(video, /upstreamUrl = filePath/);
   assert.match(video, /signBunnyUpstreamUrl/);
   assert.match(video, /safeFetch\(upstreamUrl/);
+  assert.match(video, /\^\[a-z0-9-\]\{1,64\}\$/);
+  assert.match(video, /normalizeBunnyRegion\(regionValue\)/);
+  assert.match(video, /redirect: 'error'/);
+  assert.match(video, /'AccessKey': bunny\.apiKey/);
 });
 
 test('storage provider host components are constrained before credentials are sent', async () => {
