@@ -1,7 +1,7 @@
 import { getErrorMessage, hasErrorCode } from '@/lib/error-utils';
 import { NextRequest, NextResponse } from 'next/server';
 import { getFirebaseAdmin } from '@/lib/firebase-admin';
-import { sendMail } from '@/lib/mailer';
+import { createBrandedEmail, sendMail } from '@/lib/mailer';
 import { getDb } from '@/lib/mongodb';
 
 export async function POST(req: NextRequest) {
@@ -30,14 +30,12 @@ export async function POST(req: NextRequest) {
         const admin = await getFirebaseAdmin();
         const resetLink = await admin.auth().generatePasswordResetLink(email);
 
-        const html = `
-            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
-                <h2 style="color: #0f172a; margin-bottom: 16px;">Password Reset Request</h2>
-                <p style="color: #334155; line-height: 1.5;">You recently requested a password reset. Click the link below to set a new password:</p>
-                <a href="${resetLink}" style="display: inline-block; margin: 24px 0; padding: 12px 24px; background-color: #3b82f6; color: white; text-decoration: none; border-radius: 6px; font-weight: 500;">Reset Password</a>
-                <p style="color: #334155; line-height: 1.5; font-size: 14px;">If you didn't request this, you can safely ignore this email.</p>
-            </div>
-        `;
+        const html = await createBrandedEmail({
+            title: 'Reset your password',
+            previewText: 'Use this secure link to reset your EPYVRA password.',
+            bodyHtml: '<p style="margin:0 0 16px;">We received a request to reset your password.</p><p style="margin:0;">If you did not make this request, you can safely ignore this email.</p>',
+            action: { label: 'Reset password', href: resetLink },
+        });
 
         await sendMail({
             to: email,

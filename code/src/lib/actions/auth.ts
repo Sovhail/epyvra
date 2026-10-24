@@ -277,16 +277,13 @@ export async function adminForgotPassword(_prevState: unknown, formData: FormDat
             : (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000');
         const resetLink = `${domain.replace(/\/$/, '')}/admin/reset-password?token=${token}`;
 
-        const html = `
-            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
-                <h2 style="color: #0f172a; margin-bottom: 16px;">Admin Password Reset</h2>
-                <p style="color: #334155; line-height: 1.5;">You requested a password reset for your admin account. Click the button below to set a new password. This link expires in 60 minutes.</p>
-                <a href="${resetLink}" style="display: inline-block; margin: 24px 0; padding: 12px 24px; background-color: #3b82f6; color: white; text-decoration: none; border-radius: 6px; font-weight: 500;">Reset Password</a>
-                <p style="color: #334155; line-height: 1.5; font-size: 14px;">If you didn't request this, you can safely ignore this email.</p>
-            </div>
-        `;
-
-        const { sendMail } = await import('../mailer');
+        const { createBrandedEmail, sendMail } = await import('../mailer');
+        const html = await createBrandedEmail({
+            title: 'Admin password reset',
+            previewText: 'Use this secure link to reset your EPYVRA administrator password.',
+            bodyHtml: '<p style="margin:0 0 16px;">A password reset was requested for your administrator account.</p><p style="margin:0;">This secure link expires in 60 minutes. If you did not request it, you can safely ignore this email.</p>',
+            action: { label: 'Reset administrator password', href: resetLink },
+        });
         await sendMail({
             to: email,
             subject: 'Admin Password Reset',
