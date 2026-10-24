@@ -27,9 +27,11 @@ export async function sendMail({ to, subject, html }: { to: string, subject: str
                 user: settings.smtpUser,
                 pass: settings.smtpPassword,
             },
-            tls: {
-                rejectUnauthorized: false,
-            }
+            // Fail promptly with a useful API error when a provider, port, or
+            // credential is misconfigured instead of leaving the admin UI waiting.
+            connectionTimeout: 15_000,
+            greetingTimeout: 15_000,
+            socketTimeout: 30_000,
         });
     }
 
