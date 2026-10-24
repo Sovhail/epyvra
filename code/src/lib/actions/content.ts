@@ -545,7 +545,8 @@ export async function saveSeriesAction(seriesData: SeriesInput) {
                     const baseUrl = genSettings.siteUrl.endsWith('/') ? genSettings.siteUrl.slice(0, -1) : genSettings.siteUrl;
                     const identifier = (genSettings.seriesUrlFormat === 'hash' && data.hashId) ? data.hashId : (data.slug || targetId);
                     const finalUrl = `${baseUrl}/series/${identifier}`;
-                    const pingUrl = `https://www.bing.com/indexnow?url=${encodeURIComponent(finalUrl)}&key=${plugins.indexNowKey}`;
+                    const keyLocation = `${baseUrl}/api/indexnow-key?key=${encodeURIComponent(plugins.indexNowKey)}`;
+                    const pingUrl = `https://www.bing.com/indexnow?url=${encodeURIComponent(finalUrl)}&key=${encodeURIComponent(plugins.indexNowKey)}&keyLocation=${encodeURIComponent(keyLocation)}`;
                     await fetch(pingUrl, { method: 'GET' }).catch(() => {});
                 }
             }

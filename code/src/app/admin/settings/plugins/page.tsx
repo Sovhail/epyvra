@@ -377,7 +377,7 @@ export default function PluginsSettingsPage() {
                                   }}>Generate</Button>
                               </div>
                           </FormControl>
-                          <FormDescription className="text-[10px]">Your key is automatically hosted at /api/indexnow/[key]</FormDescription>
+                          <FormDescription className="text-[10px]">Your key is automatically hosted and sent to IndexNow when a drama is published.</FormDescription>
                           <FormMessage />
                         </FormItem>
                     )}/>
