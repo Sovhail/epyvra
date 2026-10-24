@@ -53,8 +53,9 @@ object OneSignalManager {
     }
 
     fun requestPushPermission() {
-        scope.launch {
+        scope.launch(Dispatchers.Main.immediate) {
             initializationComplete.await()
+            // Android permission dialogs must be requested from the main thread.
             OneSignal.Notifications.requestPermission(true)
         }
     }

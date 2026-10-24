@@ -147,17 +147,10 @@ class MainActivity : ComponentActivity() {
         OneSignalManager.setRegistrationListener {
             runOnUiThread {
                 if (!isFinishing && !isDestroyed) {
-                    android.app.AlertDialog.Builder(this)
-                        .setTitle("Your OneSignal SDK integration is complete!")
-                        .setMessage(
-                            "You can now send Push Notifications & In-App Messages through " +
-                                "OneSignal. Tap below to enable push notifications."
-                        )
-                        .setPositiveButton("Got it") { _, _ ->
-                            OneSignalManager.requestPushPermission()
-                        }
-                        .setCancelable(false)
-                        .show()
+                    // Ask Android for notification permission as soon as OneSignal has
+                    // registered this installation. The former diagnostic dialog required
+                    // an additional tap and could leave a device unsubscribed indefinitely.
+                    OneSignalManager.requestPushPermission()
                 }
             }
         }
