@@ -114,6 +114,49 @@ export function signBunnyMediaUrl(input: {
   return { url: `https://${config.cdnHost}${signedPath}`, expiresAt, contentPath };
 }
 
+/**
+ * Signs a canonical Bunny CDN URL for a server-to-CDN request.
+ *
+ * Unlike signBunnyMediaUrl, this helper is used by the authenticated EPYVRA
+ * video proxy and is deliberately not bound to the viewer IP. Render is the
+ * Bunny client in this flow, while the public URL remains protected by
+ * EPYVRA's rotating /api/video token.
+ */
+export function signBunnyUpstreamUrl(input: {
+  sourceUrl: string;
+  expectedHost: string;
+  tokenKey?: string;
+  ttlSeconds?: number;
+  nowSeconds?: number;
+}): string {
+  const source = new URL(input.sourceUrl);
+  const expectedHost = normalizeHost(input.expectedHost);
+  const tokenKey = input.tokenKey?.trim() ?? process.env.BUNNY_CDN_TOKEN_KEY?.trim() ?? '';
+  const ttlSeconds = input.ttlSeconds ?? 120;
+
+  if (source.protocol !== 'https:' || source.hostname.toLowerCase() !== expectedHost) {
+    throw new Error('Bunny upstream source is outside the configured Pull Zone host.');
+  }
+  if (!tokenKey || tokenKey.length < 32) {
+    throw new PremiumMediaConfigurationError('Bunny CDN token signing is not configured.');
+  }
+  if (!Number.isInteger(ttlSeconds) || ttlSeconds < 30 || ttlSeconds > MAX_TTL_SECONDS) {
+    throw new PremiumMediaConfigurationError('Bunny upstream token TTL must be between 30 and 600 seconds.');
+  }
+  if (source.username || source.password || source.search || source.hash || source.pathname.includes('/../')) {
+    throw new Error('Bunny upstream source URL is not canonical.');
+  }
+
+  const extension = source.pathname.toLowerCase().split('.').pop() ?? '';
+  const contentPath = ['m3u8', 'mpd'].includes(extension)
+    ? episodeDirectory(source.pathname)
+    : source.pathname;
+  const expiresAt = (input.nowSeconds ?? Math.floor(Date.now() / 1000)) + ttlSeconds;
+  const token = advancedToken(tokenKey, contentPath, expiresAt, '');
+  const authSegment = `bcdn_token=${token}&token_path=${encodeURIComponent(contentPath)}&expires=${expiresAt}`;
+  return `${source.origin}/${authSegment}${source.pathname}`;
+}
+
 export function verifyBunnyMediaUrl(input: {
   signedUrl: string;
   sourceUrl: string;

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { signBunnyMediaUrl, verifyBunnyMediaUrl, type PremiumMediaConfig } from '../src/lib/premium-media';
+import { signBunnyMediaUrl, signBunnyUpstreamUrl, verifyBunnyMediaUrl, type PremiumMediaConfig } from '../src/lib/premium-media';
 
 const config: PremiumMediaConfig = {
   cdnHost: 'media.example.b-cdn.net',
@@ -44,4 +44,24 @@ test('DASH manifests use the same path-token propagation model', () => {
   });
   assert.equal(signed.contentPath, '/premium/episode-abc/');
   assert.match(new URL('chunk-1.m4s', signed.url).pathname, /bcdn_token=.*\/premium\/episode-abc\/chunk-1\.m4s$/);
+});
+
+test('server-side Bunny proxy signing supports a custom Pull Zone hostname', () => {
+  const signed = signBunnyUpstreamUrl({
+    sourceUrl: 'https://media.epyvra.test/videos/episode-1.mp4',
+    expectedHost: 'media.epyvra.test',
+    tokenKey: config.tokenKey,
+    ttlSeconds: 120,
+    nowSeconds: 1_000,
+  });
+  assert.match(signed, /^https:\/\/media\.epyvra\.test\/bcdn_token=HS256-/);
+  assert.match(signed, /token_path=%2Fvideos%2Fepisode-1\.mp4&expires=1120\/videos\/episode-1\.mp4$/);
+});
+
+test('server-side Bunny proxy signing rejects a host mismatch', () => {
+  assert.throws(() => signBunnyUpstreamUrl({
+    sourceUrl: 'https://attacker.example/videos/episode-1.mp4',
+    expectedHost: 'media.epyvra.test',
+    tokenKey: config.tokenKey,
+  }));
 });

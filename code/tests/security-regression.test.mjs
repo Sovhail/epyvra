@@ -115,7 +115,9 @@ test('server-side remote fetches reject private networks and validate every redi
   assert.match(safeFetch, /EPYVRA_REMOTE_FETCH_HOSTS must be configured in production/);
   assert.match(safeFetch, /allowedHosts\.includes\(url\.hostname\.toLowerCase\(\)\)/);
   assert.match(safeFetch, /assertPublicHttpUrl\(new URL\(location, current\)/);
-  assert.match(video, /safeFetch\(filePath/);
+  assert.match(video, /upstreamUrl = filePath/);
+  assert.match(video, /signBunnyUpstreamUrl/);
+  assert.match(video, /safeFetch\(upstreamUrl/);
 });
 
 test('storage provider host components are constrained before credentials are sent', async () => {

@@ -3,9 +3,11 @@ import fs from 'fs';
 import { Readable } from 'stream';
 import { join } from 'path';
 import { getServerPluginsSettings as getPluginsSettings } from '@/lib/server-settings';
+import { getServerStorageSettings as getStorageSettings } from '@/lib/server-settings';
 import { decryptPath } from '@/lib/crypto';
 import { getVideoSecret } from '@/lib/video-secret';
 import { safeFetch } from '@/lib/safe-fetch';
+import { signBunnyUpstreamUrl } from '@/lib/premium-media';
 
 function streamFile(path: string, options?: { start?: number; end?: number }): ReadableStream<Uint8Array> {
     const readStream = fs.createReadStream(path, { highWaterMark: 1024 * 1024, ...options });
@@ -125,6 +127,18 @@ export async function GET(request: NextRequest) {
     
     if (isRemote) {
         try {
+            let upstreamUrl = filePath;
+            const storageSettings = await getStorageSettings();
+            if (storageSettings?.activeProvider === 'bunny' && storageSettings.bunny?.pullZoneUrl) {
+                const pullZone = new URL(storageSettings.bunny.pullZoneUrl);
+                const source = new URL(filePath);
+                if (source.hostname.toLowerCase() === pullZone.hostname.toLowerCase()) {
+                    upstreamUrl = signBunnyUpstreamUrl({
+                        sourceUrl: filePath,
+                        expectedHost: pullZone.hostname,
+                    });
+                }
+            }
             const range = request.headers.get('range');
             const headers: Record<string, string> = {
                 'accept-encoding': 'identity',
@@ -135,7 +149,7 @@ export async function GET(request: NextRequest) {
                 headers['range'] = range;
             }
             
-            const response = await safeFetch(filePath, {
+            const response = await safeFetch(upstreamUrl, {
                 headers,
                 cache: 'no-store',
             }, 3);
@@ -161,7 +175,12 @@ export async function GET(request: NextRequest) {
             if (lastMod) {
                 responseHeaders.set('Last-Modified', lastMod);
             }
-            responseHeaders.set('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
+            responseHeaders.set(
+                'Cache-Control',
+                response.ok || response.status === 206
+                    ? 'public, max-age=86400, stale-while-revalidate=604800'
+                    : 'private, no-store, max-age=0'
+            );
             responseHeaders.set('Content-Disposition', 'inline');
             responseHeaders.set('Access-Control-Allow-Origin', '*');
             responseHeaders.set('Access-Control-Expose-Headers', 'Content-Range, Content-Length, Accept-Ranges');
