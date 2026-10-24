@@ -23,16 +23,6 @@ function generateSiteMap(baseUrl: string, series: Series[], pages: CustomPage[],
        <lastmod>${new Date().toISOString()}</lastmod>
        <priority>0.5</priority>
      </url>
-      <url>
-       <loc>${baseUrl}/wallet</loc>
-       <lastmod>${new Date().toISOString()}</lastmod>
-       <priority>0.7</priority>
-     </url>
-     <url>
-       <loc>${baseUrl}/profile</loc>
-       <lastmod>${new Date().toISOString()}</lastmod>
-       <priority>0.7</priority>
-     </url>
      ${series
        .map((item) => {
          return `

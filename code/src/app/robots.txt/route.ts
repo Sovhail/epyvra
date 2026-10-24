@@ -3,7 +3,18 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
     const settings = await getGeneralSettings();
-    const defaultRobots = `User-agent: *\nAllow: /\nSitemap: ${settings?.siteUrl || ''}/sitemap.xml`;
+    const siteUrl = (settings?.siteUrl || 'https://example.com').replace(/\/$/, '');
+    const defaultRobots = [
+        'User-agent: *',
+        'Allow: /',
+        'Disallow: /admin/',
+        'Disallow: /api/',
+        'Disallow: /wallet',
+        'Disallow: /profile',
+        'Disallow: /*/wallet',
+        'Disallow: /*/profile',
+        `Sitemap: ${siteUrl}/sitemap.xml`,
+    ].join('\n');
     const content = settings?.robotsTxt || defaultRobots;
 
     return new NextResponse(content, {
