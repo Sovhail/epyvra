@@ -12,6 +12,9 @@ export async function generateMetadata(): Promise<Metadata> {
     title: settings?.seoTitle || siteName,
     description: settings?.seoDescription || 'Explore a Universe of Drama.',
     keywords: settings?.seoKeywords || 'drama, movies, reels, streaming',
+    verification: {
+      google: '0TfOtLYeJnVa237rNbYKxgppW7YjupdxwKOzpdVqDP8',
+    },
     manifest: '/manifest.webmanifest',
     icons: {
         icon: [
