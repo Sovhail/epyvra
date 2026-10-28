@@ -14,6 +14,12 @@ export async function POST(request: NextRequest) {
     const now = Date.now();
     
     if (ip !== 'unknown') {
+        for (const [key, entry] of ipRateLimit) {
+            if (entry.resetTime <= now) ipRateLimit.delete(key);
+        }
+        if (!ipRateLimit.has(ip) && ipRateLimit.size >= 10000) {
+            return NextResponse.json({ error: 'Registration is busy. Please retry later.' }, { status: 429 });
+        }
         const rateData = ipRateLimit.get(ip);
         if (rateData && now < rateData.resetTime) {
             if (rateData.count >= 10) {

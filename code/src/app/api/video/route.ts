@@ -143,6 +143,7 @@ export async function GET(request: NextRequest) {
     
     if (isRemote) {
         try {
+            const signal = AbortSignal.any([request.signal, AbortSignal.timeout(30 * 60 * 1000)]);
             let upstreamUrl = filePath;
             const storageSettings = await getStorageSettings();
             const bunny = storageSettings?.activeProvider === 'bunny' ? storageSettings.bunny : undefined;
@@ -171,6 +172,7 @@ export async function GET(request: NextRequest) {
             let response = await safeFetch(upstreamUrl, {
                 headers,
                 cache: 'no-store',
+                signal,
             }, 3);
 
             // A Pull Zone may reject an otherwise valid CDN token when its key
@@ -178,6 +180,7 @@ export async function GET(request: NextRequest) {
             // the public CDN protected and retry server-to-server through the
             // authenticated Storage API. The credential never reaches clients.
             if (response.status === 403 && bunnySource && bunny?.storageZoneName && bunny.apiKey) {
+                await response.body?.cancel();
                 const storageHeaders: Record<string, string> = {
                     'AccessKey': bunny.apiKey,
                     'accept-encoding': 'identity',
@@ -187,6 +190,7 @@ export async function GET(request: NextRequest) {
                     headers: storageHeaders,
                     cache: 'no-store',
                     redirect: 'error',
+                    signal,
                 });
             }
             

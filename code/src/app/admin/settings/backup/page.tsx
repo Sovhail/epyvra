@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { FileUp, Download, Loader2, Database, CheckCircle, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useTransition, useEffect } from 'react';
-import { testMongoDbConnectionAction, importDataToMongoAction, exportMongoDataAction } from '@/lib/actions';
+import { testMongoDbConnectionAction, importDataToMongoAction } from '@/lib/actions';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,7 +35,6 @@ export default function BackupSettingsPage() {
     // Transitions
     const [, startMongoTestTransition] = useTransition();
     const [isMongoImporting, startMongoImportTransition] = useTransition();
-    const [, startMongoExportTransition] = useTransition();
 
     // MongoDB file state
     const [selectedMongoFile, setSelectedMongoFile] = useState<File | null>(null);
@@ -70,32 +69,23 @@ export default function BackupSettingsPage() {
     };
     
      const handleMongoExport = () => {
-        setStatuses(s => ({ ...s, mongoExport: 'pending' }));
-        startMongoExportTransition(async () => {
-            toast({ title: "Starting Database Export...", description: "This may take a moment." });
-            const result = await exportMongoDataAction();
-            if (result.success && result.data) {
-                const blob = new Blob([result.data], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `epyvra_backup_${new Date().toISOString().split('T')[0]}.json`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                setStatuses(s => ({ ...s, mongoExport: 'success' }));
-                toast({ title: "Export Successful", description: "Backup file has been downloaded." });
-            } else {
-                setStatuses(s => ({ ...s, mongoExport: 'error' }));
-                toast({ variant: 'destructive', title: "Export Failed", description: result.error });
-            }
-        });
+        const link = document.createElement('a');
+        link.href = '/api/admin/backup';
+        link.download = '';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        toast({ title: 'Downloading Database Export', description: 'Check your browser downloads for progress or errors.' });
     };
 
      const handleMongoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            if (file.size > 8 * 1024 * 1024) {
+                toast({ variant: 'destructive', title: 'Backup too large', description: 'Use MongoDB restore tools for backups over 8MB.' });
+                e.target.value = '';
+                return;
+            }
             setSelectedMongoFile(file);
             const reader = new FileReader();
             reader.onload = (event) => {

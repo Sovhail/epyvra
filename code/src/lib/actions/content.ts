@@ -978,13 +978,15 @@ export async function testMongoDbConnectionAction(setupToken?: string) {
  */
 export async function exportMongoDataAction() {
     if (!(await import('./auth').then(m => m.verifyAdminSession()))) return { success: false, error: 'Unauthorized access.' };
- try { const db = await getDb(); const collections = await db.listCollections().toArray(); const backup: Record<string, unknown[]> = {}; for (const col of collections) { if (col.name.startsWith('system.')) continue; backup[col.name] = await db.collection(col.name).find({}).toArray(); } return { success: true, data: JSON.stringify(backup, null, 2) }; } catch (e) { return handleError('exportMongoDataAction', e, 'Database export failed.'); } }
+    return { success: false, error: 'Use the streamed download at /api/admin/backup.' };
+}
 
 /**
  * Imports collections from JSON database backups.
  */
 export async function importDataToMongoAction(jsonContent: string) {
     if (!(await import('./auth').then(m => m.verifyAdminSession()))) return { success: false, error: 'Unauthorized access.' };
+    if (Buffer.byteLength(jsonContent, 'utf8') > 8 * 1024 * 1024) return { success: false, error: 'Use MongoDB restore tools for backups over 8MB.' };
 
     const demoError = getDemoModeMutationError();
     if (demoError) return demoError;
