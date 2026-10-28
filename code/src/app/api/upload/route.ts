@@ -1,6 +1,9 @@
 import { getErrorMessage, hasErrorCode } from '@/lib/error-utils';
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, stat, mkdir, chmod, readdir, unlink } from 'fs/promises';
+import { copyFile, stat, mkdir, chmod, readdir, unlink } from 'fs/promises';
+import { createReadStream } from 'node:fs';
+import { Readable } from 'node:stream';
+import { acquireUploadSlot, stageUpload, UploadError, logResourceUsage } from '@/lib/upload-stream';
 import { join } from 'path';
 import { getServerStorageSettings as getStorageSettings } from '@/lib/server-settings';
 import { DEMO_MODE_MUTATION_MESSAGE, isDemoMode } from '@/lib/demo-mode';
@@ -10,6 +13,8 @@ import { assertPublicHttpUrl, normalizeBunnyRegion } from '@/lib/safe-fetch';
 import type { StorageProvider, StorageSettings } from '@/lib/types';
 type CloudStorageConfig = { accessKeyId?: string; secretAccessKey?: string; applicationKeyId?: string; applicationKey?: string; endpoint?: string; bucket: string; region?: string };
 type BunnyStorageConfig = NonNullable<StorageSettings['bunny']>;
+type UploadFile = { name: string; size: number };
+export const runtime = 'nodejs';
 
 /**
  * Ensures that a directory exists, and sets its permissions to 0o755.
@@ -28,9 +33,9 @@ async function ensureDir(dirPath: string) {
 }
 
 /**
- * Uploads a file buffer to an S3-compatible cloud storage provider (Amazon S3, DigitalOcean Spaces, GCS, Backblaze B2).
+ * Streams a staged file to an S3-compatible storage provider.
  */
-async function uploadToS3(buffer: Buffer, originalName: string, subDir: string, config: CloudStorageConfig, mimeType: string, extension: string, customFilename?: string): Promise<string> {
+async function uploadToS3(path: string, originalName: string, subDir: string, config: CloudStorageConfig, mimeType: string, extension: string, customFilename?: string): Promise<string> {
     const filename = customFilename ? `${customFilename}.${extension}` : `${Date.now()}-${originalName.replace(/[^a-z0-9_.-]/gi, '_').toLowerCase()}`;
     const key = `${subDir}/${filename}`;
     const keyWithExt = key.endsWith(`.${extension}`) ? key : `${key}.${extension}`;
@@ -75,26 +80,26 @@ async function uploadToS3(buffer: Buffer, originalName: string, subDir: string, 
     }
 
     const s3 = new S3Client(clientConfig);
+    const { size } = await stat(path);
+    const send = async (publicRead: boolean) => {
+        const body = createReadStream(path);
+        try {
+            await s3.send(new PutObjectCommand({
+                Bucket: config.bucket, Key: keyWithExt, Body: body,
+                ContentLength: size, ContentType: mimeType,
+                ...(publicRead ? { ACL: 'public-read' as const } : {}),
+            }), { abortSignal: AbortSignal.timeout(10 * 60 * 1000) });
+        } finally { body.destroy(); }
+    };
 
     // Some storage providers fail if the 'public-read' ACL is set (e.g. if ACLs are disabled).
     // In this case, we catch the failure and retry uploading without specifying the ACL.
     try {
-        await s3.send(new PutObjectCommand({
-            Bucket: config.bucket,
-            Key: keyWithExt,
-            Body: buffer,
-            ContentType: mimeType,
-            ACL: 'public-read',
-        }));
+        await send(true);
     } catch {
         // Gated console.warn removed as per reviewer guidelines to prevent leaking system information
-        await s3.send(new PutObjectCommand({
-            Bucket: config.bucket,
-            Key: keyWithExt,
-            Body: buffer,
-            ContentType: mimeType,
-        }));
-    }
+        await send(false);
+    } finally { s3.destroy(); }
 
     // Return the absolute public URL to the uploaded file
     if (config.endpoint) {
@@ -105,9 +110,9 @@ async function uploadToS3(buffer: Buffer, originalName: string, subDir: string, 
 }
 
 /**
- * Uploads a file buffer to Bunny.net storage zone and returns the pull zone delivery URL.
+ * Streams a staged file to Bunny and returns the pull zone delivery URL.
  */
-async function uploadToBunny(buffer: Buffer, originalName: string, subDir: string, config: BunnyStorageConfig, extension: string, customFilename?: string): Promise<string> {
+async function uploadToBunny(path: string, originalName: string, subDir: string, config: BunnyStorageConfig, extension: string, customFilename?: string): Promise<string> {
     const cleanOriginalName = originalName.replace(/[^a-z0-9_.-]/gi, '_').toLowerCase();
     const filename = customFilename ? `${customFilename}.${extension}` : `${Date.now()}-${cleanOriginalName}`;
     const key = `${subDir}/${filename}`;
@@ -124,14 +129,24 @@ async function uploadToBunny(buffer: Buffer, originalName: string, subDir: strin
     
     const url = `https://${host}/${storageZoneName}/${keyWithExt}`;
     
-    const response = await fetch(url, {
+    const { size } = await stat(path);
+    const body = createReadStream(path);
+    const init: RequestInit & { duplex: 'half' } = {
         method: 'PUT',
         headers: {
             'AccessKey': apiKey,
             'Content-Type': 'application/octet-stream',
+            'Content-Length': String(size),
         },
-        body: new Uint8Array(buffer)
-    });
+        body: Readable.toWeb(body) as ReadableStream<Uint8Array>,
+        duplex: 'half',
+        redirect: 'error',
+        signal: AbortSignal.timeout(10 * 60 * 1000),
+    };
+    let response: Response;
+    try { response = await fetch(url, init); }
+    finally { body.destroy(); }
+    await response.body?.cancel();
     
     if (!response.ok) {
         // Sanitize error messages to avoid leaking keys or internal structure
@@ -231,7 +246,7 @@ async function validateRequest(request: NextRequest): Promise<NextResponse | nul
     const configuredMb = Math.min(200, Math.max(1, Math.trunc(Number(settings?.videoUploadMaxSizeMb) || 100)));
     const contentLength = Number(request.headers.get('content-length') || 0);
     const MAX_LIMIT = configuredMb * 1024 * 1024;
-    if (contentLength > MAX_LIMIT) {
+    if (contentLength > MAX_LIMIT + 64 * 1024) {
         return NextResponse.json({ success: false, error: `File size exceeds limit (Max ${configuredMb}MB).` }, { status: 413 });
     }
 
@@ -242,28 +257,23 @@ async function validateRequest(request: NextRequest): Promise<NextResponse | nul
  * Parses the file and metadata from the request, checking constraints.
  */
 async function parseAndValidateFile(request: NextRequest): Promise<{
-    buffer: Buffer;
-    file: File;
+    path: string;
+    file: UploadFile;
     type: string;
     identifier: string;
     detectedMime: string;
     detectedExt: string;
+    cleanup: () => Promise<void>;
 } | NextResponse> {
-    const data = await request.formData();
-    const file: File | null = data.get('file') as unknown as File;
-    const type = data.get('type') as string;
-    const identifier = data.get('identifier') as string;
-
-    if (!file) {
-        return NextResponse.json({ success: false, error: 'No file provided.' }, { status: 400 });
-    }
-
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    const settings = await getStorageSettings();
+    const videoLimitMb = Math.min(200, Math.max(1, Math.trunc(Number(settings?.videoUploadMaxSizeMb) || 100)));
+    const staged = await stageUpload(request, videoLimitMb * 1024 * 1024);
+    const file = { name: staged.name, size: staged.size };
 
     // Validate MIME types from file header magic numbers and filename
-    const fileInfo = detectMimeAndExtension(buffer, file.name);
+    const fileInfo = detectMimeAndExtension(staged.header, file.name);
     if (!fileInfo) {
+        await staged.cleanup();
         return NextResponse.json({ success: false, error: 'Invalid file signature: Only images (PNG, JPEG, GIF, WEBP), videos (MP4, WEBM, M3U8, TS), and subtitles (VTT, SRT) are allowed.' }, { status: 400 });
     }
 
@@ -272,20 +282,19 @@ async function parseAndValidateFile(request: NextRequest): Promise<{
     const isSubtitle = detectedMime === 'text/vtt' || detectedExt === 'vtt' || detectedExt === 'srt';
     
     // Strict file-specific size checks
-    const settings = await getStorageSettings();
-    const videoLimitMb = Math.min(200, Math.max(1, Math.trunc(Number(settings?.videoUploadMaxSizeMb) || 100)));
     const sizeLimit = isSubtitle ? 5 * 1024 * 1024 : isImage ? 10 * 1024 * 1024 : videoLimitMb * 1024 * 1024;
     if (file.size > sizeLimit) {
+        await staged.cleanup();
         return NextResponse.json({ success: false, error: `File size exceeds allowed limit (${isSubtitle ? '5MB' : isImage ? '10MB' : `${videoLimitMb}MB`}).` }, { status: 413 });
     }
 
-    return { buffer, file, type, identifier, detectedMime, detectedExt };
+    return { path: staged.path, file, type: staged.type, identifier: staged.identifier, detectedMime, detectedExt, cleanup: staged.cleanup };
 }
 
 /**
  * Handles uploads to local filesystem storage, including payment logo replacements and cleanups.
  */
-async function handleLocalStorage(buffer: Buffer, file: File, type: string, identifier: string, detectedExt: string, detectedMime: string): Promise<string> {
+async function handleLocalStorage(path: string, file: UploadFile, type: string, identifier: string, detectedExt: string, detectedMime: string): Promise<string> {
     const cleanType = typeof type === 'string' ? type.replace(/[^a-z0-9_-]/gi, '') : '';
     const cleanIdentifier = typeof identifier === 'string' ? identifier.replace(/[^a-z0-9_-]/gi, '') : '';
     const isPaymentLogo = cleanType === 'payment-logo' && cleanIdentifier;
@@ -337,7 +346,7 @@ async function handleLocalStorage(buffer: Buffer, file: File, type: string, iden
         throw new Error('Path traversal attempt detected.');
     }
 
-    await writeFile(filePath, buffer);
+    await copyFile(path, filePath);
     try { await chmod(filePath, 0o644); } catch {}
 
     return isPaymentLogo ? `/img/${filename}` : `/uploads/${subDir}/${filename}`;
@@ -349,8 +358,8 @@ async function handleLocalStorage(buffer: Buffer, file: File, type: string, iden
 async function handleCloudStorage(
     activeProvider: StorageProvider,
     storageSettings: StorageSettings | null,
-    buffer: Buffer,
-    file: File,
+    path: string,
+    file: UploadFile,
     type: string,
     identifier: string,
     detectedExt: string,
@@ -367,27 +376,34 @@ async function handleCloudStorage(
 
     if (activeProvider === 'bunny') {
         if (!storageSettings?.bunny) throw new Error('Bunny configuration is missing.');
-        return await uploadToBunny(buffer, file.name, subDir, storageSettings.bunny, detectedExt, customName);
+        return await uploadToBunny(path, file.name, subDir, storageSettings.bunny, detectedExt, customName);
     }
     const config = activeProvider === 's3' ? storageSettings?.s3 : activeProvider === 'digitalocean' ? storageSettings?.digitalocean : activeProvider === 'gcs' ? storageSettings?.gcs : activeProvider === 'backblaze' ? storageSettings?.backblaze : undefined;
     if (!config) throw new Error(`Configuration for ${activeProvider} is missing.`);
-    return await uploadToS3(buffer, file.name, subDir, config, detectedMime, detectedExt, customName);
+    return await uploadToS3(path, file.name, subDir, config, detectedMime, detectedExt, customName);
 }
 
 /**
  * Main POST request handler for file uploads.
  */
 export async function POST(request: NextRequest) {
+  let release: (() => void) | null = null;
+  let cleanup: (() => Promise<void>) | undefined;
   try {
     // 1. Validate request auth and limits
     const validationError = await validateRequest(request);
     if (validationError) return validationError;
+    release = acquireUploadSlot();
+    if (!release) return NextResponse.json({ success: false, error: 'Another upload is in progress. Please retry shortly.' }, { status: 429, headers: { 'Retry-After': '5' } });
+    logResourceUsage('upload', 'start');
 
     // 2. Parse and validate file signature
     const parseResult = await parseAndValidateFile(request);
     if (parseResult instanceof NextResponse) return parseResult;
 
-    const { buffer, file, type, identifier, detectedMime, detectedExt } = parseResult;
+    const { path, file, type, identifier, detectedMime, detectedExt } = parseResult;
+    cleanup = parseResult.cleanup;
+    logResourceUsage('upload', 'staged', file.size);
 
     // 3. Load active storage configuration
     const storageSettings = await getStorageSettings();
@@ -396,17 +412,21 @@ export async function POST(request: NextRequest) {
     // 4. Branch to appropriate storage handler
     let finalUrl = '';
     if (activeProvider === 'local') {
-        finalUrl = await handleLocalStorage(buffer, file, type, identifier, detectedExt, detectedMime);
+        finalUrl = await handleLocalStorage(path, file, type, identifier, detectedExt, detectedMime);
     } else {
-        finalUrl = await handleCloudStorage(activeProvider, storageSettings, buffer, file, type, identifier, detectedExt, detectedMime);
+        finalUrl = await handleCloudStorage(activeProvider, storageSettings, path, file, type, identifier, detectedExt, detectedMime);
     }
 
     return NextResponse.json({ success: true, url: finalUrl });
 
   } catch (error) {
+    if (error instanceof UploadError) return NextResponse.json({ success: false, error: error.message }, { status: error.status });
     if (process.env.NODE_ENV !== 'production') {
         console.error('Upload route error:', error);
     }
     return NextResponse.json({ success: false, error: getErrorMessage(error) || 'Upload failed' }, { status: 500 });
+  } finally {
+    try { await cleanup?.(); }
+    finally { if (release) { release(); logResourceUsage('upload', 'end'); } }
   }
 }

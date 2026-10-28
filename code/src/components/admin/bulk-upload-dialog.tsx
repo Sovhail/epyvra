@@ -213,7 +213,7 @@ export function BulkUploadDialog({ seriesId, nextEpisodeNumber, onSaved, disable
       return;
     }
 
-    const CONCURRENCY = 2;
+    const CONCURRENCY = 1;
     let nextIndex = 0;
     const uploadedResults: { episodeInSeason: number; quality: string; url: string }[] = [];
 
