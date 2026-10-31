@@ -2,6 +2,7 @@
 import { useEffect } from 'react';
 import Script from 'next/script';
 import { getPluginsSettings } from '@/lib/data.actions';
+import { useUser } from '@/firebase/auth/use-user';
 
 interface OneSignalSdk {
     init(options: {
@@ -11,6 +12,8 @@ interface OneSignalSdk {
         serviceWorkerParam?: { scope: string };
     }): Promise<void>;
     Slidedown?: { promptPush(): Promise<void> };
+    login?: (externalId: string) => Promise<void>;
+    logout?: () => Promise<void>;
 }
 
 declare global {
@@ -20,6 +23,7 @@ declare global {
 }
 
 export function OneSignalInitializer() {
+    const { user } = useUser();
     useEffect(() => {
         getPluginsSettings().then(settings => {
             if (settings?.oneSignalAppId) {
@@ -46,6 +50,21 @@ export function OneSignalInitializer() {
             }
         });
     }, []);
+
+    // Link the browser subscription to the authenticated EPYVRA user. Without
+    // this alias, admin notifications targeted by external_id are accepted by
+    // OneSignal but have no matching subscription to deliver to.
+    useEffect(() => {
+        const externalId = user?.uid?.trim();
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        window.OneSignalDeferred.push(async (oneSignal) => {
+            if (externalId) {
+                await oneSignal.login?.(externalId);
+            } else {
+                await oneSignal.logout?.();
+            }
+        });
+    }, [user?.uid]);
 
     return (
         <Script 
